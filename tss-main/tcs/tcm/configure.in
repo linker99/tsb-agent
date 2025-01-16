@@ -1,0 +1,244 @@
+dnl (c) Copyright IBM Corporation 2010:
+dnl 
+dnl This documentation is provided with source code (Trusted Platform
+dnl Module (TPM) subject to the following license:
+dnl 
+dnl Redistribution and use in source and binary forms, with or without
+dnl modification, are permitted provided that the following conditions are
+dnl met:
+dnl 
+dnl Redistributions of source code must retain the above copyright notice,
+dnl this list of conditions and the following disclaimer.
+dnl 
+dnl Redistributions in binary form must reproduce the above copyright
+dnl notice, this list of conditions and the following disclaimer in the
+dnl documentation and/or other materials provided with the distribution.
+dnl 
+dnl Neither the names of the IBM Corporation nor the names of its
+dnl contributors may be used to endorse or promote products derived from
+dnl this software without specific prior written permission.
+dnl 
+dnl THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+dnl "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+dnl LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+dnl A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+dnl HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+dnl SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+dnl LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+dnl DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+dnl THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+dnl (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+dnl OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+dnl $Id: configure.in 4520 2011-03-24 12:51:12Z stefanb $
+
+dnl Process this file with autoconf to produce a configure script.
+AC_INIT(lib/bind.c)
+AM_INIT_AUTOMAKE(libtcm, 2.0)
+
+dnl The following line is needed due to RHEL5
+mkdir m4 2>/dev/null
+AC_CONFIG_MACRO_DIR([m4])
+
+dnl Checks for programs.
+AC_PROG_AWK
+AC_PROG_CC
+AC_PROG_INSTALL
+AC_PROG_LN_S
+AC_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+
+AC_DEFINE(TCM_POSIX)
+AC_DEFINE(TCM_NV_DISK)
+
+dnl Checks for build features
+AC_MSG_CHECKING(whether to build for CCA)
+AC_ARG_ENABLE(cca,
+[  --enable-cca            Build the library with CCA support (instead of socket)],
+[ AC_DEFINE(XCRYPTO_USE_CCA)
+  AC_MSG_RESULT(yes)
+
+  AC_MSG_CHECKING(whether UDXTK_FS_ROOT has been set)
+  if test "set$UDXTK_FS_ROOT" != "set"; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(no)
+    echo "You must set the environment variable UDXTK_FS_ROOT."
+    exit
+  fi
+  AC_MSG_CHECKING(whether XCTK_FS_ROOT has been set)
+  if test "set$XCTK_FS_ROOT" != "set"; then
+    AC_MSG_RESULT(yes)
+  else
+    AC_MSG_RESULT(no)
+    echo "You must set the environment variable XCTK_FS_ROOT."
+    exit
+  fi
+  INCLUDES="-I${UDXTK_FS_ROOT}/inc -I${CROSS_PPC_HOME}/include -I../../cca-host-glue"
+  UDXTK_LD_PATHS="-L${UDXTK_FS_ROOT}/lib/common -L${XCTK_FS_ROOT}/lib/host/linux/gcc/redhat" 
+  UDXTK_LD_LIBS="-lcsulcall -lcsulsapi -lcsulsecy -lds30 -lxcryp -ldl"
+  AC_DEFINE(HOST32BIT)
+  AC_DEFINE(_LINUX_)
+  AC_DEFINE(LINUX)
+  AC_DEFINE(TCM_VTCM)
+  vtcm=true
+],
+[ AC_DEFINE(X86)
+  AC_MSG_RESULT(no) ])
+
+AC_ARG_WITH(libtcms,
+  [  --with-libtcms          Whether to build with libtcms support
+                          Use '--with-libtcms=installed' to use the
+                          installed libtcms. Use '--with-libtcms=no'
+                          to build without libtcms support.],
+  [],
+  [with_libtcms=no])
+
+if test "$with_libtcms" != no && test "x$with_libtcms" != x; then
+    if test "$with_libtcms" = "installed"; then
+        if test ! -r /usr/include/libtcms/tcm_library.h; then
+            AC_MSG_ERROR([the libtcms-devel package is not installed on this system])
+        fi
+        LIBTCMS_LIBRARY_PATH=
+        AC_DEFINE(TCM_USE_LIBTCMS)
+        LIBTCMS_LIBRARY="-ltcms"
+    else
+	if test "`uname -o 2>/dev/null`" = Cygwin; then
+		tmp=`readlink -f ../../src/libtcms.dll.a`
+		LINKERPARMS="-Wl,-rpath=${PWD}/../../src"
+	elif test "`uname -s`" = AIX; then
+		tmp=`ls -lL ../../src/libtcms.so 2>/dev/null |\
+		     awk '{ print $NF }'`
+		LINKERPARMS="-Wl,-brtl"	
+	elif test "`uname -s`" = Linux; then
+	        tmp=`readlink -f ../../src/libtcms.so`
+		LINKERPARMS="-Wl,-rpath=${PWD}/../../src"
+	fi
+        if test "x$tmp" != x && test -f $tmp; then
+            LIBTCMS_LIBRARY_PATH="-L../../../src ${LINKERPARMS}"
+            AC_DEFINE(USE_IN_TREE_LIBTCMS)
+            AC_DEFINE(TCM_USE_LIBTCMS)
+            LIBTCMS_LIBRARY="-ltcms"
+            with_libtcms=yes
+        else
+            AC_MSG_ERROR([libtcms could not be found; try 'make -f makefile-libtcms' in src/])
+        fi
+    fi
+fi
+
+
+AC_MSG_CHECKING(for the size of keys to support)
+AC_ARG_WITH(size-keys,
+  [  --with-size-keys=NUMBER
+                          The maximum size of asymmetric keys supported
+                          (default=4096).],
+  [number_key_bits="$withval"],
+  [number_key_bits="4096"])
+AC_DEFINE_UNQUOTED(TCM_MAXIMUM_KEY_SIZE,${number_key_bits})
+AC_MSG_RESULT($number_key_bits)
+
+
+default_transport=TCP/IP
+
+AC_MSG_CHECKING(whether to send messages to character device )
+AC_ARG_ENABLE(chardev,
+  [  --enable-chardev        To build for sending to character device.],
+  AC_DEFINE(TCM_USE_CHARDEV)
+  default_transport="/dev/tcm0"
+  AC_MSG_RESULT(yes),
+  AC_MSG_RESULT(no)
+)
+
+AC_MSG_CHECKING(whether to send messages via UnixIO socket )
+AC_ARG_ENABLE(unixio,
+  [  --enable-unixio         To build for sending via UnixIO socket.],
+  AC_DEFINE(TCM_USE_UNIXIO)
+  default_transport="UNIXIO socket"
+  AC_MSG_RESULT(yes),
+  AC_MSG_RESULT(no)
+)
+
+
+
+AC_MSG_CHECKING(whether to enable virtual TCM support)
+AC_ARG_ENABLE(vtcm,
+  [  --enable-vtcm           To enable virtual TCM support when using sockets.],
+  AC_DEFINE(TCM_VTCM)
+  vtcm=true
+  AC_MSG_RESULT(yes),
+  AC_MSG_RESULT(no)
+)
+
+AC_MSG_CHECKING(whether to use serial port)
+AC_ARG_ENABLE(serial-port,
+  [  --enable-serial-port    To enable communication via serial port.],
+  AC_DEFINE(USE_SERIAL_PORT)
+  AC_DEFINE(USE_PARTIAL_READ)
+  AC_MSG_RESULT(yes),
+  AC_MSG_RESULT(no)
+)
+
+#The following generates a non-fatal error when linking:
+# gcc : -lc : linker input file unused because linking not done
+#AC_MSG_CHECKING(whether to build statically linked executables)
+#AC_ARG_ENABLE(staticexec,
+#  [  --enable-staticexec    To build statically linked executables.],
+#  STATIC_LINKING_FLAG="-static -lc"
+#  AC_DEFINE(USE_STATIC_LINKING)
+#  AC_MSG_RESULT(yes),
+#  AC_MSG_RESULT(no)
+#)
+
+
+dnl Checks for libraries.
+
+dnl Checks for header files.
+AC_HEADER_STDC
+AC_CHECK_HEADERS(fcntl.h sys/ioctl.h unistd.h)
+
+dnl Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_TYPE_SIZE_T
+
+dnl Checks for library functions.
+AC_PROG_GCC_TRADITIONAL
+AC_FUNC_MEMCMP
+AC_CHECK_LIB([crypto],[HMAC_CTX_cleanup],[AC_DEFINE(HAVE_HMAC_CTX_CLEANUP)])
+
+AC_DEFINE(TCM_V12)
+AC_DEFINE(TCM_SM4)
+AC_DEFINE(TCM_USE_TAG_IN_STRUCTURE)
+
+AM_CONDITIONAL(VTCM_TOOLS, test x$vtcm = xtrue)
+AM_CONDITIONAL(LIBTCMS_AVAILABLE,
+               test x$with_libtcms = xyes || test x$with_libtcms = xinstalled)
+
+AC_SUBST(VTCM_TOOLS)
+AC_SUBST(UDXTK_LD_PATHS)
+AC_SUBST(UDXTK_LD_LIBS)
+AC_SUBST(STATIC_LINKING_FLAG)
+AC_SUBST(INCLUDES)
+AC_SUBST(TCM_MAXIMUM_KEY_SIZE)
+AC_SUBST(LIBTCMS_LIBRARY)
+AC_SUBST(LIBTCMS_LIBRARY_PATH)
+AC_SUBST(LIBTCMS_AVAILABLE)
+AC_OUTPUT(Makefile lib/Makefile)
+
+AC_MSG_NOTICE([-------------------------------])
+
+if test "x$number_key_bits" != "x"; then
+	AC_MSG_NOTICE([max. key size: $number_key_bits (in client lib.)])
+fi
+
+	AC_MSG_NOTICE([def.transport: $default_transport (change with TCM_DEVICE env. var.)])
+
+if test "$with_libtcms" = "yes"; then
+	AC_MSG_NOTICE([      libtcms: using in-source-tree libtcms])
+elif test "$with_libtcms" = "installed"; then
+	AC_MSG_NOTICE([      libtcms: using system-installed libtcms])
+elif test "$with_libtcms" = "notfound"; then
+	AC_MSG_NOTICE([      libtcms: not found (run 'make -f makefile-libtcms' in src/)])
+else
+	AC_MSG_NOTICE([      libtcms: no])
+fi
+

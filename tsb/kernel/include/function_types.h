@@ -1,0 +1,60 @@
+#ifndef __FUNCTION_TYPES_H__
+#define __FUNCTION_TYPES_H__
+
+enum {
+	FUNC_NULL = 0,
+	FUNC_PROGRAM = 1,
+	FUNC_SHARELIB = 2,
+	FUNC_MODULE = 3,
+	FUNC_FILE = 4,
+	FUNC_PROTECT = 5,
+	FUNC_NET = 6,
+	FUNC_MAX,
+};
+
+enum {
+	EXEC_CTL = 1,
+	DYN_CTL = 2,
+	MODULE_CTL = 3,
+	SCRIPT_CTL = 4,
+};
+
+enum {
+	DC_PASS   = 0,
+	DC_FORBID = 1,
+	DC_ERROR_PASS,
+	DC_EAUDIT_PASS,
+};
+
+//operate
+enum {
+	WHITELIST_OPERATE_EXEC = 0x1, //1 执行
+	CRITICAL_FILE_OPEN = 0x2,  //2 打开
+	OPERATE_WRITE = 0x0004,   //4 写
+	OPERATE_READ = 0x0008,   //8 读
+	OPERATE_APPEND = 0x0010,  //16 追加
+	OPERATE_DELETE = 0x0020,  //32 删除
+	OPERATE_CREATE = 0x0040,  //64 创建
+	OPERATE_RENAME = 0x0080,  //128 重命名
+	OPERATE_KILL = 0x0100,
+};
+enum {
+	DMEASURE_OPERATE_PERIODICITY = 0x1,
+	DMEASURE_TRIGGER = 0x2,
+};
+
+//type  TODO 暂用TYPE_WHITELIST枚举类型（后期换为LOG_CATEGRORY_WHITELIST）
+enum {
+	TYPE_BMEASURE = 0x1,
+	TYPE_WHITELIST = 0x2,
+	TYPE_DMEASURE = 0x3,
+	//TYPE_TNC = 0x4,
+	//TYPE_FILE_ACCESS = 0x5,
+	TYPE_AUDIT_SUM,
+};
+
+#define		RESULT_SUCCESS        1
+#define		RESULT_FAIL           2
+#define		RESULT_BYPASS         3
+#define		RESULT_UNMEASURED     4
+#endif

@@ -1,0 +1,32 @@
+/*
+ * tcf_error.h
+ *
+ *  Created on: 2021Äê4ÔÂ27ÈÕ
+ *      Author: wangtao
+ */
+
+#ifndef INCLUDE_TCF_ERROR_H_
+#define INCLUDE_TCF_ERROR_H_
+
+enum{
+	TCF_SUCCESS = 0,
+	TCF_ERR_PARAMETER = 4096, 	/* An argument had an invalid value */
+	TCF_ERR_DIR,
+	TCF_ERR_FILE,
+	TCF_ERR_NOMEM,
+	TCF_ERR_BAD_DATA,
+	TCF_ERR_TIME,
+	TCF_ERR_TIMEOUT,
+	TCF_ERR_ITEM_NOT_FOUND,
+	TCF_ERR_INPUT_EXCEED,
+	TCF_ERR_OUTPUT_EXCEED,
+	TCF_ERR_RAND,
+	TCF_ERR_TSB,
+	TCF_ERR_TSB_NOTICE,
+	TCF_ERR_SEM,
+	TCF_ERR_SELECT,
+	TCF_ERR_VERSION,
+	TCF_ERR_SEM_TIMEOUT,
+};
+
+#endif /* INCLUDE_TCF_ERROR_H_ */

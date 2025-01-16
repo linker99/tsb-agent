@@ -1,0 +1,9 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=白细胞管理系统
+Exec=sh /usr/local/httcsec/ttm/ui/KXCalPlatform.sh
+Icon=/usr/local/httcsec/ttm/ui/ico/gui.png
+Info="Spark"
+Terminal=false
+Type=Application
+StartupNotify=true

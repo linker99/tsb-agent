@@ -1,0 +1,14 @@
+步骤一：拷贝/usr/local/httcsec/lib/libhttctsb.so 到当前目录
+步骤二：make clean
+步骤三：make
+
+编译出来的工具 log_set_level
+
+执行参数：
+NO_INFO   关闭日志打印
+TSB_INFO  打开日志打印
+TPCM_DEBUG 打开日志打印（预留）
+TSB_DEBUG  打开日志打印（预留）
+eg. ./log_set NO_INFO
+
+

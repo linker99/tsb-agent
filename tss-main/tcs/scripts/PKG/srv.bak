@@ -1,0 +1,32 @@
+#!/bin/bash
+
+usage(){
+        echo "USAGE : ./srv start/stop "
+}
+
+if [ $# -ne 1 ];
+then
+    usage
+    exit
+fi
+
+if [ $1 == "start" ]; then
+	insmod /usr/local/httcsec/tss/kernel/httctdd.ko
+	insmod /usr/local/httcsec/tss/kernel/tddl.ko sync=0
+	source /usr/local/httcsec/tss/symbol.sh
+	insmod /usr/local/httcsec/tss/kernel/httctcs.ko k_kallsyms_lookup_name=$kallsyms_lookup_name k_do_invalidatepage=$do_invalidatepage
+	insmod /usr/local/httcsec/tss/kernel/httctcs-ex.ko
+	
+	chmod 666 /dev/httctcs
+	chmod 666 /dev/tcm_ttd
+	chmod 666 /dev/tpcm_ttd
+
+elif [ $1 == "stop" ]; then
+	rmmod httctcs-ex
+	rmmod httctcs
+	rmmod tddl
+	rmmod httctdd
+else
+	usage
+	exit
+fi

@@ -1,0 +1,24 @@
+说明：
+
+1、安装
+	./config.sh install
+	
+
+2、初始化（耗时较长）
+
+	./config.sh init
+
+3、启动服务
+	systemctl start httcsec
+	
+
+4、停止服务
+	systemctl stop httcsec
+	
+
+5、卸载
+	./config.sh uninstall
+
+
+6、升级安装
+	./config.sh update

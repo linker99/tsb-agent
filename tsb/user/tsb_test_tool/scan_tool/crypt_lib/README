@@ -1,0 +1,5 @@
+signature tool:
+	make
+
+signature library:
+	make lib

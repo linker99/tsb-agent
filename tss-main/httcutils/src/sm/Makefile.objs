@@ -1,0 +1,6 @@
+common-obj-$(CONFIG_TPCM) += sm2.o
+common-obj-$(CONFIG_TPCM) += sm3.o
+common-obj-$(CONFIG_TPCM) += sm4.o
+common-obj-$(CONFIG_TPCM) += ecc.o
+
+

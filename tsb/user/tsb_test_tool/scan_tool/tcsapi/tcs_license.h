@@ -1,0 +1,40 @@
+
+
+#ifndef TCSAPI_TCS_LICENSE_H_
+#define TCSAPI_TCS_LICENSE_H_
+//#include "tcsapi/tcs_constant.h"
+#include "tcs_license_def.h"
+/*
+ * 	生成License请求
+ * 	基于输入参数，生成License请求，License请求发送给TPCM生成厂商进行授权
+ * 	部分TPCM自带永久许可授权，不需要进行许可授权。
+ */
+int tcs_generate_license_request(struct license_req *req,const struct license_param *param);
+
+/*
+ * 	导入License
+ * 	将TPCM生产厂商授权的License，导入到TPCM之中。
+ *	部分TPCM自带永久许可授权，不需要进行许可授权。
+ */
+int tcs_import_license(struct license *license);
+
+//int tcs_upgrade_license(struct license *license);
+
+/*
+ * 	获取License状态
+ */
+int tcs_get_license_status(int *status,int *left);//proc导出
+
+
+/*
+ * 	获取License信息
+ */
+int tcs_get_license_info(int *status, uint64_t *deadline);
+
+/*
+ * 	重置试用期
+ * 	重新开始试用期计时，同时将清除全部数据。
+ */
+int tcs_reset_test_license(void);
+
+#endif /* TCSAPI_TCS_LICENSE_H_ */

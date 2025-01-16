@@ -1,0 +1,151 @@
+#!/bin/bash
+
+INSTALL_PATH=/usr/local/httcsec
+
+check_tsb_module() {
+        lhttcfac=$(lsmod |grep httcfac)
+        if [ "$lhttcfac" ]; then
+                echo "httcfac mod is running!"  >>  /usr/local/httcsec/ttm/var/log/ttmsrv.log
+        fi
+        lhttcdmeasure=$(lsmod |grep httcdmeasure)
+        if [ "$lhttcdmeasure" ]; then
+                echo "httcdmeasure mod is running!"  >>  /usr/local/httcsec/ttm/var/log/ttmsrv.log
+        fi
+        lhttcsmeasure=$(lsmod |grep httcsmeasure)
+        if [ "$lhttcsmeasure" ]; then
+                echo "httcsmeasure mod is running!"  >>  /usr/local/httcsec/ttm/var/log/ttmsrv.log
+        fi
+        lplatform=$(lsmod |grep -w "platform")
+        if [ "$lplatform" ]; then
+                echo "platform mod is running!"  >>  /usr/local/httcsec/ttm/var/log/ttmsrv.log
+        fi
+}
+
+check_tss_module() {
+        lhttctcs=$(lsmod |grep httctcs)
+        if [ "$lhttctcs" ]; then
+                echo "httctcs mod is running!"  >>  /usr/local/httcsec/ttm/var/log/ttmsrv.log
+        fi
+        ltddl=$(lsmod |grep tddl)
+        if [ "$ltddl" ]; then
+		echo `date +%Y-%m-%d' '%H:%M:%S.%N` >> /usr/local/httcsec/ttm/var/log/ttmsrv.log
+                echo "tddl mod is running!"$ltddl  >>  /usr/local/httcsec/ttm/var/log/ttmsrv.log
+		while [ "$ltddl" ]; do
+			ltddl=$(lsmod |grep -w "tddl")
+			if [ -z "$ltddl" ]; then
+				break
+			fi
+			echo "tddl mod is running!"$ltddl  >>  /usr/local/httcsec/ttm/var/log/ttmsrv.log
+			sleep 1
+		done
+		echo `date +%Y-%m-%d' '%H:%M:%S.%N` >> /usr/local/httcsec/ttm/var/log/ttmsrv.log
+        fi
+        lhttctdd=$(lsmod |grep httctdd)
+        if [ "$lhttctdd" ]; then
+                echo "httctdd mod is running! "$lhttctdd  >>  /usr/local/httcsec/ttm/var/log/ttmsrv.log
+        fi
+        lread_sysram=$(lsmod |grep read_sysram)
+        if [ "$lread_sysram" ]; then
+                echo "read_sysram mod is running!"  >>  /usr/local/httcsec/ttm/var/log/ttmsrv.log
+        fi
+}
+
+check_tnc_module() {
+        lhttcnetauth=$(lsmod |grep httcnetauth)
+        if [ "$lhttcnetauth" ]; then
+                echo "httcnetauth mod is running!"  >>  /usr/local/httcsec/ttm/var/log/ttmsrv.log
+        fi
+}
+
+stop_server()
+{
+
+	kill -INT `pidof ht_agent` >/dev/null 2>&1
+}
+
+start_server()
+{
+	echo "启动后台服务......"
+
+	${INSTALL_PATH}/ttm/bin/ht_agent
+
+}
+
+httc_model_start()
+{
+        echo "加载$1..."
+        $INSTALL_PATH/$1/srv start
+
+        echo "完成"
+}
+
+httc_model_stop()
+{
+        echo "停止$1..."
+        $INSTALL_PATH/$1/srv stop
+
+        echo "完成"
+}
+
+
+start()
+{
+        httc_model_start tss
+
+        httc_model_start tsb
+
+        start_server
+}
+
+check_service()
+{
+        PROCESS_NAME="/usr/local/httcsec/ttm/srv start"
+ 
+        while ps -ef | grep -v grep | grep "$PROCESS_NAME" > /dev/null;do
+            echo " $PROCESS_NAME is running, waiting..."
+            sleep 1
+        done
+}
+
+stop()
+{
+        check_service
+	stop_server
+
+	httc_model_stop tsb
+	check_tsb_module
+
+	httc_model_stop tss
+	check_tss_module
+
+}
+
+usage()
+{
+	echo "usage:"
+	echo "$0 [ start ] | [ stop ]"
+	exit 1
+}
+
+menu_option()
+{
+	case $1 in
+		start)
+			start
+			;;
+
+		stop)
+			echo "stop start !!!!!!!!!!!" >> /usr/local/httcsec/ttm/var/log/ttmsrv.log 
+			echo `date +%Y-%m-%d' '%H:%M:%S.%N` >> /usr/local/httcsec/ttm/var/log/ttmsrv.log 
+			stop
+			echo `date +%Y-%m-%d' '%H:%M:%S.%N` >> /usr/local/httcsec/ttm/var/log/ttmsrv.log 
+			echo "stop end !!!!!!!!!!!" >> /usr/local/httcsec/ttm/var/log/ttmsrv.log 
+			;;
+		
+		*)
+			usage
+			;;
+	esac
+}
+
+menu_option $*

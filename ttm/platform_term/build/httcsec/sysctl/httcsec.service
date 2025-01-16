@@ -1,0 +1,13 @@
+[Unit]
+Description=httcsec server daemon
+After=iBMA.target iBMA.service firewalld.target
+
+[Service]
+ExecStart=bash -c '/usr/local/httcsec/ttm/srv start &' 
+ExecStop=/usr/local/httcsec/ttm/srv stop
+Type=forking
+RemainAfterExit=yes
+TimeoutSec=1200s
+
+[Install]
+WantedBy=multi-user.target

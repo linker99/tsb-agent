@@ -1,0 +1,33 @@
+工具路径：/usr/local/httcsec/ttm/bin/
+
+ht_audit_switch 审计策略工具用法说明
+./ht_audit_switch show 获取当前审计策略
+./ht_audit_switch dmeasure success/fail/no/all 设置动态度量审计策略（成功/失败/不审计/全审计）
+./ht_audit_switch smeasure success/fail/no/all 设置静态度量审计策略（成功/失败/不审计/全审计）
+
+ht_global_policy_switch 全局策略工具用法说明
+./ht_global_policy_switch show 获取当前全局策略
+./ht_global_policy_switch dmeasure on/off  设置动态度量控制策略（开启/关闭）
+./ht_global_policy_switch smeasure on/off  设置静态度量控制策略（开启/关闭）
+
+ht_whitelist 白名单工具用法说明
+./ht_whitelist -a  nounzip/unzip_ko/unzip_all  全盘扫描白名单（不处理压缩包/处理压缩包中的ko文件/处理压缩包中所有符合白名单的文件），其中默认处理压缩包中的ko文件
+./ht_whitelist -s  scan_dir  nounzip/unzip_ko/unzip_all 增量添加指定目录或文件白名单，scan_dir 要添加的目录或文件 （不处理压缩包/处理压缩包中的ko文件/处理压缩包中所有符合白名单的文件），其中默认处理压缩包中的ko文件
+./ht_whitelist -d  scan_dir  nounzip/unzip_ko/unzip_all 删除指定目录或文件白名单， scan_dir 要删除白名单的目录或文件 （不处理压缩包/处理压缩包中的ko文件/处理压缩包中所有符合白名单的文件），其中默认处理压缩包中的ko文件
+
+
+ht_dmeasure 动态度量工具用法说明
+./ht_dmeasure get_dmeasure_process_policy  获取进程动态度量策略
+./ht_dmeasure get_dmeasure_policy  获取环境动态度量策略
+
+配置环境动态度量策略
+./ht_dmeasure update_dmeasure_policy name(kernel_section/syscall_table/idt_table/module_list/filesystem/network) mininterval(600-1728000秒)  
+注：相同name，不同mininterval可修改环境动态度量时间间隔
+
+配置进程动态度量策略
+./ht_dmeasure update_dmeasure_process_policy name(全路径) mininterval(600-1728000秒) sub_process_mode(0/1/2) old_process_mode(0/1/2) share_lib_mode(0/1/2)  （1度量、2不度量、0为默认跟随全局策略）
+注：进程动态度量不支持修改
+
+删除动态度量策略
+	环境动态度量 配置相同策略即删除
+	进程动态度量 配置相同全路径即删除

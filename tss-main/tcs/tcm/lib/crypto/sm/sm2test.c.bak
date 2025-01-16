@@ -1,0 +1,172 @@
+
+#ifdef __KERNEL__
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#else
+#include <stdio.h>
+#include <stdlib.h>
+#endif
+
+#include "ssl.h"
+#include "sm4.h"
+#include "sm2.h"
+#include "sm2_if.h"
+
+static const char rnd_seed[] = "string to make the random number generator think it has entropy";
+
+static void util_dump_hex (unsigned char *name, void *p, int bytes)
+{
+    int i = 0;
+    uint8_t *data = p;
+    int hexlen = 0;
+    int chrlen = 0;
+    uint8_t hexbuf[128] = {0};
+    uint8_t chrbuf[128] = {0};
+    uint8_t dumpbuf[128] = {0};
+
+    printf ("%s length=%d:\n", name, bytes);
+    
+    for (i = 0; i < bytes; i ++){
+        hexlen += sprintf (&hexbuf[hexlen], "%02X ", data[i]); 
+        chrlen += sprintf (&chrbuf[chrlen], "%c", ((data[i] >= 33) && (data[i] <= 126)) ? (unsigned char)data[i] : '.');
+        if (i % 16 == 15){
+            sprintf (&dumpbuf[0], "%08X: %s %s", i / 16 * 16, hexbuf, chrbuf);
+            printf ("%s\n", dumpbuf);
+            hexlen = 0;
+            chrlen = 0;
+        }
+    }
+
+    if (i % 16 != 0){    
+        sprintf (&dumpbuf[0], "%08X: %-48s %s", i / 16 * 16, hexbuf, chrbuf);
+        printf ("%s\n", dumpbuf);
+    }
+}
+
+static inline int ctoi (char c)
+{
+	int n = 0;
+	if (c >= '0' && c <= '9'){
+		n = c - '0';
+	}
+	else if (c >= 'a' && c <= 'f'){
+		n = c - 'a' + 10;
+	}
+	else if (c >= 'A' && c <= 'F'){
+		n = c - 'A' + 10;
+	}
+	
+	return n;
+}
+static inline void Str_char2Hex (uint8_t *output, uint8_t *input, uint32_t insize)
+{
+    uint32_t i = 0;    
+	while (i < (insize / 2)) {
+		output[i] = (ctoi(input[i*2]) << 4) | ctoi(input[i*2+1]);
+       	i++;
+	}
+}
+
+int sm4_test(void)
+{
+    unsigned char key[16] = {0};
+    unsigned char *keyStr = "0123456789ABCDEFFEDCBA9876543210";
+    unsigned char iv[16] = {0};
+    unsigned char *ivStr = "00000000000000000000000000000000";
+    unsigned char plain[128] = {0};
+    unsigned char *plainStr = "FEDCBA98765432100123456789ABCDEF";
+	unsigned char cipher[1024] = {0};
+	unsigned char cipherStr[1024] = {0};
+	unsigned int plain_len = 0;
+	unsigned int cipher_len = 0;
+
+	sm4_context ctx;
+
+	Str_char2Hex (key, keyStr, 32);
+	Str_char2Hex (iv, ivStr, 32);
+	Str_char2Hex (plain, plainStr, strlen (plainStr));
+	
+	sm4_importkey (&ctx, key, iv);
+
+	printf ("SM4 Encry: %s\n", plainStr);
+
+    sm4_encrypt (&ctx, FM_ALGMODE_CBC, plain, strlen (plainStr)/2, cipher, &cipher_len);
+	util_dump_hex ("SM4 cipher", (void*)cipher, cipher_len);
+
+    sm4_decrypt (&ctx, FM_ALGMODE_CBC, cipher, cipher_len, plain, &plain_len);
+	util_dump_hex ("SM4 plain", (void*)plain, plain_len);
+    
+out:
+
+    return 0;
+}
+
+
+int sm2_test(void)
+{
+	int ret = -1;
+	unsigned char *plain = NULL;
+	unsigned int plain_len = 0;
+	unsigned char *cipher = NULL;
+	unsigned int cipher_len = 0;
+	unsigned int sig_len = 0;
+    unsigned char signatureStr[129] = {0}; 
+
+	unsigned char *signature = NULL;
+    unsigned char digest[32] = {0};
+    unsigned char pubkey[64] = {0};
+    unsigned char privkey[32] = {0};
+    unsigned char *digestStr = "B4D70964AB1776849C73B23373D3A3602E12F5C779BAC887301D24F7CD5E5405";
+    unsigned char *pubkeyStr = "C90C8B152D883CBE8B62E054D256DE78138F864A60D60AFE223BB83B068E19BE7AFCD9022580639DC45BB43E71FD9DDDC1F3122D31505CFC05E113FB6295CCAC";
+    unsigned char *privkeyStr = "B4D70964AB1776849C73B23373D3A3602E12F5C779BAC887301D24F7CD5E5405";
+
+	Str_char2Hex (pubkey, pubkeyStr, 128);
+	Str_char2Hex (privkey, privkeyStr, 64);
+	Str_char2Hex (digest, digestStr, 64);
+
+    if (0 != (ret = os_sm2_sign(digest, 32, privkey, 32, pubkey, 64, &signature, &sig_len)))
+    {
+    	printf("signed failed\n");
+    	goto out;
+    }
+    printf("os_sm2_sign OK\n");
+
+    if (0 != (ret = os_sm2_verify(digest, 32, pubkey, 64, signature, sig_len)))
+    {
+    	printf("verify failed\n");
+    	goto out;
+    }
+    printf("os_sm2_verify OK\n");
+
+	if (0 != (ret = os_sm2_encrypt (digest, 32, pubkey, 64, &cipher, &cipher_len)))
+    {
+    	printf("SM2 Encrypt failed\n");
+    	goto out;
+    }
+    printf("SM2 Encrypt OK\n");
+    util_dump_hex ("SM2 cipher", (void*)cipher, cipher_len);
+
+	if (0 != (ret = os_sm2_decrypt (cipher, cipher_len, privkey, 32, &plain, &plain_len)))
+    {
+    	printf("SM2 Decrypt failed\n");
+    	goto out;
+    }
+    printf("SM2 Decrypt OK\n");
+    util_dump_hex ("SM2 plain", (void*)plain, plain_len);
+
+out:
+    if (signature) SM2_FREE(signature);
+    if (cipher) SM2_FREE(cipher);
+    if (plain) SM2_FREE(plain);
+    return ret;
+}
+
+int main ()
+{
+	sm2_test ();
+	sm4_test ();
+	return 0;
+}
+
+

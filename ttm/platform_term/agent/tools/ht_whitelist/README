@@ -1,0 +1,9 @@
+
+ht_whitelist -a nounzip/unzip_ko/unzip_all              全盘打白名单，默认将压缩包中的ko文件进行加白（unzip_ko），
+                                                        也可以选择不处理压缩包（nounzip）以及将压缩包中符合加白策略的所有文件（unzip_all）进行加白
+ht_whitelist -s scan_path   nounzip/unzip_ko/unzip_all  指定目录或文件扫描增量打白名单，默认将压缩包中的ko文件进行加白（unzip_ko），
+                                                        也可以选择不处理压缩包（nounzip）以及将压缩包中符合加白策略的所有文件（unzip_all）进行加白
+                                                        其中：scan_path：要打白名单的目录或文件（例如：/usr/local/ 或 /root/1.sh）
+ht_whitelist -c                                         关闭白名单控制
+ht_whitelist -o                                         开启白名单控制
+ht_whitelist -h                                         print usage help information
