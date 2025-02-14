@@ -1,37 +1,54 @@
 # TSB-agent
 
 #### 介绍
-The Trusted Software Base agent (TSB-agent) is deployed in the operating system. With the support of The Root of Trust, it establishes an active immune defense system for trusted terminal devices and enhances the security capabilities of terminals. It realizes the functions of element collection, basic communication and control execution in the operating system to support the realization of the Initiative Trusted Computing system.This product is an indispensable component for realizing Initiative Trusted Computing.Make the community pay more attention to the Initiative Trusted Computing technology.Make the trusted functions of the operating system meet the requirements of Initiative Trusted Computing.Plan the development of Initiative Trusted Computing technology products according to the development directions of operating system technology and trusted computing technology.The development and upgrading of the basic functions of TSB-agent, and the integration of the product with the security mechanisms of the operating system.
+可信软件基代理(TSB-Agent) 部署于操作系统，在可信根的支撑下，建立可信终端设备的主动免疫防御体系，提升终端安全能力。其实现自主可信计算（Initiative Trusted Computing）体系中系统层要素采集、基础通信、控制执行功能。是实现自主可信计算（Initiative Trusted Computing）的重要部件。
 
-#### 软件架构
-软件架构说明
+#### 功能说明
+静态度量：对应用程序进行白名单完整性检查，防止病毒、木马等未知恶意程序运行。
+动态度量：可定期对运行环境进行检查，在恶意软件在程序运行阶段进行内存注入攻击是进行告警。
+审计信息：记录关键的告警行为和操作的详细信息。
 
+#### 系统要求
+操作系统： OpenEuler22.03
 
-#### 安装教程
+#### 硬件要求
+CPU：3 GHz及以上级别
+内存：64GB 及以上级别
+硬盘：500G 以上
+网卡：100 Mb base 及以上级别
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+#### 运行依赖
+libsqlite3.so
+libcjson.so
+veth虚拟网卡
 
-#### 使用说明
+#### 安装
+cp -rf tss-main/tcf/scripts/tss  /usr/local/httcsec/
+cp -rf proxy/tpcmproxy  /usr/local/httcsec/tss/
+cp -rf tsb/tsb /usr/local/httcsec/
+cp -rf ttm/platform_term/build/ttm  /usr/local/httcsec/
+启动tss服务
+/usr/local/httcsec/tss/srv start
+全局扫描白名单
+/usr/local/httcsec/ttm/bin/ht_init scan  accuracy_first  nounzip
+重置license
+/usr/local/httcsec/ttm/bin/ht_init reset
+设置管理员
+/usr/local/httcsec/ttm/bin/ht_init set-admin
+下发全局策略
+/usr/local/httcsec/ttm/bin/ht_init set-default-policy all
+停止tss服务
+/usr/local/httcsec/tss/srv stop
+启动服务
+/usr/local/httcsec/ttm/srv start
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
-
-#### 参与贡献
-
-1.  Fork 本仓库
-2.  新建 Feat_xxx 分支
-3.  提交代码
-4.  新建 Pull Request
-
-
-#### 特技
-
-1.  使用 Readme\_XXX.md 来支持不同的语言，例如 Readme\_en.md, Readme\_zh.md
-2.  Gitee 官方博客 [blog.gitee.com](https://blog.gitee.com)
-3.  你可以 [https://gitee.com/explore](https://gitee.com/explore) 这个地址来了解 Gitee 上的优秀开源项目
-4.  [GVP](https://gitee.com/gvp) 全称是 Gitee 最有价值开源项目，是综合评定出的优秀开源项目
-5.  Gitee 官方提供的使用手册 [https://gitee.com/help](https://gitee.com/help)
-6.  Gitee 封面人物是一档用来展示 Gitee 会员风采的栏目 [https://gitee.com/gitee-stars/](https://gitee.com/gitee-stars/)
+#### 使用说明：
+运行命令
+白名单管理：
+/usr/local/httcsec/ttm/bin/ht_whitelist  [-s/-d]  scan_dir
+全局策略开关管理：
+/usr/local/httcsec/ttm/bin/ht_global_policy_switch  [show/dmeasure/smeasure   on/off] 
+动态度量管理：
+/usr/local/httcsec/ttm/bin/ht_dmeasure  [get_dmeasure_policy/get_dmeasure_process_policy/update_dmeasure_process_policy]
+审计策略管理：
+/usr/local/httcsec/ttm/bin/ht_audit_switch [show; dmeasure/smeasure  success/fail/no/all]
