@@ -23,10 +23,13 @@ libcjson.so
 veth虚拟网卡
 
 #### 安装
+1.	部署安装
 cp -rf tss-main/tcf/scripts/tss  /usr/local/httcsec/
 cp -rf proxy/tpcmproxy  /usr/local/httcsec/tss/
 cp -rf tsb/tsb /usr/local/httcsec/
 cp -rf ttm/platform_term/build/ttm  /usr/local/httcsec/
+
+2.	初始化
 启动tss服务
 /usr/local/httcsec/tss/srv start
 全局扫描白名单
@@ -39,16 +42,18 @@ cp -rf ttm/platform_term/build/ttm  /usr/local/httcsec/
 /usr/local/httcsec/ttm/bin/ht_init set-default-policy all
 停止tss服务
 /usr/local/httcsec/tss/srv stop
-启动服务
+
+3.	启动服务
 /usr/local/httcsec/ttm/srv start
+
 
 #### 使用说明：
 运行命令
-白名单管理：
+#白名单管理：
 /usr/local/httcsec/ttm/bin/ht_whitelist  [-s/-d]  scan_dir
-全局策略开关管理：
+#全局策略开关管理：
 /usr/local/httcsec/ttm/bin/ht_global_policy_switch  [show/dmeasure/smeasure   on/off] 
-动态度量管理：
+#动态度量管理：
 /usr/local/httcsec/ttm/bin/ht_dmeasure  [get_dmeasure_policy/get_dmeasure_process_policy/update_dmeasure_process_policy]
-审计策略管理：
+#审计策略管理：
 /usr/local/httcsec/ttm/bin/ht_audit_switch [show; dmeasure/smeasure  success/fail/no/all]
