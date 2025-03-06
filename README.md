@@ -49,11 +49,15 @@ cp -rf ttm/platform_term/build/ttm  /usr/local/httcsec/
 
 #### 使用说明：
 运行命令
-#白名单管理：
+
+1.	白名单管理：
 /usr/local/httcsec/ttm/bin/ht_whitelist  [-s/-d]  scan_dir
-#全局策略开关管理：
+
+2.	全局策略开关管理：
 /usr/local/httcsec/ttm/bin/ht_global_policy_switch  [show/dmeasure/smeasure   on/off] 
-#动态度量管理：
+
+3.	动态度量管理：
 /usr/local/httcsec/ttm/bin/ht_dmeasure  [get_dmeasure_policy/get_dmeasure_process_policy/update_dmeasure_process_policy]
-#审计策略管理：
+
+4.	审计策略管理：
 /usr/local/httcsec/ttm/bin/ht_audit_switch [show; dmeasure/smeasure  success/fail/no/all]
