@@ -14,7 +14,6 @@
 /*
  * 更新可信网络连接策略。
  * 只有设置
- */
 int tcf_update_tnc_policy(struct tnc_policy_update *update,
 		const char *uid,int cert_type,
 		int auth_length,unsigned char *auth){
@@ -34,11 +33,12 @@ int tcf_update_tnc_policy(struct tnc_policy_update *update,
 		httc_write_version_notices (ntohll (update->be_replay_counter), POLICY_TYPE_TNC);
 		return ret;
 }
+ */
 
 /*
  * 读取可信网络连接策略
- */
 int tcf_get_tnc_policy(struct tnc_policy **tnc_policy,int *length){
 	return tcs_get_tnc_policy(tnc_policy,length);
 }
 
+ */
