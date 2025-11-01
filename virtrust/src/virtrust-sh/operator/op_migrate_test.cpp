@@ -116,7 +116,7 @@ namespace virtrust {
 
         OpRc result = opMigrate.ParseArgv(argc, const_cast<char **>(argv));
 
-        // Verify ParseArgv returns ERROR for complex arguments
+        // Verify ParseArgv returns OK for complex arguments
         EXPECT_EQ(result, OpRc::OK);
     }
 
