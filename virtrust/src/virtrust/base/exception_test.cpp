@@ -68,7 +68,7 @@ namespace virtrust {
         }
     }
 
-    TEST(Exception, )
+    TEST(Exception, ExceptionMessageDetails)
     {
         try {
             VIRTRUST_ENFORCE(false, "Test message with ", 42);
