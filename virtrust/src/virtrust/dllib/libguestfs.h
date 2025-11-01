@@ -52,7 +52,7 @@ public:
 
     DlFun<int, guestfs_h *, const char *, const char *> guestfs_mount_ro;
 
-    DlFun<int, guestfs_h *> guestfs_unmount_all;
+    DlFun<int, guestfs_h *> guestfs_umount_all;
 
     DlFun<void, guestfs_h *> guestfs_close;
 
@@ -79,7 +79,7 @@ private:
         DLLIB_SELF_DLSYM(guestfs_inspect_os);
         DLLIB_SELF_DLSYM(guestfs_inspect_get_mountpoints);
         DLLIB_SELF_DLSYM(guestfs_mount_ro);
-        DLLIB_SELF_DLSYM(guestfs_unmount_all);
+        DLLIB_SELF_DLSYM(guestfs_umount_all);
         DLLIB_SELF_DLSYM(guestfs_close);
         DLLIB_SELF_DLSYM(guestfs_set_trace);
         DLLIB_SELF_DLSYM(guestfs_exists);

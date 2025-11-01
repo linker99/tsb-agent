@@ -9,7 +9,7 @@ namespace virtrust {
 using virConnectPtr = int *;
 using virDomainPtr = int *;
 using virNetworkPtr = int *;
-using virTypeParameterPtr = int *;
+using virTypedParameterPtr = int *;
 
 /**
  * virDomainState:
@@ -22,8 +22,8 @@ typedef enum {
     VIR_DOMAIN_NOSTATE = 0,     /* no state (Since: 0.0.1) */
     VIR_DOMAIN_RUNNING = 1,     /* the domain is running (Since: 0.0.1) */
     VIR_DOMAIN_BLOCKED = 2,     /* the domain is blocked on resource (Since: 0.0.1) */
-    VIR_DOMAIN_PAUSED  = 3,     /* the domain is paused by user (Since: 0.0.1) */
-    VIR_DOMAIN_SHUTDOWN= 4,     /* the domain is being shut down (Since: 0.0.1) */
+    VIR_DOMAIN_PAUSED = 3,      /* the domain is paused by user (Since: 0.0.1) */
+    VIR_DOMAIN_SHUTDOWN = 4,    /* the domain is being shut down (Since: 0.0.1) */
     VIR_DOMAIN_SHUTOFF = 5,     /* the domain is shut off (Since: 0.0.1) */
     VIR_DOMAIN_CRASHED = 6,     /* the domain is crashed (Since: 0.0.2) */
     VIR_DOMAIN_PMSUSPENDED = 7, /* the domain is suspended by guest
@@ -38,7 +38,7 @@ typedef enum {
  *
  * Since: 0.0.1
  */
-typedef struct _virDomainInfo virDomainInfo;
+using virDomainInfo = struct _virDomainInfo;
 
 struct _virDomainInfo {
     unsigned char state;        /* the running state, one of virDomainState */
@@ -101,6 +101,20 @@ typedef enum {
 } virDomainCreateFlags;
 
 /**
+ * virDomainDestroyFlagsValues:
+ *
+ * Flags used to provide specific behaviour to the
+ * virDomainDestroyFlags() function
+ *
+ * Since: 0.9.4
+ */
+typedef enum {
+    VIR_DOMAIN_DESTROY_DEFAULT   = 0,      /* Default behavior - could lead to data loss!! (Since: 0.9.10) */
+    VIR_DOMAIN_DESTROY_GRACEFUL  = 1 << 0, /* only SIGTERM, no SIGKILL (Since: 0.9.10) */
+    VIR_DOMAIN_DESTROY_REMOVE_LOGS = 1 << 1, /* remove VM logs on destroy (Since: 8.3.0) */
+} virDomainDestroyFlagsValues;
+
+/**
  * virDomainUndefineFlagsValues:
  *
  * Since: 0.9.4
@@ -143,7 +157,7 @@ inline LogLevel virErrorLevelToLogLevel(virErrorLevel level)
             return LogLevel::WARN;
         }
         case VIR_ERR_ERROR: {
-            return LogLevel::WARN;
+            return LogLevel::ERROR;
         }
         default:
             return LogLevel::UNKNOWN;

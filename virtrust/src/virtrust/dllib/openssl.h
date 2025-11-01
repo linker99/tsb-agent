@@ -36,10 +36,10 @@ public:
     // Declare all functions that you need
     // NOTE Please make sure the class instance is inited before calling those functions
 
-    // Fetch openssl message disgest context
+    // Fetch openssl message digest context
     DlFun<EVP_MD *, OSSL_LIB_CTX *, const char *, const char *> EVP_MD_fetch;
 
-    // Get the output size of the message disgest algorithm (e.g. SM3), this function is the same as EVP_MD_size
+    // Get the output size of the message digest algorithm (e.g. SM3), this function is the same as EVP_MD_size
     DlFun<int, const EVP_MD *> EVP_MD_get_size;
 
     // Create new message digest context
@@ -55,7 +55,7 @@ public:
     DlFun<int, EVP_MD_CTX *, EVP_MD *> EVP_DigestInit;
 
     // Update
-    DlFun<int, EVP_MD_CTX *, const void *, size_t> EVP_Digest_Update;
+    DlFun<int, EVP_MD_CTX *, const void *, size_t> EVP_DigestUpdate;
 
     // Final
     DlFun<int, EVP_MD_CTX *, unsigned char *, unsigned int *> EVP_DigestFinal_ex;
@@ -78,7 +78,7 @@ private:
         DLLIB_SELF_DLSYM(EVP_MD_CTX_reset);
         DLLIB_SELF_DLSYM(EVP_MD_CTX_copy_ex);
         DLLIB_SELF_DLSYM(EVP_DigestInit);
-        DLLIB_SELF_DLSYM(EVP_Digest_Update);
+        DLLIB_SELF_DLSYM(EVP_DigestUpdate);
         DLLIB_SELF_DLSYM(EVP_DigestFinal_ex);
         DLLIB_SELF_DLSYM(EVP_MD_free);
         DLLIB_SELF_DLSYM(EVP_MD_CTX_free);

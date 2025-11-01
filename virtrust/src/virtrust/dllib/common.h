@@ -21,38 +21,43 @@ enum class DllibRc : uint32_t {
 
 template <class R, class... Args> class DlFun {
 public:
-    using FunTy = R (*) (Args...);
+    using FunTy = R (*)(Args...);
 
     DlFun() = default;
 
-    DlFun(std::string_view name, FunTy funcptr)
-        : funcName_(name), funcptr_(funcptr ? std::function<R (Args...)>(funcptr) : std::function<R (Args...)>(nullptr))
+    DlFun(std::string_view name, FunTy funptr)
+        : funName_(name), funptr_(funptr ? std::function<R(Args...)>(funptr) : std::function<R(Args...)>(nullptr))
     {}
 
-    std::function<R (Args...)> Get() const
+    std::function<R(Args...)> Get() const
     {
-        return funcptr_;
+        return funptr_;
+    }
+
+    std::string GetName() const
+    {
+        return funName_;
     }
 
     R operator()(Args... args) const
     {
-        if (!funcptr_) {
+        if (!funptr_) {
             throw std::runtime_error(std::string("[") + __FILE__ + ":" + std::to_string(__LINE__) +
-                                     "]: Fatal Error: function " + funcName_ +
+                                     "] Fatal Error: function " + funName_ +
                                      " is nullptr, maybe previous dlsym failed.");
         }
-        return funcptr_(args...);
+        return funptr_(std::forward<Args>(args)...);
     }
 
 
 private:
-    std::string funcName_ = "unknown";
-    std::function<R (Args...)> funcptr_ = nullptr;
+    std::string funName_ = "unknown";
+    std::function<R(Args...)> funptr_ = nullptr;
 };
 
 class DlLibBase {
 public:
-    // Check weather dlopen and dlsym has succeed
+    // Check whether dlopen and dlsym has succeed
     DllibRc CheckOk() const
     {
         return ok_ ? DllibRc::OK : DllibRc::ERROR;
@@ -64,7 +69,7 @@ public:
     }
 
 protected:
-    explicit DlLibBase(std::string_view lib) : libname_(lib)
+    explicit DlLibBase(std::string_view lib) : libName_(lib)
     {}
 
     virtual ~DlLibBase()
@@ -87,7 +92,7 @@ protected:
 
     DllibRc SelfDlOpen()
     {
-        libptr_ = dlopen(libname_.data(), RTLD_NOW | RTLD_GLOBAL);
+        libptr_ = dlopen(libName_.data(), RTLD_NOW | RTLD_GLOBAL);
         return libptr_ != nullptr ? DllibRc::OK : DllibRc::ERROR;
     }
 
@@ -107,11 +112,11 @@ protected:
 
 private:
     void *libptr_ = nullptr;
-    const std::string libname_ = "unknown";
+    const std::string libName_ = "unknown";
 
-    // duncCache_ store all dlsym function raw pointers
+    // funCache_ stores all dlsym function raw pointers
     // WARNING: DO NOT manually manipulate those pointers
-    std::vector<void *> funcCache_; // cache DO NOT own pointers, those pointers should read only
+    std::vector<void *> funCache_; // cache DO NOT own pointers, those pointers should read only
     size_t size_ = 0;
     bool ok_ = true;
 };

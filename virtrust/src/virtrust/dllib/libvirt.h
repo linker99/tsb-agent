@@ -3,7 +3,6 @@
 #include <dlfcn.h>
 
 #include <string_view>
-#include <libvirt/virterror.h>
 
 #include "virtrust/dllib/common.h"
 #include "virtrust/dllib/libvirt_defines.h"
@@ -12,6 +11,7 @@ namespace virtrust {
 
 // libvirt api
 class Libvirt : public DlLibBase {
+public:
     ~Libvirt() = default;
     Libvirt(const Libvirt &) = delete;
     void operator=(const Libvirt &) = delete;
@@ -31,6 +31,7 @@ class Libvirt : public DlLibBase {
         return CheckOk();
     }
 
+    // Set log level
     DllibRc SetErrorFunction(virErrorFunc func)
     {
         auto ret = GetInstance().CheckOk();
@@ -48,7 +49,7 @@ class Libvirt : public DlLibBase {
     DlFun<int, virDomainPtr, unsigned int> virDomainCreateWithFlags;
     DlFun<int, virConnectPtr> virConnectClose;
     DlFun<int, virDomainPtr> virDomainFree;
-    DlFun<int, virDomainPtr, unsigned int> virDomainShutDownFlags;
+    DlFun<int, virDomainPtr, unsigned int> virDomainShutdownFlags;
     DlFun<int, virConnectPtr> virConnectNumOfDomains;
     DlFun<int, virConnectPtr, virDomainPtr **, unsigned int> virConnectListAllDomains;
     DlFun<unsigned int, virDomainPtr> virDomainGetID;
@@ -58,7 +59,7 @@ class Libvirt : public DlLibBase {
     DlFun<int, virDomainPtr, unsigned int> virDomainUndefineFlags;
     DlFun<void, void *, virErrorFunc> virSetErrorFunc;
     DlFun<int, virDomainPtr, char *> virDomainGetUUIDString;
-    DlFun<virDomainPtr, virDomainPtr, virConnectPtr, virTypeParameterPtr, unsigned int, unsigned int>
+    DlFun<virDomainPtr, virDomainPtr, virConnectPtr, virTypedParameterPtr, unsigned int, unsigned int>
         virDomainMigrate3;
 
 private:
@@ -74,7 +75,7 @@ private:
         DLLIB_SELF_DLSYM(virDomainCreateWithFlags);
         DLLIB_SELF_DLSYM(virConnectClose);
         DLLIB_SELF_DLSYM(virDomainFree);
-        DLLIB_SELF_DLSYM(virDomainShutDownFlags);
+        DLLIB_SELF_DLSYM(virDomainShutdownFlags);
         DLLIB_SELF_DLSYM(virConnectNumOfDomains);
         DLLIB_SELF_DLSYM(virConnectListAllDomains);
         DLLIB_SELF_DLSYM(virDomainGetID);
