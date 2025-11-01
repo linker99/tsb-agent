@@ -10,7 +10,7 @@ namespace virtrust {
 
     TEST(OpDestroyTest, ParseArgvValidDomainTest)
     {
-        OpCeate opDestroy;
+        OpDestroy opDestroy;
 
         // Test with valid domain name argument
         const char *argv[] = {"op_destroy", "test_domain"};
