@@ -1,3 +1,5 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+
 set(VIRTRUST_SOURCE_FILES ${VIRTRUST_SOURCE_FILES})
 
 add_virtrust_test_if(libxml2_test ${BUILD_TEST})
