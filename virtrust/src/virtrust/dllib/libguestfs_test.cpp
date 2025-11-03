@@ -28,7 +28,7 @@ namespace virtrust {
         }
     }
         
-    TEST(DynamicLibraryTest, SingletonPattern)
+    TEST(LibGuestfsTest, SingletonPattern)
     {
         // Test that libguestfs follow singleton pattern
         auto& libguestfs1 = Libguestfs::GetInstance();
@@ -36,7 +36,7 @@ namespace virtrust {
         EXPECT_EQ(&libguestfs1, &libguestfs2);
     }
     
-    TEST(DynamicLibraryTest, CheckOKFunction)
+    TEST(LibGuestfsTest, CheckOKFunction)
     {
         // Test the CheckOK function
         auto& libguestfs = Libguestfs::GetInstance();
@@ -46,7 +46,7 @@ namespace virtrust {
         EXPECT_GT(libguestfs.size(), (size_t)0);
     }
     
-    TEST(DynamicLibraryTest, ReloadFunction)
+    TEST(LibGuestfsTest, ReloadFunction)
     {
         // Test reloading functionality
         auto& libguestfs = Libguestfs::GetInstance();
@@ -62,7 +62,7 @@ namespace virtrust {
         EXPECT_EQ(libguestfs.CheckOK(), DllibRc::OK);
     }
     
-    TEST(DynamicLibraryTest, FunctionPointerValidity)
+    TEST(LibGuestfsTest, FunctionPointerValidity)
     {
         // Test that all function pointer are valid
         auto& libguestfs = Libguestfs::GetInstance();
