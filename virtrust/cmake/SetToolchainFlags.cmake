@@ -36,7 +36,10 @@ endfunction()
 
 # Linker Flags
 function(add_linker_flags flag)
-  get_propterty(virtrust_link_options DIRECTORY PROPERTY LINK_OPTIONS)
+  get_property(
+    virtrust_link_options
+    DIRECTORY
+    PROPERTY LINK_OPTIONS)
   string(FIND "${virtrust_link_options}" "${flag}" flag_already_set)
   if(flag_already_set EQUAL -1)
     message(STATUS "Adding linker flag: ${flag} ...")

@@ -36,7 +36,7 @@ OpTy OpTyFromStr(const std::string &type);
 struct OpConfig {
   std::string uri = std::string(VIRTRUST_DEFAULT_URI);
   bool enableExec = true;
-}
+};
 
 // Operator Interface
 class OpItf {
@@ -47,13 +47,19 @@ public:
   // Getters and Setters
 
   // Get uri string
-  std::string GetUri() const { return cofnig_.uri; }
+  std::string GetUri() const { return config_.uri; }
 
   // Get type
-  OpTy TYpe() const { return type_; }
+  OpTy Type() const { return type_; }
 
   // Get const reference of op's config
-  const OpCOnfig &GetConfig() const { return config_; }
+  const OpConfig &GetConfig() const { return config_; }
+
+  void SetConfig(const OpConfig &config) { config_ = config; }
+
+  virtual OpRc Exec() = 0;
+  virtual OpRc ParseArgv(int argc, char **argv) = 0;
+  virtual void PrintUsage() = 0;
 
 protected:
   const OpTy type_ = OpTy::UNKNOWN;

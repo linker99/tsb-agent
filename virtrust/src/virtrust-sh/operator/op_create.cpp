@@ -5,6 +5,7 @@
 #include "virtrust-sh/operator/op_utils.h"
 #include "virtrust/api/domain.h"
 
+#include <getopt.h>
 #include <string>
 #include <vector>
 
@@ -30,12 +31,14 @@ OpRc OpCreate::Exec() {
 OpRc OpCreate::ParseArgv(int argc, char **argv) {
   int arg = -1;
   int longindex = -1;
-  optind = 1;                   // reset
-  const int onlyTsbVal = 0x100; // REVIEW why?
-  std::vector<option> opt =
-  { {"help", no_argument, nullptr, 'h'},
-    {"only-tsb", no_argument, nullptr, onlyTsbVal},
-    {nullptr, 0, nullptr, 0} }
+  optind = 1; // reset
+  bool hasNameArg = false;
+
+  std::vector<option> opt = {
+      {"help", no_argument, nullptr, 'h'},
+      {"name", required_argument, nullptr, 'n'},
+      {"allow-store-measurements", no_argument, nullptr, 1},
+      {nullptr, 0, nullptr, 0}};
 
   opterr = 0;
   // The leading + means no re-ordering, see man page of getopt_long
@@ -45,26 +48,30 @@ OpRc OpCreate::ParseArgv(int argc, char **argv) {
     case 'h':
       config_.enableExec = false;
       PrintUsage();
-      optind = argc; // stop parsing
+      optind = 1;
       return OpRc::OK;
-    case onlyTsbVal:
-      onlyTsb_ = true;
-      continue;
+    case 'n':
+      hasNameArg = true;
+      break;
     default:
-      config_.enableExec = false;
-      PrintUsage();
-      optind = argc; // stop parsing
-      return OpRc::ERROR;
+      continue; // do nothing;
     }
   }
 
-  if (strlen(argv[optind]) != 0) {
-    domainName_ = argv[optind];
-    return OpRc::OK;
-  } else {
-    VIRTRUST_LOG_ERROR("Invalid empty domain name");
+  opterr = 1;
+  if (!hasNameArg) {
+    fmt::print("\n--name/-n not set.\n");
     return OpRc::ERROR;
   }
+
+  virtInstallArgs_.clear();
+
+  // all args should be parse to virt-install, so nothing need to be done here
+  virtInstallArgs_.emplace_back(VIRTRUST_SH_VIRT_INSTALL_PATH);
+  for (auto i = 1; i < argc; ++i) {
+    virtInstallArgs_.emplace_back(argv[i]);
+  }
+  return OpRc::OK;
 }
 
 // Print the usage of this operator

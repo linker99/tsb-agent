@@ -56,7 +56,7 @@ int ProcessOp(int argc, char **argv, const virtrust::OpConfig &config) {
   auto op = virtrust::MakeOperator(virtrust::OpTyFromStr(argv[optind]));
   if (op == nullptr) {
     fmt::print(":\nInvalid command: {}\n", argv[optind]);
-    PrintUsage(argc[0]);
+    PrintUsage(argv[0]);
     return 1;
   }
 
@@ -64,32 +64,31 @@ int ProcessOp(int argc, char **argv, const virtrust::OpConfig &config) {
   op->SetConfig(config);
 
   // Parse subcommand
-  auto rc = op->ParseArgc(argc - optind, &argc[optind]);
+  auto rc = op->ParseArgv(argc - optind, &argv[optind]);
   if (rc != virtrust::OpRc::OK) {
     return 1;
   }
 
   // Execute subcommand, if enabled
-  if (op->GetConfig().endableExec) {
+  if (op->GetConfig().enableExec) {
     rc = op->Exec();
     if (rc != virtrust::OpRc::OK) {
-      fmt::print("\nCommand execution failed.\nSee log at: {}\n", GetLogPath);
+      fmt::print("\nCommand execution failed.\nSee log at: {}\n", GetLogPath());
       return 1;
     }
   }
-  fmt::print("\nCommand execution succeed.\nSee log at: {}\n", GetLogPath);
+  fmt::print("\nCommand execution succeed.\nSee log at: {}\n", GetLogPath());
   return 0;
 }
 
 int ProcessArgs(int argc, char **argv) {
   int arg = -1;
   int longindex = -1;
-  std::vector<option> opt =
-  { {"connect", required_argument, nullptr, 'c'},
-    {"debug", no_argument, nullptr, 'd'},
-    {"help", no_argument, nullptr, 'h'},
-    {"version", no_argument, nullptr, 'v'},
-    {nullptr, 0, nullptr, 0} }
+  std::vector<option> opt = {{"connect", required_argument, nullptr, 'c'},
+                             {"debug", no_argument, nullptr, 'd'},
+                             {"help", no_argument, nullptr, 'h'},
+                             {"version", no_argument, nullptr, 'v'},
+                             {nullptr, 0, nullptr, 0}};
 
   virtrust::OpConfig op_config = {}; // default init
 
@@ -102,7 +101,7 @@ int ProcessArgs(int argc, char **argv) {
       break;
     case 'd':
       virtrust::Logger::Instance()->SetDisplayLogLevel(
-          virturst::LogLevel::DEBUG);
+          virtrust::LogLevel::DEBUG);
       break;
     case 'v':
       PrintVersion(argv[0]);
@@ -126,7 +125,7 @@ int ProcessArgs(int argc, char **argv) {
     PrintUsage(argv[0]);
     return 1; // fail
   } else {
-    return ProcessOp(argc, argc, op_config);
+    return ProcessOp(argc, argv, op_config);
   }
 }
 
@@ -134,7 +133,7 @@ int ProcessArgs(int argc, char **argv) {
 
 int main(int argc, char *argv[]) {
   // Check input parameters
-  if (argc[0] == nullptr || strlen(argv[0] > PATH_MAX)) {
+  if (argv[0] == nullptr || strlen(argv[0]) > PATH_MAX) {
     fmt::print("Invalid program name length, exit with failure\n");
     return 1;
   }
@@ -150,14 +149,14 @@ int main(int argc, char *argv[]) {
   // Let libvirt print its err to virtrust
   virtrust::Libvirt::GetInstance().SetErrorFunction(
       []([[maybe_unused]] void *userData, virtrust::virErrorPtr error) {
-        auto logLevel = virtrust::virErrorLogLevelToLogLevel(error->level);
+        auto logLevel = virtrust::virErrorLevelToLogLevel(error->level);
         // domain: see
         // https://libvirt.org/html/libvirt-virterror.html#virErrorDomain
         // code: see
         // https://libvirt.org/html/libvirt-virterror.html#virErrorNumber
         auto logMsg = fmt::format("[LIBVIRT domain: {}, code: {}] {}",
                                   error->domain, error->code, error->message);
-        virtrust::Logger::Instance()->Log(loglevel, logMsg);
+        virtrust::Logger::Instance()->Log(logLevel, logMsg);
       });
 
   // Run virtrust based on args

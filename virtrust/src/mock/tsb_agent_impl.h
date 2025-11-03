@@ -5,10 +5,11 @@
 #pragma once
 
 #ifndef USE_MOCK_TSB_AGENT
-#error "USE_MOCK_TSB_AGENT is not defined. Please define it if your want to use mock TSB agent."
+#error                                                                         \
+    "USE_MOCK_TSB_AGENT is not defined. Please define it if your want to use mock TSB agent."
 #else
 
-#include <cstdine>
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <string>
@@ -23,70 +24,68 @@
 namespace virtrust::mock {
 constexpr std::string_view STORAGE_FILENAME = "mock-tsb-agent.save";
 
-enum class TsbAgentRc {
-    OK,
-    ERROR
-};
+enum class TsbAgentRc { OK, ERROR };
 
 class TsbAgentImpl {
 public:
-    // Destructor
-    ~TsbAgentImpl() = default;
+  // Destructor
+  ~TsbAgentImpl() = default;
 
-    TsbAgentImpl(const TsbAgentImpl &) = delete;
+  TsbAgentImpl(const TsbAgentImpl &) = delete;
 
-    TsbAgentImpl &operator=(const TsbAgentImpl &) = delete;
+  TsbAgentImpl &operator=(const TsbAgentImpl &) = delete;
 
-    // Get singleton isntance
-    static TsbAgentImpl &GetInstance()
-    {
-        static TsbAgentImpl instance;
-        return instance;
-    }
+  // Get singleton isntance
+  static TsbAgentImpl &GetInstance() {
+    static TsbAgentImpl instance;
+    return instance;
+  }
 
-    std::string GetPath()
-    {
-        return storageFilePath_.c_str();
-    }
+  std::string GetPath() { return storageFilePath_.c_str(); }
 
-    // Lifetime management
+  // Lifetime management
 
-    std::vector<Description> GetVRoots();
+  std::vector<Description> GetVRoots();
 
-    TsbAgentRc CreateVRoot(const std::string &uuid, const std::string &name);
+  TsbAgentRc CreateVRoot(const std::string &uuid, const std::string &name);
 
-    TsbAgentRc StartVRoot(const std::string &uuid);
+  TsbAgentRc StartVRoot(const std::string &uuid);
 
-    TsbAgentRc StopVRoot(const std::string uuid);
+  TsbAgentRc StopVRoot(const std::string &uuid);
 
-    TsbAgentRc RemoveVRoot(const std::string &uuid);
+  TsbAgentRc RemoveVRoot(const std::string &uuid);
 
-    // Update measure values
-    TsbAgentRc UpdateMeasure(const std::string &uuid, MeasureInfo bios, MeasureInfo shim, MeasureInfo grub,
-                             MeasureInfo grubCfg, MeasureInfo kernel, MeasureInfo initrd);
+  // Update measure values
+  TsbAgentRc UpdateMeasure(const std::string &uuid, MeasureInfo bios,
+                           MeasureInfo shim, MeasureInfo grub,
+                           MeasureInfo grubCfg, MeasureInfo kernel,
+                           MeasureInfo initrd);
 
-    TsbAgentRc CheckMeasure(const std::string &uuid, MeasureInfo bios, MeasureInfo shim, MeasureInfo grub,
-                            MeasureInfo grubCfg, MeasureInfo kernel, MeasureInfo initrd);
+  TsbAgentRc CheckMeasure(const std::string &uuid, MeasureInfo bios,
+                          MeasureInfo shim, MeasureInfo grub,
+                          MeasureInfo grubCfg, MeasureInfo kernel,
+                          MeasureInfo initrd);
 
-    // Migration
+  // Migration
 
-    TsbAgentRc GetReport(const std::string &uuid);
-    TsbAgentRc Migration1GetRandPk(const std::string &uuid);
-    TsbAgentRc Migration2CheckPeerPk();
-    TsbAgentRc Migration3GetVRootCipher();
-    TsbAgentRc Migration4ImportVRootCipher();
+  TsbAgentRc GetReport(const std::string &uuid);
+  TsbAgentRc Migration1GetRandPk(const std::string &uuid);
+  TsbAgentRc Migration2CheckPeerPk();
+  TsbAgentRc Migration3GetVRootCipher();
+  TsbAgentRc Migration4ImportVRootCipher();
 
-    TsbAgentRc MigrationNotify();
+  TsbAgentRc MigrationNotify();
 
 private:
-    TsbAgentImpl() = default;
-    std::unordered_map<std::string, std::unique_ptr<VRoot>> vRootMap_;
+  TsbAgentImpl() = default;
+  std::unordered_map<std::string, std::unique_ptr<VRoot>> vRootMap_;
 
-    // REVIEW migration data
-    std::vector<char> pk_;
+  // REVIEW migration data
+  std::vector<char> pk_;
 
-    // default to current location
-    std::filesystem::path storageFilePath_ = std::filesystem::current_path() / STORAGE_FILENAME;
+  // default to current location
+  std::filesystem::path storageFilePath_ =
+      std::filesystem::current_path() / STORAGE_FILENAME;
 };
 } // namespace virtrust::mock
 

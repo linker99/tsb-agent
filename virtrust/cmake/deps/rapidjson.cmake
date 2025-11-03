@@ -4,19 +4,10 @@ ExternalProject_Add(
   rapidjson
   URL https://github.com/Tencent/rapidjson/archive/refs/tags/v1.1.0.tar.gz
   URL_HASH
-    SHA256=7b42b4d6ed48810c5362c265a17faebe90dc2373c885e5216439d37927f02926
-  CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=On #
-             -DCMAKE_CXX_STANDARD=17 #
-             -DCMAKE_C_STANDARD_REQUIRED=Yes #
-             -DCMAKE_INSTALL_PREFIX=${CMAKE_DEPS_PREFIX} #
-             -DBUILD_GMOCK=On #
-  PREFIX ${CMAKE_DEPS_PREFIX}
-  BUILD_BYPRODUCTS ${CMAKE_DEPS_LIBDIR}/libgtest${CMAKE_STATIC_LIBRARY_SUFFIX}
-  BUILD_BYPRODUCTS
-    ${CMAKE_DEPS_LIBDIR}/libgtest_main${CMAKE_STATIC_LIBRARY_SUFFIX}
-  BUILD_BYPRODUCTS ${CMAKE_DEPS_LIBDIR}/libgmock${CMAKE_STATIC_LIBRARY_SUFFIX}
-  BUILD_BYPRODUCTS
-    ${CMAKE_DEPS_LIBDIR}/libgmock_main${CMAKE_STATIC_LIBRARY_SUFFIX}
+    SHA256=bf7ced29704a1e696fbccf2a2b4ea068e7774fa37f6d7dd4039d0787f8bed98e
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_DEPS_INSTALL_PREFIX}
+             -DCMAKE_CXX_FALGS=${CMAKE_CXX_FALGS} -DCMAKE_SKIP_RPATH=On
+  PREFIX ${CMAKE_DEPS_INSTALL_PREFIX}
   EXCLUDE_FROM_ALL true
   DOWNLOAD_EXTRACT_TIMESTAMP On
   LOG_DOWNLOAD On
@@ -24,16 +15,12 @@ ExternalProject_Add(
   LOG_BUILD On
   LOG_INSTALL On)
 
-import_static_lib_from(libgtest googletest)
-import_static_lib_from(libgtest_main googletest)
-import_static_lib_from(libgmock_main googletest)
-import_static_lib_from(libgmock googletest)
-
-target_link_libraries(libgtest_main INTERFACE libgtest)
-target_link_libraries(libgmock_main INTERFACE libgmock)
+# NOTE rapidjson is a header-only lib
+add_library(librapidjson INTERFACE)
+target_include_directories(librapidjson INTERFACE ${CMAKE_DEPS_INCLUDEDIR})
+add_dependencies(librapidjson rapidjson)
 
 # -----------------------------
 # Alias Target for External Use
 # -----------------------------
-add_library(Deps::gtest ALIAS libgtest_main)
-add_library(Deps::gmock ALIAS libgmock_main)
+add_library(Deps::rapidjson ALIAS librapidjson)

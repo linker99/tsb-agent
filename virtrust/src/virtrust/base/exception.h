@@ -80,9 +80,8 @@ private:
   inline EnforceFailMessage name(const T1 &x, const T2 &y) {                   \
     if (x op y) {                                                              \
       return EnforceOK();                                                      \
-    } else {                                                                   \
-      return MakeString(x, " vs ", y);                                         \
     }                                                                          \
+    return MakeString(x, " vs ", y);                                           \
   }
 
 BINARY_COMP_HELPER(Equals, ==)
@@ -103,10 +102,10 @@ BINARY_COMP_HELPER(LessEquals, <=)
     }                                                                          \
   } while (false)
 
-} // namespace enforce_detail
-
 #define VIRTRUST_ENFORCE_THAT(condition, ...)                                  \
   VIRTRUST_ENFORCE_THAT_IMPL((condition), #condition, __VA_ARGS__)
+
+} // namespace enforce_detail
 
 #define VIRTRUST_ENFORCE_EQ(x, y, ...)                                         \
   VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::Equals((x), (y)),     \

@@ -17,16 +17,17 @@ enum class LogLevel {
   TRACE = 0,
   DEBUG = 1,
   INFO = 2,
-  ERROR = 3,
-  CRITICAL = 4,
-  UNKNOWN = 5,
+  WARN = 3,
+  ERROR = 4,
+  CRITICAL = 5,
+  UNKNOWN,
 };
 
 std::string LogLevelToStr(LogLevel level);
 
 class Logger {
 public:
-  using CustomLogFunTy = void(LogLevel level, std::string_view, msg);
+  using CustomLogFunTy = void(LogLevel level, std::string_view msg);
 
   Logger(const Logger &) = delete;
   Logger(Logger &&) = delete;
@@ -60,7 +61,7 @@ public:
    * 默认20 范围[1,64]。
    * @return VirtrustRc::OK 失败错误码
    */
-  VirtrustRc InitLog(int logLevel = static_cast<int>(logLevel::INFO),
+  VirtrustRc InitLog(int logLevel = static_cast<int>(LogLevel::INFO),
                      const char *path = nullptr,
                      int rotationFileSize = DEFAULT_ROTATION_FILE_SIZE,
                      int rotationFileCount = DEFAULT_ROTATION_FILE_COUNT);

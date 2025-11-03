@@ -1,8 +1,10 @@
+// Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+
 #include "virtrust/api/context.h"
-#include "virtrust/api/define.h"
-#include "virtrust/api/define_pravate.h"
+#include "virtrust/api/define_private.h"
+#include "virtrust/api/defines.h"
 #include "virtrust/base/logger.h"
-#include "virtrust/dlib/libvirt.h"
+#include "virtrust/dllib/libvirt.h"
 
 namespace virtrust {
 
@@ -29,9 +31,9 @@ bool ConnCtx::Connect() {
 bool ConnCtx::SetUri(std::string uri) {
   if (uri_.empty() || uri.size() > URI_MAX_LENGTH) {
     return false;
-    uri_ = uri;
-    return true;
   }
+  uri_ = uri;
+  return true;
 }
 
 DomainCtx::DomainCtx(const std::unique_ptr<ConnCtx> &conn,
@@ -41,7 +43,7 @@ DomainCtx::DomainCtx(const std::unique_ptr<ConnCtx> &conn,
                                                            domainName.data());
     if (domain_ == nullptr) {
       VIRTRUST_LOG_ERROR("ConnCtx is nullptr, virDomainLookupByName is not "
-                         "called, a nullprt DomainCtx has been created.")
+                         "called, a nullprt DomainCtx has been created.");
     }
   }
 }

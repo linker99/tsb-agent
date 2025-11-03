@@ -7,8 +7,8 @@
 #include "spdlog/fmt/bundled/chrono.h"
 #include "spdlog/fmt/bundled/core.h"
 
-#include "virstrust/base/logger.h"
 #include "virtrust/base/log_adapt.h"
+#include "virtrust/base/logger.h"
 #include "virtrust/utils/enum_check.h"
 
 namespace virtrust {
@@ -23,7 +23,7 @@ constexpr auto DEFAULT_LOG_FUNCTION = [](LogLevel level, std::string_view msg) {
   std::chrono::time_point<std::chrono::system_clock> now =
       std::chrono::system_clock::now();
   fmt::print("[{} {:%Y-%m-%d %H-%M-%S}] {}\n", LogLevelToStr(level), now, msg);
-}
+};
 } // namespace
 
 std::string LogLevelToStr(LogLevel level) {
@@ -50,14 +50,14 @@ Logger *Logger::Instance() {
   return &logger;
 }
 
-void Logger::Log(LogLevel level, const std::string &msg) {
+void Logger::Log(LogLevel level, std::string_view msg) {
   if (logFunction_ != nullptr) {
     logFunction_(level, msg);
   } else {
     if (LogAdapt::gSpdLogger != nullptr &&
         LogAdapt::gSpdLogger->spdLogger != nullptr &&
         static_cast<int>(level) >= static_cast<int>(displayLogLevel_)) {
-      LogAdapt::gSpdlogger->spdLogger->log(
+      LogAdapt::gSpdLogger->spdLogger->log(
           static_cast<spdlog::level::level_enum>(static_cast<int>(level)),
           msg.data());
     }
@@ -69,23 +69,23 @@ void Logger::SetDisplayLogLevel(LogLevel level) {
     fmt::print(stderr, "log level is invalid : {}", static_cast<int>(level));
   }
 
-  if (logAdapt::gSpdLogger != nullptr &&
+  if (LogAdapt::gSpdLogger != nullptr &&
       LogAdapt::gSpdLogger->spdLogger != nullptr) {
     LogAdapt::gSpdLogger->spdLogger->set_level(
-        static_cast<spdlog::level::level_enum>(static_cast_<int>(level)));
+        static_cast<spdlog::level::level_enum>(static_cast<int>(level)));
     displayLogLevel_ = level;
   } else {
-    fmt::print(stderr, "failed to set log level\n")
+    fmt::print(stderr, "failed to set log level\n");
   }
 }
 
 void Logger::Reset() {
-  logFunction = nullptr;
+  logFunction_ = nullptr;
   if (LogAdapt::gSpdLogger != nullptr &&
-      LogAdapt::gSpdLogger->spdlogger != nullptr) {
+      LogAdapt::gSpdLogger->spdLogger != nullptr) {
     LogAdapt::gSpdLogger->spdLogger->set_level(
         static_cast<spdlog::level::level_enum>(
-            static_cast_<int>(LogLevel::INFO)));
+            static_cast<int>(LogLevel::INFO)));
   }
   displayLogLevel_ = LogLevel::INFO;
 }
@@ -117,7 +117,7 @@ bool Logger::SetCustomLogFunction(const std::function<CustomLogFunTy> &func) {
     DEFAULT_LOG_FUNCTION(
         LogLevel::ERROR,
         "Failed to set external log function as log function is nullptr.");
-    return fasle;
+    return false;
   } else {
     logFunction_ = func;
     return true;

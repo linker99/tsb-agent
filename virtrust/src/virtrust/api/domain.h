@@ -1,6 +1,7 @@
-#ifndef TSB_AGENT_DOMAIN_H
-#define TSB_AGENT_DOMAIN_H
-#progma once
+// Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+
+#pragma once
+
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -17,8 +18,8 @@ namespace virtrust {
  * --allow-store-measurements可选 是否鞥新tsb的度量值
  * @return VirtrustRc
  */
-VirTrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn,
-                        const std::vector<std::string> $args);
+VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn,
+                        const std::vector<std::string> &args);
 
 /**
  * 停止虚拟机
@@ -29,11 +30,11 @@ VirTrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn,
  * @param isOnlyTsb 是否只更新tsb资源，为true时只更新tsb资源
  * @return VirtrustRc
  */
-VirTrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn,
+VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn,
                          const std::string &domainName, unsigned int flags,
                          bool isOnlyTsb = false);
 
-VirTrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn,
+VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn,
                          const std::string &domainName,
                          const std::string &destUri);
 
@@ -46,7 +47,7 @@ VirTrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn,
  * @param isOnlyTsb 是否只更新tsb资源，为true时只更新tsb资源
  * @return VirtrustRc
  */
-VirTrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn,
+VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn,
                        const std::string &domainName, unsigned int flags,
                        bool isOnlyTsb = false);
 
@@ -54,13 +55,13 @@ VirTrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn,
  * 删除虚拟机
  * @param conn 连接参数
  * @param flags
- * 见DomainUndefineFlags,DOMAIN_UNDEFINE_NVRAM和DOMAIN_UNDEFINE_KEEP_NVMEM仅支持同一时间指定一种
+ * 见DomainUndefineFlags,DOMAIN_UNDEFINE_NVRAM和DOMAIN_UNDEFINE_KEEP_NVRAM仅支持同一时间指定一种
  * @param domainName 虚拟机名称，isOnlyTsb为true时只更新tsb相关资源
  * 为虚拟机UUID，当isOnlyTsb为true时将忽略flags入参
  * @param isOnlyTsb 是否只删除tsb资源，为true时只删除tsb资源
  * @return VirtrustRc
  */
-VirTrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn,
+VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn,
                           const std::string &domainName, unsigned int flags,
                           bool isOnlyTsb = false);
 
@@ -74,10 +75,7 @@ VirTrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn,
  * 是否屏显tsb资源和libvirt资源不一致的错误信息，如果libvirt有但是tsb没有不会屏显，日志会有warn日志
  * @return VirtrustRc
  */
-VirTrustRc DomainList(const std::unique_ptr<ConnCtx> &conn,
-                          unsigned int flags,
-                          std::unordered_map<std::string, DomainInfo>
-                              &domainInfos bool printErrToCli = false);
+VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
+                      std::unordered_map<std::string, DomainInfo> &domainInfos,
+                      bool printErrToCli = false);
 } // namespace virtrust
-
-#endif // TSB_AGENT_DOMAIN_H

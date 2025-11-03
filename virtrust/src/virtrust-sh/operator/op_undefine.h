@@ -20,12 +20,12 @@ public:
   OpRc ParseArgv(int argc, char **argv) override;
 
   // Print the usage of this operator
-  OpRc PrintUsage() override;
+  void PrintUsage() override;
 
 private:
   std::string domainName_ = "unknown";
   unsigned int flags_ = 0;
-  bool isOnlyTsb_ = false;
+  bool onlyTsb_ = false;
 };
 
 } // namespace virtrust

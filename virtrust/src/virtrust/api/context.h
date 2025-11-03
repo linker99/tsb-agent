@@ -1,15 +1,19 @@
-#ifndef TSB_AGENT_CONTEXT_H
-#define TSB_AGENT_CONTEXT_H
-#progma once
+// Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+
+#pragma once
+
 #include <memory>
 #include <string>
+
 namespace virtrust {
 
 class ConnCtx {
 public:
-  using virConnectPrt = int *;
+  // HACK redefine this type as it in libvirt
+  using virConnectPtr = int *;
+
   ConnCtx();
-  explicit ConnCtx(virConnectPrt conn) : conn_(conn) {}
+  explicit ConnCtx(virConnectPtr conn) : conn_(conn) {}
   bool Connect();
 
   ConnCtx(const ConnCtx &) = delete;
@@ -18,7 +22,14 @@ public:
   bool SetUri(std::string uri);
 
   bool CheckOk() { return conn_ != nullptr; }
-}
+
+  // Get the raw pointer (NOTE you may receive a nullptr)
+  virConnectPtr Get() { return conn_; }
+
+private:
+  virConnectPtr conn_ = nullptr;
+  std::string uri_;
+};
 
 class DomainCtx {
 public:
@@ -37,6 +48,5 @@ public:
 
 private:
   virDomainPtr domain_ = nullptr;
-}
-
-#endif // TSB_AGENT_CONTEXT_H
+};
+} // namespace virtrust
