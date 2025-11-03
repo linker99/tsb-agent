@@ -6,3 +6,5 @@
 
 # Build file
 virtrust/build/*
+
+.vscode
