@@ -1,4 +1,5 @@
 #pragma once
+
 #include <sstream>
 #include <string>
 #include <vector>
@@ -8,13 +9,12 @@ namespace virtrust {
 inline void MakeStringInternal(std::stringstream &) {}
 
 template <typename T>
-inline void MakeStringInternal(std::stringstream &, const T &t) {
-
-  ss << t
+inline void MakeStringInternal(std::stringstream &ss, const T &t) {
+  ss << t;
 }
 
 template <>
-inline void MakeStringInternal(std::stringstream &,
+inline void MakeStringInternal(std::stringstream &ss,
                                const std::stringstream &t) {
 
   ss << t.str();
@@ -22,12 +22,12 @@ inline void MakeStringInternal(std::stringstream &,
 
 template <typename T, typename... Args>
 inline void MakeStringInternal(std::stringstream &ss, const T &t,
-                               const Args &... args) {
+                               const Args &...args) {
   MakeStringInternal(ss, t);
   MakeStringInternal(ss, args...);
 }
 
-template <typename... Args> std::string MakeString(const Args &... args) {
+template <typename... Args> std::string MakeString(const Args &...args) {
   std::stringstream ss;
   MakeStringInternal(ss, args...);
   return std::string(ss.str());
@@ -48,10 +48,8 @@ std::string MakeString(const std::vector<T> &v, const std::string &delim = "") {
 template <> inline std::string MakeString(const std::string &args) {
   return args;
 }
-inline std::string MakeString(const char *cstr) {
 
-  return { cstr }
-}
+inline std::string MakeString(const char *cstr) { return {cstr}; }
 
 void StrSplit(std::string_view src, std::string_view sep,
               std::vector<std::string> &out);
@@ -64,7 +62,7 @@ inline std::vector<std::string> StrSplit(std::string_view src,
 }
 
 // 按照空白符分割字符串
-inline std::vector<std::string> StrSplit(std::string_view &str) {
+inline std::vector<std::string> StrSplit(const std::string &str) {
   std::istringstream iss(str);
   std::vector<std::string> rets;
   std::string token;
@@ -74,7 +72,7 @@ inline std::vector<std::string> StrSplit(std::string_view &str) {
   return rets;
 }
 // 去除收尾的指定字符
-inline std::string StrTrim(const std::string $str, char ch) {
+inline std::string StrTrim(const std::string &str, char ch) {
 
   if (str.empty()) {
     return str;
@@ -88,7 +86,7 @@ inline std::string StrTrim(const std::string $str, char ch) {
 }
 
 // 去除首尾的空白符
-inline std::string StrTrimWhitespce(const std::string &str) {
+inline std::string StrTrimWhitespace(const std::string &str) {
   const std::string whitespace = "\t\n\v\f\r";
   size_t start = str.find_first_not_of(whitespace);
   if (start == std::string::npos) {

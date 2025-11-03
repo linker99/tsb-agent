@@ -20,10 +20,10 @@ public:
   OpRc ParseArgv(int argc, char **argv) override;
 
   // Print the usage of this operator
-  OpRc PrintUsage() override;
+  void PrintUsage() override;
 
 private:
-  unsigned int flags_ LIST_DOMAINS_ACTIVE; // default show only active
+  unsigned int flags_ = LIST_DOMAINS_ACTIVE; // default show only active
 };
 
 } // namespace virtrust

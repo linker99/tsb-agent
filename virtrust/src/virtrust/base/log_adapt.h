@@ -5,7 +5,6 @@
 #include <string>
 #include <utility>
 
-
 #include "spdlog/common.h"
 #include "spdlog/spdlog.h"
 #include "virtrust/api/defines.h"
@@ -18,10 +17,12 @@ public:
   LogAdapt(int logType, std::string path, int rotationFileSize,
            int rotationFileCount)
       : logType_(logType), rotationFileSize_(rotationFileSize),
-        rotationFileCount_(rotationFileCount){};
+        rotationFileCount_(rotationFileCount) {};
   ~LogAdapt() = default;
+
   VirtrustRc Initialize();
-  static void Uninitialize();
+  static void UnInitialize();
+
   static int GetLogLevel();
   inline void SetLogLevel(int logLevel) {
     if (logLevel < 0) {
@@ -51,9 +52,10 @@ public:
 private:
   int logType_;
   int logLevel_{0};
+  std::string filePath_;
   int rotationFileSize_;
   int rotationFileCount_;
-}
+};
 
 } // namespace virtrust
 #endif

@@ -2,9 +2,12 @@
 
 macro(add_virtrust_test_if NAME)
   if(BUILD_TEST)
-    add_executable(${NAME} ${NAME}.cc)
+    add_executable(${NAME} ${NAME}.cpp)
     target_link_libraries(${NAME} PRIVATE virtrust-shared Deps::gtest)
     add_test(NAME ${NAME} COMMAND ${NAME})
+    target_include_directories(
+      ${NAME} PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+                      ${CMAKE_DEPS_INCLUDEDIR})
     set_tests_properties(
       ${NAME}
       PROPERTIES
@@ -16,10 +19,13 @@ endmacro()
 
 macro(add_virtrust_sh_test_if NAME)
   if(BUILD_TEST)
-    add_executable(${NAME} ${NAME}.cc)
+    add_executable(${NAME} ${NAME}.cpp)
     target_link_libraries(${NAME} PRIVATE virtrust-sh-obj virtrust-shared
                                           Deps::gtest)
     add_test(NAME ${NAME} COMMAND ${NAME})
+    target_include_directories(
+      ${NAME} PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+                      ${CMAKE_DEPS_INCLUDEDIR})
     set_tests_properties(
       ${NAME}
       PROPERTIES
@@ -31,10 +37,13 @@ endmacro()
 
 macro(add_libvirtrustd_test_if NAME)
   if(BUILD_TEST)
-    add_executable(${NAME} ${NAME}.cc)
+    add_executable(${NAME} ${NAME}.cpp)
     target_link_libraries(${NAME} PRIVATE libvirtrustd-obj virtrust-shared
                                           Deps::gtest)
     add_test(NAME ${NAME} COMMAND ${NAME})
+    target_include_directories(
+      ${NAME} PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+                      ${CMAKE_DEPS_INCLUDEDIR})
     set_tests_properties(
       ${NAME}
       PROPERTIES

@@ -1,0 +1,8 @@
+# Test data
+*.pem
+*.srl
+*.csr
+*.cert
+
+# Build file
+virtrust/build/*

@@ -1,8 +1,9 @@
+// Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
 
-#ifndef TSB_AGENT_DEFINE_PRIVATE_H
-#define TSB_AGENT_DEFINE_PRIVATE_H
-#include "<string>"
-#include "<string_view>"
+#pragma once
+
+#include <string>
+#include <string_view>
 
 namespace virtrust {
 constexpr std::string_view VIRTRUST_VERSION = "1.0.0";
@@ -21,14 +22,15 @@ public:
   std::string uuid_;    // 虚机的uuid
   std::string version_; // 度量阶段的版本号
   int size_;            // content的长度
-  std::string content_; //如果size是32 content是哈希，如果size不等于32
-                        // content是度量对象的原文数据
-}
+  std::string content_; // 如果size是32 content是哈希，如果size不等于32
+                        //  content是度量对象的原文数据
+};
+
 // 汇总虚拟机每个文件度量所需要的信息 方便后续度量
 class VirshMeasureSummary {
 public:
-  VirshMeasureSummary(const std::string uuid)
-      : base("base", uuid), shim("shim", uuid), grub("grub", uuid),
+  VirshMeasureSummary(const std::string &uuid)
+      : bios("bios", uuid), shim("shim", uuid), grub("grub", uuid),
         grubCfg("grub_cfg", uuid), kernel("kernel", uuid),
         initrd("initrd", uuid) {}
 
@@ -38,7 +40,5 @@ public:
   VirshMeasureInfo grubCfg;
   VirshMeasureInfo kernel;
   VirshMeasureInfo initrd;
-}
+};
 } // namespace virtrust
-
-#endif // TSB_AGENT_DEFINE_PRIVATE_H

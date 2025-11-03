@@ -6,11 +6,23 @@ set(VIRTRUST_SH_SOURCE_FILES "")
 
 add_subdirectory(operator)
 
-target_source(virtrust-sh-obj PRIVATE ${VIRTRUST_SH_SOURCE_FILES})
+target_sources(virtrust-sh-obj PRIVATE ${VIRTRUST_SH_SOURCE_FILES})
 
 target_include_directories(
-  virtrust-sh-obj PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DDIR}/src>
-                          ${CMAKE_DEPENDENCY_INCLUDEDIR})
+  virtrust-sh-obj PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+                          ${CMAKE_DEPS_INCLUDEDIR})
+
+target_link_libraries(virtrust-sh-obj PRIVATE virtrust-shared)
+
+# ----------------
+# Final Executable
+# ----------------
+
+add_executable(virtrust-sh ${CMAKE_CURRENT_LIST_DIR}/main.cpp)
+
+target_include_directories(
+  virtrust-sh PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+                      ${CMAKE_DEPS_INCLUDEDIR})
 
 target_link_libraries(virtrust-sh PRIVATE virtrust-sh-obj virtrust-shared)
 

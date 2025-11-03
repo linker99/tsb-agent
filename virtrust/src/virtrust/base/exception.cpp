@@ -4,6 +4,8 @@
 
 #include <numeric>
 
+#include "spdlog/fmt/fmt.h"
+
 namespace virtrust {
 EnforceNotMet::EnforceNotMet(const char *file, const int line,
                              const char *condition, const std::string &msg)
@@ -13,7 +15,7 @@ EnforceNotMet::EnforceNotMet(const char *file, const int line,
 }
 
 std::string EnforceNotMet::msg() const {
-  return std::accumulate(msgStack.begin(), msgStack_.end(), std::string(""));
+  return std::accumulate(msgStack_.begin(), msgStack_.end(), std::string(""));
 }
 
 const char *EnforceNotMet::what() const noexcept { return fullMsg_.c_str(); }

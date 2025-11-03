@@ -28,7 +28,7 @@ std::unique_ptr<OpItf> MakeOperator(OpTy type) {
   case OpTy::UNDEFINE:
     return std::make_unique<OpUndefine>();
   case OpTy::LIST:
-    return std::make_unique<OpLIST>();
+    return std::make_unique<OpList>();
   default:
     return nullptr; // return nullptr if error
   }
@@ -46,7 +46,7 @@ OpTy OpTyFromStr(const std::string &type) {
   } else if (type == "undefine") {
     return OpTy::UNDEFINE;
   } else if (type == "list") {
-    return opty::LIST;
+    return OpTy::LIST;
   } else {
     return OpTy::UNKNOWN;
   }

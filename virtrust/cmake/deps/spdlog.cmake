@@ -8,9 +8,9 @@ ExternalProject_Add(
   CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=On
              -DCMAKE_CXX_STANDARD=17
              -DCMAKE_C_STANDARD_REQUIRED=Yes
-             -DCMAKE_INSTALL_PREFIX=${CMAKE_DEPS_PREFIX}
+             -DCMAKE_INSTALL_PREFIX=${CMAKE_DEPS_INSTALL_PREFIX}
              -DCMAKE_CPP_FLAGS=-isystem\ ${CMAKE_DEPS_INCLUDEDIR}
-  PREFIX ${CMAKE_DEPS_PREFIX}
+  PREFIX ${CMAKE_DEPS_INSTALL_PREFIX}
   EXCLUDE_FROM_ALL true
   DOWNLOAD_EXTRACT_TIMESTAMP On
   BUILD_BYPRODUCTS ${CMAKE_DEPS_LIBDIR}/libspdlog${CMAKE_STATIC_LIBRARY_SUFFIX}
@@ -19,14 +19,9 @@ ExternalProject_Add(
   LOG_BUILD On
   LOG_INSTALL On)
 
-add_dependencies(spdlog fmt)
-
 import_static_lib_from(libspdlog spdlog)
 
 # -----------------------------
 # Alias Target for External Use
 # -----------------------------
 add_library(Deps::spdlog ALIAS libspdlog)
-
-# HACK https://github.com/gabime/spdlog/issues/1897
-add_compile_definitions(SPDLOG_FMT_EXTERNAL)

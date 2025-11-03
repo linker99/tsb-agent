@@ -1,5 +1,6 @@
-#ifndef TSB_AGENT_FILE_LOCK_H
-#define TSB_AGENT_FILE_LOCK_H
+// Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+
+#pragma once
 
 #include "virtrust/base/logger.h"
 #include <cerrno>
@@ -7,7 +8,6 @@
 #include <fcntl.h>
 #include <sys/file.h>
 #include <unistd.h>
-
 
 namespace virtrust {
 
@@ -25,23 +25,21 @@ public:
       close(fd_);
       fd_ = -1;
     }
+  }
 
-    ~FileLock() {
-      if (fd_ != -1) {
-        flock(fd_, LOCK_UN);
-        close(fd_);
-      }
+  ~FileLock() {
+    if (fd_ != -1) {
+      flock(fd_, LOCK_UN);
+      close(fd_);
     }
+  }
 
-    bool isLocked() const { return fd_ != -1; }
-    int GetFileDescriptor() const { return fd_; }
+  bool IsLocked() const { return fd_ != -1; }
+  int GetFileDescriptor() const { return fd_; }
 
-  private:
-    static constexpr mode_t LOCK_FILE_PERMISSIONS = 0644;
-    int fd_ = -1;
-  };
-}
+private:
+  static constexpr mode_t LOCK_FILE_PERMISSIONS = 0644;
+  int fd_ = -1;
+};
 
 } // namespace virtrust
-
-#endif // TSB_AGENT_FILE_LOCK_H

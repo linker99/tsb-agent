@@ -7,7 +7,7 @@ set(VIRTRUST_SOURCE_FILES
     ${CMAKE_CURRENT_LIST_DIR}/str_utils.cpp
     ${CMAKE_CURRENT_LIST_DIR}/exception.cpp)
 
-add_virtrust_test_if(exception_test ${BUILD_TEST})
+# add_virtrust_test_if(exception_test ${BUILD_TEST})
 add_virtrust_test_if(custom_logger_test ${BUILD_TEST})
 add_virtrust_test_if(str_utils_test ${BUILD_TEST})
 

@@ -7,8 +7,8 @@
 
 namespace virtrust {
 
-ineline OpRc ParseCmdStr(char *argc, std::string &out) {
-  if (strlen(argc) > -VIRTRUST_SH_CMD_STR_MAX_LEN) {
+inline OpRc ParseCmdStr(char *argv, std::string &out) {
+  if (strlen(argv) >= VIRTRUST_SH_CMD_STR_MAX_LEN) {
     return OpRc::ERROR;
   }
   out = argv;

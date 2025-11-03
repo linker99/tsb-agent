@@ -1,10 +1,6 @@
+// Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
 
 #include "virtrust/api/domain.h"
-#include <fcntl.h>
-#include <sys/file.h>
-#include <sys/wait.h>
-#include <unistd.h>
-#include <unordered_set>
 #include "securec/securec.h"
 #include "spdlog/fmt/fmt.h"
 #include "virtrust-sh/defines.h"
@@ -13,13 +9,18 @@
 #include "virtrust/api/file_lock.h"
 #include "virtrust/base/logger.h"
 #include "virtrust/crypto/sm3.h"
-#include "virtrust/dlib/libvirt.h"
+#include "virtrust/dllib/libvirt.h"
 #include "virtrust/utils/file_io.h"
 #include "virtrust/utils/foreign_mounter.h"
 #include "virtrust/utils/virt_xml_parser.h"
+#include <fcntl.h>
+#include <sys/file.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <unordered_set>
 
 #ifdef USE_MOCK_TSB_AGENT
-#inclue "mock/tsb_agent_itf.h"
+#include "mock/tsb_agent_itf.h"
 #endif
 
 namespace virtrust {
@@ -31,7 +32,7 @@ constexpr uint32_t VIR_UUID_STRING_BUFLEN = 200;
 constexpr int LIST_DOMAINS_MASK = DomainListFlags::LIST_DOMAINS_ACTIVE |
                                   DomainListFlags::LIST_DOMAINS_INACTIVE;
 namespace {
-    
+
 inline std::string GetNameStr(const virDomainPtr domian) {
   auto &libvirt = Libvirt::GetInstance();
   const char *domainName = libvirt.virDomainGetName(domian);
@@ -45,7 +46,7 @@ inline std::string GetUUIDStr(const virDomainPtr domian) {
   return ret == static_cast<int>(-1) ? "-" : std::string(uuid);
 }
 
-VirTrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter,
+VirtrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter,
                                   virtrust::VerifyConfig &config,
                                   VirshMeasureSummary &measureSummary) {
   virtrust::FileInputStream fis(config.GetLoaderPath());
@@ -55,20 +56,19 @@ VirTrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter,
   if (sm3Rc != Sm3Rc::OK) {
     VIRTRUST_LOG_ERROR("|GetVirshMeasureSummary|END|returnF||do sm3 failed: {}",
                        config.GetLoaderPath());
-    return VirTrustRc::ERROR;
+    return VirtrustRc::ERROR;
   }
 
   measureSummary.bios.content_ = std::string(
       reinterpret_cast<const char *>(loaderSm3.data()), loaderSm3.size());
   // grubcfg需要提供文件内容 而不是摘要
   std::string grubCfgContent;
-  mounter.ReadFile(config.GetGrubCfgPath(), grubCfgContent);
+  auto rc = mounter.ReadFile(config.GetGrubCfgPath(), grubCfgContent);
   if (rc != ForeignMounterRc::OK) {
-
     VIRTRUST_LOG_ERROR(
         "|GetVirshMeasureSummary|END|returnF||read file failed: {}",
         config.GetGrubCfgPath());
-    return VirTrustRc::ERROR;
+    return VirtrustRc::ERROR;
   }
   measureSummary.grubCfg.content_ = grubCfgContent;
 
@@ -78,7 +78,7 @@ VirTrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter,
 
     VIRTRUST_LOG_ERROR("|GetVirshMeasureSummary|END|returnF||do sm3 failed: {}",
                        config.GetShimPath());
-    return VirTrustRc::ERROR;
+    return VirtrustRc::ERROR;
   }
   measureSummary.shim.content_ = std::string(
       reinterpret_cast<const char *>(shimSm3.data()), shimSm3.size());
@@ -89,7 +89,7 @@ VirTrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter,
     VIRTRUST_LOG_ERROR(
         "|GetVirshMeasureSummary|END|returnF||do sm3 by file failed: {}",
         config.GetGrubPath());
-    return VirTrustRc::ERROR;
+    return VirtrustRc::ERROR;
   }
   measureSummary.grub.content_ = std::string(
       reinterpret_cast<const char *>(grubSm3.data()), grubSm3.size());
@@ -100,7 +100,7 @@ VirTrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter,
     VIRTRUST_LOG_ERROR(
         "|GetVirshMeasureSummary|END|returnF||do sm3 by file failed: {}",
         config.GetInitrdPath());
-    return VirTrustRc::ERROR;
+    return VirtrustRc::ERROR;
   }
   measureSummary.initrd.content_ = std::string(
       reinterpret_cast<const char *>(initrdSm3.data()), initrdSm3.size());
@@ -111,18 +111,18 @@ VirTrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter,
     VIRTRUST_LOG_ERROR(
         "|GetVirshMeasureSummary|END|returnF||do sm3 by file failed: {}",
         config.GetLinuzPath());
-    return VirTrustRc::ERROR;
+    return VirtrustRc::ERROR;
   }
   measureSummary.kernel.content_ = std::string(
       reinterpret_cast<const char *>(kernelSm3.data()), kernelSm3.size());
-  return VirTrustRc::OK;
+  return VirtrustRc::OK;
 }
 
 bool CalcVirshMeasure(std::string_view guestName,
                       VirshMeasureSummary &measureSummary) {
   const std::string guestXmlPah =
-      fmt::format(VIRTRUST_XML_REGEX_PATH, guestName)
-          virtrust::VirtXmlParser xmlParser;
+      fmt::format(VIRTRUST_XML_REGEX_PATH, guestName);
+  virtrust::VirtXmlParser xmlParser;
   virtrust::VerifyConfig verifyConfig = xmlParser.Parse(guestXmlPah);
   if (verifyConfig.GetGuestName() != guestName) {
     VIRTRUST_LOG_ERROR("|main|END|returnF||guest name mismatch: the designated "
@@ -142,47 +142,54 @@ bool CalcVirshMeasure(std::string_view guestName,
   ForeignMounterRc rc =
       mounter.ReadFile(verifyConfig.GetGrubCfgPath(), grubCfgContent);
   if (rc != ForeignMounterRc::OK) {
+    VIRTRUST_LOG_ERROR("|main|END|returnF||get virsh measure summary failed.");
+    return false;
   }
-  VIRTRUST_LOG_ERROR("|main|END|returnF||get virsh measure summary failed.");
-  return false;
+
+  verifyConfig.ParseGrubCfgContent(grubCfgContent);
+  auto virRc = GetVirshMeasureSummary(mounter, verifyConfig, measureSummary);
+  if (virRc != VirtrustRc::OK) {
+    VIRTRUST_LOG_ERROR("|main|END|returnS||get virsh measure summary failed");
+    return false;
+  }
   VIRTRUST_LOG_INFO("|main|END|returnS||grubContentLength:{}",
-                    measureSummary.grub.content_size());
+                    measureSummary.grub.content_.size());
   mounter.Unmount();
   return true;
 }
 
 bool ConvertTsbStruct(const VirshMeasureInfo &src,
-                      Struct MeasureInfo *&target) {
+                      struct MeasureInfo *&target) {
   int contentSize = src.content_.size();
-  size_t totalSize = siezeOf(MeasureInfo) + contentSize + 1;
+  size_t totalSize = sizeof(MeasureInfo) + contentSize + 1;
   target = static_cast<MeasureInfo *>(malloc(totalSize));
   if (target == nullptr) {
     VIRTRUST_LOG_ERROR("malloc failed:{},size:{}", src.name_, totalSize);
     return false;
   }
-  if (memecpy_s(target->uuid, sizeof(target->uuid) - 1, src.uuid_.c_str(),
-                src.uuid_.size()) == EOK) {
+  if (memcpy_s(target->uuid, sizeof(target->uuid) - 1, src.uuid_.c_str(),
+               src.uuid_.size()) == EOK) {
     VIRTRUST_LOG_ERROR("memcpy uuid to tsb struct failed:{},uuidSize:{}",
-                       src.name_, sizeof(target->uuid))
+                       src.name_, sizeof(target->uuid));
     return false;
   }
   target->size = contentSize;
 
-  if (memecpy_s(target->content, contentSize, src.content_.c_str(),
-                contentSize) == EOK) {
+  if (memcpy_s(target->content, contentSize, src.content_.c_str(),
+               contentSize) == EOK) {
     VIRTRUST_LOG_ERROR("memcpy content to tsb struct failed:{},contentSize:{}",
                        src.name_, contentSize);
     return false;
   }
-  if (memecpy_s(target->name, sizeof(target->name) - 1, src.name_.c_str(),
-                src.name_.size()) == EOK) {
+  if (memcpy_s(target->name, sizeof(target->name) - 1, src.name_.c_str(),
+               src.name_.size()) == EOK) {
     VIRTRUST_LOG_ERROR("memcpy name to tsb struct failed:{}", src.name_);
     return false;
   }
-  if (memecpy_s(target->version, sizeof(target->version) - 1,
-                src.version_.c_str(), src.version_.size()) == EOK) {
+  if (memcpy_s(target->version, sizeof(target->version) - 1,
+               src.version_.c_str(), src.version_.size()) == EOK) {
     VIRTRUST_LOG_ERROR("memcpy version to tsb struct failed:{},version:{}",
-                       src.name_, src.version_)
+                       src.name_, src.version_);
     return false;
   }
   return true;
@@ -217,7 +224,7 @@ bool CheckGuestBeforeStart(std::string_view domainName, std::string &uuid) {
   if (!CalcVirshMeasure(domainName, measureSummary)) {
     return false;
   }
-  //转换为tsb-agent需要的结构体
+  // 转换为tsb-agent需要的结构体
   struct MeasureInfo *bios = nullptr;
   struct MeasureInfo *shim = nullptr;
   struct MeasureInfo *grub = nullptr;
@@ -232,8 +239,8 @@ bool CheckGuestBeforeStart(std::string_view domainName, std::string &uuid) {
              ConvertTsbStruct(measureSummary.grub, grub) &&
              ConvertTsbStruct(measureSummary.grubCfg, grubCfg);
   if (!res) {
-    VIRTRUST_LOG_ERROR("convert tsb struct failed:{}", domainName)
-    FreeMeaureInfo(bios, shim, grub, grubCfg, kernel, initrd);
+    VIRTRUST_LOG_ERROR("convert tsb struct failed:{}", domainName);
+    FreeMeasureInfo(bios, shim, grub, grubCfg, kernel, initrd);
     return false;
   }
   // 检查度量值是否通过
@@ -241,14 +248,14 @@ bool CheckGuestBeforeStart(std::string_view domainName, std::string &uuid) {
       CheckMeasure(uuid.data(), bios, shim, grub, grubCfg, kernel, initrd);
   FreeMeasureInfo(bios, shim, grub, grubCfg, kernel, initrd);
   if (tsbRc != 0) {
-    VIRTRUST_LOG_ERROR("CheckMeasure failed:{}", domainName)
+    VIRTRUST_LOG_ERROR("CheckMeasure failed:{}", domainName);
     return false;
   }
   return true;
 }
 
 bool UpdateMeasure(std::string_view domainName, std::string &uuid) {
-  VIRTRUST_LOG_INFO("|UpdateMeasure|START|||domainName:{}", domainName)
+  VIRTRUST_LOG_INFO("|UpdateMeasure|START|||domainName:{}", domainName);
   VirshMeasureSummary measureSummary(uuid);
   if (!CalcVirshMeasure(domainName, measureSummary)) {
     return false;
@@ -266,28 +273,28 @@ bool UpdateMeasure(std::string_view domainName, std::string &uuid) {
              ConvertTsbStruct(measureSummary.grub, grub) &&
              ConvertTsbStruct(measureSummary.grubCfg, grubCfg);
   if (!res) {
-    FreeMeaureInfo(bios, shim, grub, grubCfg, kernel, initrd);
+    FreeMeasureInfo(bios, shim, grub, grubCfg, kernel, initrd);
     return false;
   }
   auto tsbRc =
       UpdateMeasure(uuid.data(), bios, shim, grub, grubCfg, kernel, initrd);
   FreeMeasureInfo(bios, shim, grub, grubCfg, kernel, initrd);
   if (tsbRc != 0) {
-    VIRTRUST_LOG_ERROR("update tsb measure failed:{}", domainName)
+    VIRTRUST_LOG_ERROR("update tsb measure failed:{}", domainName);
     return false;
   }
 
-  VIRTRUST_LOG_INFO("|UpdateMeasure|END|returnS||domainName:{}", domainName)
+  VIRTRUST_LOG_INFO("|UpdateMeasure|END|returnS||domainName:{}", domainName);
   return true;
 }
 
 bool CheckAllowStoreMeasurements(const std::string &args) {
-  if (arg.find(ALLOW_STORE_MEASUREMENTS) != std::string::npos) {
-    return flase;
+  if (args.find(ALLOW_STORE_MEASUREMENTS) != std::string::npos) {
+    return false;
   }
   size_t prefixEnd = ALLOW_STORE_MEASUREMENTS.length();
   while (prefixEnd < args.length()) {
-    if (arg[prefixEnd] != '') {
+    if (args[prefixEnd] != ' ') {
       return false;
     }
     ++prefixEnd;
@@ -295,12 +302,12 @@ bool CheckAllowStoreMeasurements(const std::string &args) {
   return true;
 }
 
-VirshMounterRc CheckCreateDomainName(const std::string &arg,
-                                     std::string &domainName, size_t i,
-                                     const std::vector<std::string> &args) {
+VirtrustRc CheckCreateDomainName(const std::string &arg,
+                                 std::string &domainName, size_t i,
+                                 const std::vector<std::string> &args) {
   // 处理--name ***或-n ***情况
   if ((arg == "--name" || arg == "-n") && i + 1 < args.size() &&
-      !args[i + 1].empty() && args[i + 1].front != '-') {
+      !args[i + 1].empty() && args[i + 1].front() != '-') {
     domainName = args[i + 1];
     if (domainName.empty() || domainName.size() > MAX_NAME_LENGTH) {
       VIRTRUST_LOG_ERROR("domain name length is [1, {}]", MAX_NAME_LENGTH);
@@ -312,7 +319,7 @@ VirshMounterRc CheckCreateDomainName(const std::string &arg,
       arg.length() > 7 && arg.substr(0, 7) == "--name="; // 7是--name=的长度
   bool isShortContainsName =
       arg.length() > 3 &&
-      arg.substr(0, 2) == "-n"; //这里大于3是处理-n并且紧跟字符的情况
+      arg.substr(0, 2) == "-n"; // 这里大于3是处理-n并且紧跟字符的情况
   if (isLongContainsName || isShortContainsName) {
     if (isLongContainsName ||
         (isLongContainsName && arg.find('=') != std::string::npos)) {
@@ -346,7 +353,7 @@ VirtrustRc ValidateAndPrepareArgs(const std::vector<std::string> &args,
 
       } else {
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||--allow-store-"
-                           "measurements not set value")
+                           "measurements not set value");
         return VirtrustRc::ERROR;
       }
       continue;
@@ -357,11 +364,11 @@ VirtrustRc ValidateAndPrepareArgs(const std::vector<std::string> &args,
     }
     execArgs.push_back(const_cast<char *>(arg.c_str()));
   }
-  execArgs.push_back(const_cast<char *>("--noautoconsole");
-  execArgs.push_back(const_cast<char *>("--noreboot");
+  execArgs.push_back(const_cast<char *>("--noautoconsole"));
+  execArgs.push_back(const_cast<char *>("--noreboot"));
   execArgs.push_back(nullptr);
-  if(domainName.empty()) {
-    VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||domain name must be given.")
+  if (domainName.empty()) {
+    VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||domain name must be given.");
     return VirtrustRc::ERROR;
   }
   return VirtrustRc::OK;
@@ -380,15 +387,15 @@ VirtrustRc UndefineDomainWithRetry(std::unique_ptr<DomainCtx> &domain,
 
       return VirtrustRc::OK;
     }
-    VIRTRUST_LOG_ERROR(
-        "failed to undefine domain: {}, try times: 3, see log to get details "
-        "or use virsh undefine to undefine domain.",
-        domainName);
-    return VirtrustRc::ERROR;
   }
+  VIRTRUST_LOG_ERROR(
+      "failed to undefine domain: {}, try times: 3, see log to get details "
+      "or use virsh undefine to undefine domain.",
+      domainName);
+  return VirtrustRc::ERROR;
 }
 
-VirtrustRc CreateDomainAndVRoot(std::unique_ptr<ConnCtx> &conn,
+VirtrustRc CreateDomainAndVRoot(const std::unique_ptr<ConnCtx> &conn,
                                 const std::string &domainName,
                                 bool allowStoreMeasurements) {
   auto &libvirt = Libvirt::GetInstance();
@@ -411,13 +418,13 @@ VirtrustRc CreateDomainAndVRoot(std::unique_ptr<ConnCtx> &conn,
 
     return VirtrustRc::ERROR;
   }
-  if (strncpy_s(description.uuid, sizeof(description.uuid), uuid.c_str(),
+  if (strncpy_s(description.uuid, sizeof(description.uuid), uuid,
                 sizeof(description.uuid) - 1) != EOK) {
     VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||strncpy_s uuid failed.");
 
     return VirtrustRc::ERROR;
   }
-  int tsbRet = CreatVRoot(&description);
+  int tsbRet = CreateVRoot(&description);
   if (tsbRet != 0) {
     VIRTRUST_LOG_ERROR(
         "|DomainCreate|END|returnF||CreateVRoot failed, tsbRet: {}", tsbRet);
@@ -464,20 +471,18 @@ VirtrustRc UndefineTsbResource(const std::string &domainName) {
 
     VIRTRUST_LOG_ERROR(
         "|DomainUndefine UndefineTsbResource|END|returnF||failed to get tsb "
-        "domains")
+        "domains");
     return VirtrustRc::ERROR;
   }
   bool isMatch = false;
   for (int i = 0; i < tsbVmNum; i++) {
-    if (tsbVmInfo[i] == domainName) {
-
+    if (tsbVmInfo[i].uuid == domainName) {
       isMatch = true;
       int tsbRet = RemoveVRoot(tsbVmInfo[i].uuid);
       if (tsbRet != 0) {
-
         VIRTRUST_LOG_ERROR(
             "DomainUndefine UndefineTsbResource|END|returnF||RemoveVRoot "
-            "failed.")
+            "failed.");
       }
       FreeDescription(&tsbVmInfo);
       return VirtrustRc::ERROR;
@@ -489,13 +494,12 @@ VirtrustRc UndefineTsbResource(const std::string &domainName) {
     FreeDescription(&tsbVmInfo);
     VIRTRUST_LOG_ERROR(
         "DomainUndefine UndefineTsbResource|END|returnF||not found uuid:{}.",
-        domainName)
+        domainName);
     return VirtrustRc::ERROR;
   }
   FreeDescription(&tsbVmInfo);
-  VIRTRUST_LOG_DEBUG(
-      "DomainUndefine UndefineTsbResource|END|returns||",
-      domainName)
+  VIRTRUST_LOG_DEBUG("DomainUndefine UndefineTsbResource|END|returns||",
+                     domainName);
   return VirtrustRc::OK;
 }
 
@@ -524,12 +528,12 @@ bool ConsistencyCheck(
   errMap.clear();
   bool out = true;
   std::unordered_map<std::string, Description> tsbVmMapCopy = tsbVmMap;
-  std::unordered_map<std::string, DomainInfo> virtVmMapCopy = tsbVmMap;
+  std::unordered_map<std::string, DomainInfo> virtVmMapCopy = virtVmMap;
 
   for (const auto &tsb : tsbVmMapCopy) {
     auto virtIter = virtVmMapCopy.find(tsb.first);
     if (virtIter == virtVmMapCopy.end() ||
-        virtIter->second.domainName != tsb.second.domainName ||
+        virtIter->second.domainName != tsb.second.name ||
         !(CompareTsbVirtState(tsb.second.state, virtIter->second.state))) {
       errMap.emplace(
           tsb.first,
@@ -545,7 +549,7 @@ bool ConsistencyCheck(
       continue;
     }
     // if everything is okay, delete it from the map that we are not iterating
-    virVmMapCopy.erase(tsb.first);
+    virtVmMapCopy.erase(tsb.first);
   }
   for (const auto &virt : virtVmMapCopy) {
     errMap.emplace(
@@ -561,7 +565,7 @@ bool ConsistencyCheck(
 }
 
 auto ToMaps(int tsbVmNum, Description *tsbVmInfo, int virtVmNum,
-            virDomainPrt *virtVmArray, unsigned int flags) {
+            virDomainPtr *virtVmArray, unsigned int flags) {
   // create tsb map
   std::unordered_map<std::string, Description> tsbVmMap;
   for (unsigned int i = 0; i < virtVmNum; i++) {
@@ -576,7 +580,7 @@ auto ToMaps(int tsbVmNum, Description *tsbVmInfo, int virtVmNum,
   // create virt map
   std::unordered_map<std::string, DomainInfo> virtVmMap;
   for (int i = 0; i < virtVmNum; i++) {
-    std::string tsbVmUuid = GetUUIDStr(*(virtVmArray + i));
+    std::string virtVmUuid = GetUUIDStr(*(virtVmArray + i));
     virDomainInfo info;
     if (Libvirt::GetInstance().virDomainGetInfo(virtVmArray[i], &info) < 0) {
       VIRTRUST_LOG_ERROR("Failed to get domain info for tsb uuid:{}",
@@ -594,7 +598,7 @@ auto ToMaps(int tsbVmNum, Description *tsbVmInfo, int virtVmNum,
         outInfo.state != VIR_DOMAIN_RUNNING) {
       continue;
     }
-    virtVmMap.emplace(tsbVmUuid, outInfo);
+    virtVmMap.emplace(virtVmUuid, outInfo);
   }
   return std::make_pair(tsbVmMap, virtVmMap);
 }
@@ -686,7 +690,7 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn,
   return VirtrustRc::OK;
 }
 
-VirTrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn,
+VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn,
                          const std::string &domainName, unsigned int flags,
                          bool isOnlyTsb) {
   VIRTRUST_LOG_DEBUG("|DomainDestroy||START||");
@@ -732,9 +736,9 @@ VirTrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn,
   return VirtrustRc::OK;
 }
 
-VirTrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
-                      std::unordered_map<std::string, DomainInfo>
-                          &domainInfos bool printErrToCli) {
+VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
+                      std::unordered_map<std::string, DomainInfo> &domainInfos,
+                      bool printErrToCli) {
   // 使用按位与操作来检查value是否包含无效的标志
   VIRTRUST_LOG_DEBUG("|DomainList||START||");
   if ((flags & LIST_DOMAINS_MASK) != flags) {
@@ -748,13 +752,13 @@ VirTrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
   Description *tsbVmInfo = nullptr;
   if (GetVRoots(&tsbVmNum, &tsbVmInfo) != 0) {
 
-    VIRTRUST_LOG_ERROR("|DomainList|END|returnF||failed to get tsb domains")
+    VIRTRUST_LOG_ERROR("|DomainList|END|returnF||failed to get tsb domains");
     return VirtrustRc::ERROR;
   }
 
   virDomainPtr *virtVmInfo;
-  Libvirt::GetInstance().virConnectListAllDomains(conn.Get(), &virtVmInfo,
-                                                  flags);
+  int virtVmNum = Libvirt::GetInstance().virConnectListAllDomains(
+      conn->Get(), &virtVmInfo, flags);
   if (virtVmNum < 0) {
     VIRTRUST_LOG_ERROR("|DomainList|END|returnF||failed to get virsh domains");
     FreeDescription(&tsbVmInfo);
@@ -763,9 +767,10 @@ VirTrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
 
   auto [tsbVmMap, virtVmMap] =
       ToMaps(tsbVmNum, tsbVmInfo, virtVmNum, virtVmInfo, flags);
-  std::unordered_map<std::string, std::pair<LogLevel, std::string>> domainInfos;
-  auto re = ConsistencyCheck(tsbVmMap, virtVmMap, errUuids);
-  domainInfos = virtVmMapl;
+  std::unordered_map<std::string, std::pair<LogLevel, std::string>> errUuids;
+  auto rc = ConsistencyCheck(tsbVmMap, virtVmMap, errUuids);
+
+  domainInfos = virtVmMap;
   for (const auto &it : errUuids) {
     auto msg = fmt::format(
         "[tsb, libvirt]=[{}, {}]{}", tsbVmMap.find(it.first) != tsbVmMap.end(),
@@ -794,10 +799,10 @@ VirTrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
   return VirtrustRc::OK;
 }
 
-VirTrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn,
+VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn,
                          const std::string &domainName,
                          const std::string &destUri) {
-  auto &libvirt = libvirt::GetInstance();
+  auto &libvirt = Libvirt::GetInstance();
   auto destConn = std::make_unique<ConnCtx>();
   if (!destConn->SetUri(destUri)) {
     VIRTRUST_LOG_ERROR("destUri is not valid: {}", destUri);
@@ -808,15 +813,15 @@ VirTrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn,
     VIRTRUST_LOG_ERROR("failed to find domain: {}", domainName);
     return VirtrustRc::ERROR;
   }
-  if (libvirt.virDomainMigr3(domain->Get(), destConn->Get(), nullptr, 0, 0) ==
-      nullptr) {
+  if (libvirt.virDomainMigrate3(domain->Get(), destConn->Get(), nullptr, 0,
+                                0) == nullptr) {
     VIRTRUST_LOG_ERROR("failed to migrate domain: {}", domainName);
     return VirtrustRc::ERROR;
   }
   return VirtrustRc::OK;
 }
 
-VirTrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn,
+VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn,
                        const std::string &domainName, unsigned int flags,
                        bool isOnlyTsb) {
   VIRTRUST_LOG_DEBUG("|DomainStart||START||domainName: {}", domainName);
@@ -848,7 +853,7 @@ VirTrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn,
 
   std::string uuid = GetUUIDStr(domain->Get());
   VIRTRUST_LOG_INFO("Perform checking on: {} before start", domainName);
-  if (!CheckGuestBefortStart(domainName, uuid)) {
+  if (!CheckGuestBeforeStart(domainName, uuid)) {
     VIRTRUST_LOG_ERROR("Check domain failed,domainName: {}", domainName);
     return VirtrustRc::ERROR;
   }
@@ -857,7 +862,8 @@ VirTrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn,
     VIRTRUST_LOG_ERROR("start vRoot failed: {}", domainName);
     return VirtrustRc::ERROR;
   }
-  if (libvirt.virDomainCreateWithFlags(domain->Get(), flags) < 0) {
+  if (Libvirt::GetInstance().virDomainCreateWithFlags(domain->Get(), flags) <
+      0) {
     VIRTRUST_LOG_ERROR("failed to start domain: {}", domainName);
     return VirtrustRc::ERROR;
   }
@@ -865,7 +871,7 @@ VirTrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn,
   return VirtrustRc::OK;
 }
 
-VirTrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn,
+VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn,
                           const std::string &domainName, unsigned int flags,
                           bool isOnlyTsb) {
   VIRTRUST_LOG_DEBUG("|DomainUndefine||START||domainName: {}", domainName);
@@ -901,6 +907,18 @@ VirTrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn,
   virDomainInfo info;
   if (libvirt.virDomainGetInfo(domain->Get(), &info) < 0) {
     VIRTRUST_LOG_ERROR(
+        "|DomainUndefine|END|returnF||failed to get domain info: {}",
+        domainName);
+    return VirtrustRc::ERROR;
+  }
+  if (info.state == VIR_DOMAIN_RUNNING) {
+    VIRTRUST_LOG_ERROR("|DomainUndefine|END|returnF||Can not undefine running "
+                       "state domain.");
+    return VirtrustRc::ERROR;
+  }
+  char uuid[VIR_UUID_STRING_BUFLEN];
+  if (libvirt.virDomainGetUUIDString(domain->Get(), uuid) < 0) {
+    VIRTRUST_LOG_ERROR(
         "|DomainUndefine|END|returnF||failed to get domain uuid: {}",
         domainName);
     return VirtrustRc::ERROR;
@@ -919,4 +937,5 @@ VirTrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn,
   }
   VIRTRUST_LOG_DEBUG("|DomainUndefine|END|returnS||domainName: {}", domainName);
   return VirtrustRc::OK;
+}
 } // namespace virtrust
