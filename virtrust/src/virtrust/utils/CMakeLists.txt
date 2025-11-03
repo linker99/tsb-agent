@@ -1,3 +1,5 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+
 set(VIRTRUST_SOURCE_FILES
     ${VIRTRUST_SOURCE_FILES}
     ${CMAKE_CURRENT_LIST_DIR}/file_io.cpp
