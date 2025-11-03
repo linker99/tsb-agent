@@ -33,10 +33,10 @@ public:
 
     // Declare all functions that you need
     // NOTE Please make sure the class instance is inited before calling those functions
-    DlFun<xmlDocPtr, const char *> xmlParseFile;
-    DlFun<void, xmlDocPtr> xmlFreeDoc;
-    DlFun<xmlNodePtr, xmlDocPtr> xmlDocGetRootElement;
-    DlFun<xmlChar *, xmlNodePtr, const xmlChar *> xmlGetProp;
+    DlFun<xmlDoc *, const char *> xmlParseFile;
+    DlFun<void, xmlDoc *> xmlFreeDoc;
+    DlFun<xmlNode *, const xmlDoc *> xmlDocGetRootElement;
+    DlFun<xmlChar *, const xmlNode *, const xmlChar *> xmlGetProp;
     DlFun<void, void *> xmlFree;
 
 private:
