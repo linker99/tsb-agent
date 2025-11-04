@@ -27,8 +27,8 @@ build_asan='Off'
 enable_test='On'
 
 # 获取项目根目录(目前为构建脚本所在目录)
-PROJECT_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd) "
-# OUTPUT_DIR=${PROJECT_ROOT_DIR}/output
+PROJECT_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
+OUTPUT_DIR=${PROJECT_ROOT_DIR}/output
 
 echo "PROJECT_ROOT_DIR $PROJECT_ROOT_DIR"
 
@@ -72,13 +72,14 @@ function parse_args() {
 
 
 function build_output() {
+     log_info "***** start build cmake ${OUTPUT_DIR}*****"
     cmake -DCMAKE_BUILD_TYPE=${build_type} \
         -DBUILD_TEST=${enable_test}\
         -DUSE_MOCK_TSB_AGENT=On \
-        -S . -B build
-        # -DCMAKE_INSTALL_PREFIX="${OUTPUT_DIR}/virtrust" \
+        -DCMAKE_INSTALL_PREFIX=${OUTPUT_DIR}/virtrust
 
-    cmake --build build -j${CPU_NUM}
+    make -j8
+    make install
     # cmake --build build --target install
 }
 
