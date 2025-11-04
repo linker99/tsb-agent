@@ -1,5 +1,8 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
 
+# HACK spdlog installs in lib64
+file(MAKE_DIRECTORY ${CMAKE_DEPS_INSTALL_PREFIX}/lib64)
+
 ExternalProject_Add(
   spdlog
   URL https://github.com/gabime/spdlog/archive/refs/tags/v1.14.1.tar.gz

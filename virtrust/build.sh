@@ -27,10 +27,10 @@ build_asan='Off'
 enable_test='On'
 
 # 获取项目根目录(目前为构建脚本所在目录)
-PROJECT_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd) "
+PROJECT_ROOT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd) "
 # OUTPUT_DIR=${PROJECT_ROOT_DIR}/output
 
-echo "PROJECT_ROOT: $PROJECT_ROOT"
+echo "PROJECT_ROOT_DIR $PROJECT_ROOT_DIR"
 
 # 日志打印辅助函数
 function log_info() {
@@ -75,8 +75,8 @@ function build_output() {
     cmake -DCMAKE_BUILD_TYPE=${build_type} \
         -DBUILD_TEST=${enable_test}\
         -DUSE_MOCK_TSB_AGENT=On \
-        -DCMAKE_INSTALL_PREFIX="${OUTPUT_DIR}/virtrust" \
-        -S . -B build \
+        -S . -B build
+        # -DCMAKE_INSTALL_PREFIX="${OUTPUT_DIR}/virtrust" \
 
     cmake --build build -j${CPU_NUM}
     # cmake --build build --target install
@@ -109,4 +109,4 @@ build_cmake
 
 ENC_TIME=$(date +%s.%N)
 EXEC_TIME=$(echo "scale=3;($ENC_TIME - $START_TIME)/1" | bc)
-echo -e $(data +"%Y-%m-%d %H-%M)"): "\033[32m" build success in "${EXEC_TIME}"s '\033[0m' 
+echo -e $(date +"%Y-%m-%d %H-%M)"): "\033[32m" build success in "${EXEC_TIME}"s '\033[0m' 
