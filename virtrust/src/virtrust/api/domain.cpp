@@ -9,7 +9,7 @@
 
 #include <unordered_set>
 
-#include "securec/securec.h"
+#include <securec.h>
 #include "spdlog/fmt/fmt.h"
 
 #include "virtrust-sh/defines.h"

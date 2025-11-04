@@ -10,7 +10,7 @@ target_include_directories(
   mock-tsb-agent PRIVATE ${CMAKE_DEPS_INCLUDEDIR}
                          $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
-target_link_libraries(mock-tsb-agent PRIVATE Deps::spdlog Deps::secure_c)
+target_link_libraries(mock-tsb-agent PRIVATE Deps::spdlog boundscheck)
 
 # NOTE Make sure targets are linekd to mock-tsb-agent
 
