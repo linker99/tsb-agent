@@ -7,6 +7,7 @@ ExternalProject_Add(
   PREFIX ${CMAKE_DEPS_INSTALL_PREFIX}
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ${CMAKE_MAKE_PROGRAM}
+  UPDATE_COMMAND ""
   INSTALL_COMMAND mkdir -p ${CMAKE_DEPS_INCLUDEDIR}/securec
   COMMAND cp include/securec.h ${CMAKE_DEPS_INCLUDEDIR}/securec
   COMMAND cp include/securectype.h ${CMAKE_DEPS_INCLUDEDIR}/securec
