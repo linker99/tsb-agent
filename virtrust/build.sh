@@ -72,15 +72,16 @@ function parse_args() {
 
 
 function build_output() {
-     log_info "***** start build cmake ${OUTPUT_DIR}*****"
-    cmake -DCMAKE_BUILD_TYPE=${build_type} \
+    log_info "***** start build cmake ${OUTPUT_DIR}*****"
+    mkdir -p build
+    pushd build
+    cmake .. -DCMAKE_BUILD_TYPE=${build_type} \
         -DBUILD_TEST=${enable_test}\
         -DUSE_MOCK_TSB_AGENT=On \
-        -DCMAKE_INSTALL_PREFIX=${OUTPUT_DIR}/virtrust
-
-    make -j8
+        -DCMAKE_INSTALL_PREFIX=${OUTPUT_DIR}/virtrust \
+    make
     make install
-    # cmake --build build --target install
+    popd
 }
 
 function build_cmake() {
@@ -107,7 +108,3 @@ cd ${PROJECT_ROOT_DIR}
 
 parse_args "$@"
 build_cmake
-
-ENC_TIME=$(date +%s.%N)
-EXEC_TIME=$(echo "scale=3;($ENC_TIME - $START_TIME)/1" | bc)
-echo -e $(date +"%Y-%m-%d %H-%M)"): "\033[32m" build success in "${EXEC_TIME}"s '\033[0m' 
