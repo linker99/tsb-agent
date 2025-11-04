@@ -11,6 +11,7 @@ ExternalProject_Add(
     no-docs no-apps --banner=Finished --release --libdir=${CMAKE_INSTALL_LIBDIR}
     --prefix=${CMAKE_DEPS_INSTALL_PREFIX} -w
   BUILD_COMMAND make build_sw
+  UPDATE_COMMAND ""
   INSTALL_COMMAND make install_sw
   BUILD_IN_SOURCE On
   DOWNLOAD_EXTRACT_TIMESTAMP On

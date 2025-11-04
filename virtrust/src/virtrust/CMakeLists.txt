@@ -19,8 +19,6 @@ target_include_directories(
   virtrust-obj PRIVATE ${CMAKE_DEPS_INCLUDEDIR}
                        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
-target_link_libraries(virtrust-obj PRIVATE Deps::spdlog Deps::secure_c)
-
 # Shared lib
 
 add_library(virtrust-shared SHARED $<TARGET_OBJECTS:virtrust-obj>)
