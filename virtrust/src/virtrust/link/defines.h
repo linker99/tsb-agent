@@ -11,17 +11,17 @@
 
 namespace virtrust {
 enum class LinkRc : uint32_t {
-    OK = 0,
-    ERROR = 1,
+  OK = 0,
+  ERROR = 1,
 };
 
 struct LinkConfig {
-    std::string caPath;
-    std::string certPath;
-    std::string skPath;
-    std::string ip;
-    std::string ipMask;
-    uint16_t port;
+  std::string caPath;
+  std::string certPath;
+  std::string skPath;
+  std::string ip;
+  std::string ipMask;
+  uint16_t port;
 };
 
 } // namespace virtrust

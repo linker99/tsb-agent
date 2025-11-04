@@ -1,6 +1,6 @@
 /*
-* Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
-*/
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ */
 
 #pragma once
 
@@ -19,84 +19,81 @@ namespace virtrust {
 // libguestfs api
 class Libguestfs : public DlLibBase {
 public:
-    ~Libguestfs() = default;
-    Libguestfs(const Libguestfs &) = delete;
-    void operator=(const Libguestfs &) = delete;
+  ~Libguestfs() = default;
+  Libguestfs(const Libguestfs &) = delete;
+  void operator=(const Libguestfs &) = delete;
 
-    // Singleton instance
-    static Libguestfs &GetInstance()
-    {
-        static Libguestfs instance;
-        return instance;
-    }
+  // Singleton instance
+  static Libguestfs &GetInstance() {
+    static Libguestfs instance;
+    return instance;
+  }
 
-    // Reload all functions
-    DllibRc Reload()
-    {
-        SelfDlClose();
-        LoadAll();
-        return CheckOk();
-    }
+  // Reload all functions
+  DllibRc Reload() {
+    SelfDlClose();
+    LoadAll();
+    return CheckOk();
+  }
 
-    // Declare all functions that you need
-    // NOTE Please make sure the class instance is inited before calling those functions
+  // Declare all functions that you need
+  // NOTE Please make sure the class instance is inited before calling those
+  // functions
 
-    // Create guestfs context
-    DlFun<guestfs_h *> guestfs_create;
+  // Create guestfs context
+  DlFun<guestfs_h *> guestfs_create;
 
-    DlFun<int, guestfs_h *, const char *> guestfs_set_backend;
+  DlFun<int, guestfs_h *, const char *> guestfs_set_backend;
 
-    DlFun<int, guestfs_h *, const char *, const struct guestfs_add_drive_opts_argv> guestfs_add_drive_opts_argv;
+  DlFun<int, guestfs_h *, const char *,
+        const struct guestfs_add_drive_opts_argv>
+      guestfs_add_drive_opts_argv;
 
-    DlFun<int, guestfs_h *> guestfs_launch;
+  DlFun<int, guestfs_h *> guestfs_launch;
 
-    DlFun<char **, guestfs_h *> guestfs_inspect_os;
+  DlFun<char **, guestfs_h *> guestfs_inspect_os;
 
-    DlFun<char **, guestfs_h *, const char *> guestfs_inspect_get_mountpoints;
+  DlFun<char **, guestfs_h *, const char *> guestfs_inspect_get_mountpoints;
 
-    DlFun<int, guestfs_h *, const char *, const char *> guestfs_mount_ro;
+  DlFun<int, guestfs_h *, const char *, const char *> guestfs_mount_ro;
 
-    DlFun<int, guestfs_h *> guestfs_umount_all;
+  DlFun<int, guestfs_h *> guestfs_umount_all;
 
-    DlFun<void, guestfs_h *> guestfs_close;
+  DlFun<void, guestfs_h *> guestfs_close;
 
-    DlFun<int, guestfs_h *, int> guestfs_set_trace;
+  DlFun<int, guestfs_h *, int> guestfs_set_trace;
 
-    DlFun<int, guestfs_h *, const char *> guestfs_exists;
+  DlFun<int, guestfs_h *, const char *> guestfs_exists;
 
-    DlFun<int, guestfs_h *, const char *> guestfs_is_file;
+  DlFun<int, guestfs_h *, const char *> guestfs_is_file;
 
-    DlFun<char *, guestfs_h *, const char *, size_t *> guestfs_read_file;
+  DlFun<char *, guestfs_h *, const char *, size_t *> guestfs_read_file;
 
 private:
-    void LoadAll()
-    {
-        // NOTE explicitly dlopen shared library
-        auto ret = SelfDlOpen();
-        if (ret != DllibRc::OK) {
-            return;
-        }
-        DLLIB_SELF_DLSYM(guestfs_create);
-        DLLIB_SELF_DLSYM(guestfs_set_backend);
-        DLLIB_SELF_DLSYM(guestfs_add_drive_opts_argv);
-        DLLIB_SELF_DLSYM(guestfs_launch);
-        DLLIB_SELF_DLSYM(guestfs_inspect_os);
-        DLLIB_SELF_DLSYM(guestfs_inspect_get_mountpoints);
-        DLLIB_SELF_DLSYM(guestfs_mount_ro);
-        DLLIB_SELF_DLSYM(guestfs_umount_all);
-        DLLIB_SELF_DLSYM(guestfs_close);
-        DLLIB_SELF_DLSYM(guestfs_set_trace);
-        DLLIB_SELF_DLSYM(guestfs_exists);
-        DLLIB_SELF_DLSYM(guestfs_is_file);
-        DLLIB_SELF_DLSYM(guestfs_read_file);
+  void LoadAll() {
+    // NOTE explicitly dlopen shared library
+    auto ret = SelfDlOpen();
+    if (ret != DllibRc::OK) {
+      return;
     }
+    DLLIB_SELF_DLSYM(guestfs_create);
+    DLLIB_SELF_DLSYM(guestfs_set_backend);
+    DLLIB_SELF_DLSYM(guestfs_add_drive_opts_argv);
+    DLLIB_SELF_DLSYM(guestfs_launch);
+    DLLIB_SELF_DLSYM(guestfs_inspect_os);
+    DLLIB_SELF_DLSYM(guestfs_inspect_get_mountpoints);
+    DLLIB_SELF_DLSYM(guestfs_mount_ro);
+    DLLIB_SELF_DLSYM(guestfs_umount_all);
+    DLLIB_SELF_DLSYM(guestfs_close);
+    DLLIB_SELF_DLSYM(guestfs_set_trace);
+    DLLIB_SELF_DLSYM(guestfs_exists);
+    DLLIB_SELF_DLSYM(guestfs_is_file);
+    DLLIB_SELF_DLSYM(guestfs_read_file);
+  }
 
-    Libguestfs() : DlLibBase(LIB_NAME)
-    {
-        LoadAll();
-    }
+  Libguestfs() : DlLibBase(LIB_NAME) { LoadAll(); }
 
-    static constexpr std::string_view LIB_NAME = "libguestfs.so";
+  static constexpr std::string_view LIB_NAME = "libguestfs.so";
 };
 
 } // namespace virtrust

@@ -1,6 +1,6 @@
 /*
-* Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
-*/
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ */
 
 #pragma once
 
@@ -16,33 +16,33 @@ namespace virtrust {
 struct guestfs_h;
 
 struct guestfs_add_drive_opts_argv {
-    uint64_t bitmask;
+  uint64_t bitmask;
 #define GUESTFS_ADD_DRIVE_OPTS_READONLY_BITMASK (UINT64_C(1) << 0)
-    int readonly;
+  int readonly;
 #define GUESTFS_ADD_DRIVE_OPTS_FORMAT_BITMASK (UINT64_C(1) << 1)
-    const char *format;
+  const char *format;
 #define GUESTFS_ADD_DRIVE_OPTS_IFACE_BITMASK (UINT64_C(1) << 2)
-    const char *iface;
+  const char *iface;
 #define GUESTFS_ADD_DRIVE_OPTS_NAME_BITMASK (UINT64_C(1) << 3)
-    const char *name;
+  const char *name;
 #define GUESTFS_ADD_DRIVE_OPTS_LABEL_BITMASK (UINT64_C(1) << 4)
-    const char *label;
+  const char *label;
 #define GUESTFS_ADD_DRIVE_OPTS_PROTOCOL_BITMASK (UINT64_C(1) << 5)
-    const char *protocol;
+  const char *protocol;
 #define GUESTFS_ADD_DRIVE_OPTS_SERVER_BITMASK (UINT64_C(1) << 6)
-    char *const *server;
+  char *const *server;
 #define GUESTFS_ADD_DRIVE_OPTS_USERNAME_BITMASK (UINT64_C(1) << 7)
-    const char *username;
+  const char *username;
 #define GUESTFS_ADD_DRIVE_OPTS_SECRET_BITMASK (UINT64_C(1) << 8)
-    const char *secret;
+  const char *secret;
 #define GUESTFS_ADD_DRIVE_OPTS_CACHEMODE_BITMASK (UINT64_C(1) << 9)
-    const char *cachemode;
+  const char *cachemode;
 #define GUESTFS_ADD_DRIVE_OPTS_DISCARD_BITMASK (UINT64_C(1) << 10)
-    const char *discard;
+  const char *discard;
 #define GUESTFS_ADD_DRIVE_OPTS_COPYONREAD_BITMASK (UINT64_C(1) << 11)
-    int copyonread;
+  int copyonread;
 #define GUESTFS_ADD_DRIVE_OPTS_BLOCKSIZE_BITMASK (UINT64_C(1) << 12)
-    int blocksize;
+  int blocksize;
 };
 
 } // namespace virtrust

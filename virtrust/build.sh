@@ -21,7 +21,6 @@
 # 脚本内命令(前台命令)失败时，立即退出脚本
 #set -o errexit
 
-
 build_target='cicd_default'
 build_type='Release'
 build_asan='Off'
@@ -29,7 +28,7 @@ enable_test='On'
 
 # 获取项目根目录(目前为构建脚本所在目录)
 PROJECT_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd) "
-OUTPUT_DIR=${PROJECT_ROOT_DIR}/output
+# OUTPUT_DIR=${PROJECT_ROOT_DIR}/output
 
 echo "PROJECT_ROOT: $PROJECT_ROOT"
 
@@ -80,7 +79,7 @@ function build_output() {
         -S . -B build \
 
     cmake --build build -j${CPU_NUM}
-    cmake --build build --target install
+    # cmake --build build --target install
 }
 
 function build_cmake() {

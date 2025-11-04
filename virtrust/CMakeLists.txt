@@ -93,11 +93,13 @@ set(CMAKE_CXX_FLAGS_DEBUG "")
 include(SetToolchainFlags)
 set_toolchain_flags()
 
-add_compiler_flags("-Wno-missing-field-initializers")
-add_compiler_flags("-Wno-format-overflow")
-add_compiler_flags("-Wno-unused-parameter")
-add_compiler_flags("-Wno-sign-compare")
-add_compiler_flags("-Wno-template-body") # HACK for rapidjson
+add_compiler_flags(-Wno-missing-field-initializers)
+add_compiler_flags(-Wno-format-overflow)
+add_compiler_flags(-Wno-unused-parameter)
+add_compiler_flags(-Wno-sign-compare)
+add_compiler_flags(-Wno-template-body)
+add_compiler_flags(-Wno-class-memaccess) # HACK for rapidjson
+add_compiler_flags(-Wno-implicit-fallthrough) # HACK for rapidjson
 
 get_property(
   virtrust_link_options
