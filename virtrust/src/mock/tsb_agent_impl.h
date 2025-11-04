@@ -17,7 +17,7 @@
 
 #include "mock/tsb_agent_itf.h"
 #include "mock/v_root.h"
-#include "securec/securec.h"
+#include <securec.h>
 #include "spdlog/spdlog.h"
 
 namespace virtrust::mock {

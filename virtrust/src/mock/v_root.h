@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "mock/tsb_agent_itf.h"
-#include "securec/securec.h"
+#include <securec.h>
 
 namespace virtrust::mock {
 

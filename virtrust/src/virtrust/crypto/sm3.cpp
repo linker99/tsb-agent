@@ -5,7 +5,7 @@
 
 #include <vector>
 
-#include "securec/securec.h"
+#include <securec.h>
 
 #include "virtrust/base/logger.h"
 #include "virtrust/dllib/openssl.h"
