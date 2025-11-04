@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.14.1)
 project(virtrust CXX C)
 
 option(BUILD_TEST "Enable/Disable tests" On)
-option(ENABLE_DOWNLOAD_DEPS "Download Dependencies Automatically" Off)
 option(USE_MOCK_TSB_AGENT "Use Mocked Tsb Agent (DO NOT USE IN PRODUCTION)" On)
 
 set(USER_DEPS_DIR
@@ -61,7 +60,9 @@ endif()
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set_property(CACHE CMAKE_INSTALL_PREFIX PROPERTY VALUE ${PROJECT_BINARY_DIR})
   message(
-    "CMAKE_INSTALL_PREFIX not specified, defaulting to '${PROJECT_BINARY_DIR}'")
+    WARNING
+      "CMAKE_INSTALL_PREFIX not specified, defaulting to '${PROJECT_BINARY_DIR}'"
+  )
 endif()
 
 cmake_policy(GET CMP0097 NEW)
@@ -76,11 +77,6 @@ set(CMAKE_DEPS_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/${DEPS_INSTALL_PREFIX_NAME})
 set(CMAKE_DEPS_INCLUDEDIR
     ${CMAKE_DEPS_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR})
 set(CMAKE_DEPS_LIBDIR ${CMAKE_DEPS_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR})
-if(ENABLE_DOWNLOAD_DEPS)
-  set(CMAKE_DEPS_SRCDIR ${CMAKE_DEPS_INSTALL_PREFIX}/src)
-else()
-  set(CMAKE_DEPS_SRCDIR ${USER_DEPS_DIR})
-endif()
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD 17)
@@ -93,13 +89,14 @@ set(CMAKE_CXX_FLAGS_DEBUG "")
 include(SetToolchainFlags)
 set_toolchain_flags()
 
-add_compiler_flags(-Wno-missing-field-initializers)
-add_compiler_flags(-Wno-format-overflow)
-add_compiler_flags(-Wno-unused-parameter)
-add_compiler_flags(-Wno-sign-compare)
-add_compiler_flags(-Wno-template-body)
-add_compiler_flags(-Wno-class-memaccess) # HACK for rapidjson
-add_compiler_flags(-Wno-implicit-fallthrough) # HACK for rapidjson
+# HACK compiler flags, try remove this in the future
+add_compiler_flags(-Wno-missing-field-initializers) # for dllib guestfs
+add_compiler_flags(-Wno-unused-parameter) # for tsb interface
+add_compiler_flags(-Wno-deprecated-declarations) # rapidjson headers
+add_compiler_flags(-Wno-error=pragmas) # rapidjson headers
+add_compiler_flags(-Wno-class-memaccess) # rapidjson headers
+add_compiler_flags(-Wno-implicit-fallthrough) # rapidjson headers
+add_compiler_flags(-Wno-template-body) # rapidjson headers
 
 get_property(
   virtrust_link_options
@@ -121,7 +118,6 @@ message(STATUS "Linker Flags  :\n${virtrust_link_options}")
 message(STATUS "Exe Linker Flags  :\n${CMAKE_EXE_LINKER_FLAGS}")
 message(STATUS "CMAKE_INSTALL_PREFIX  :${CMAKE_INSTALL_PREFIX}")
 message(STATUS "CMAKE_DEPS_SRCDIR  :${CMAKE_DEPS_SRCDIR}")
-message(STATUS "(opt) ENABLE_DOWNLOAD_DEPS  :${ENABLE_DOWNLOAD_DEPS}")
 message(STATUS "(opt) BUILD_TEST  :${BUILD_TEST}")
 message(STATUS "(opt) USE_MOCK_TSB_AGENT  :${USE_MOCK_TSB_AGENT}")
 

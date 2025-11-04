@@ -18,8 +18,7 @@ namespace virtrust {
  * --allow-store-measurements可选 是否鞥新tsb的度量值
  * @return VirtrustRc
  */
-VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn,
-                        const std::vector<std::string> &args);
+VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<std::string> &args);
 
 /**
  * 停止虚拟机
@@ -30,12 +29,10 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn,
  * @param isOnlyTsb 是否只更新tsb资源，为true时只更新tsb资源
  * @return VirtrustRc
  */
-VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn,
-                         const std::string &domainName, unsigned int flags,
+VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags,
                          bool isOnlyTsb = false);
 
-VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn,
-                         const std::string &domainName,
+VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName,
                          const std::string &destUri);
 
 /**
@@ -47,8 +44,7 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn,
  * @param isOnlyTsb 是否只更新tsb资源，为true时只更新tsb资源
  * @return VirtrustRc
  */
-VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn,
-                       const std::string &domainName, unsigned int flags,
+VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags,
                        bool isOnlyTsb = false);
 
 /**
@@ -61,8 +57,7 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn,
  * @param isOnlyTsb 是否只删除tsb资源，为true时只删除tsb资源
  * @return VirtrustRc
  */
-VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn,
-                          const std::string &domainName, unsigned int flags,
+VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags,
                           bool isOnlyTsb = false);
 
 /**
@@ -76,6 +71,5 @@ VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn,
  * @return VirtrustRc
  */
 VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
-                      std::unordered_map<std::string, DomainInfo> &domainInfos,
-                      bool printErrToCli = false);
+                      std::unordered_map<std::string, DomainInfo> &domainInfos, bool printErrToCli = false);
 } // namespace virtrust

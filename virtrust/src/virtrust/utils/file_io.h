@@ -11,68 +11,73 @@
 namespace virtrust {
 class FileInputStream {
 public:
-  explicit FileInputStream(std::string fileName);
+    explicit FileInputStream(std::string fileName);
 
-  ~FileInputStream() = default;
+    ~FileInputStream() = default;
 
-  bool operator!() const;
+    bool operator!() const;
 
-  explicit operator bool() const;
+    explicit operator bool() const;
 
-  bool Eof() const;
+    bool Eof() const;
 
-  FileInputStream &GetLine(std::string *ret, char delim);
+    FileInputStream &GetLine(std::string *ret, char delim);
 
-  FileInputStream &Read(void *buf, size_t length);
+    FileInputStream &Read(void *buf, size_t length);
 
-  FileInputStream &Seekg(size_t pos);
+    FileInputStream &Seekg(size_t pos);
 
-  size_t Tellg();
+    size_t Tellg();
 
-  void TransferTo(std::ostringstream &oss);
+    void TransferTo(std::ostringstream &oss);
 
-  std::string ReadAll();
+    std::string ReadAll();
 
-  size_t GetLength() const;
+    size_t GetLength() const;
 
-  const std::string &GetName() const;
+    const std::string &GetName() const;
 
-  void Close();
+    void Close();
 
-  static bool IsStreaming() { return false; }
+    static bool IsStreaming()
+    {
+        return false;
+    }
 
-  std::unique_ptr<FileInputStream> Spawn();
+    std::unique_ptr<FileInputStream> Spawn();
 
 private:
-  const std::string fileName_;
-  std::ifstream in_;
-  size_t fileLen_;
+    const std::string fileName_;
+    std::ifstream in_;
+    size_t fileLen_;
 };
 
 class FileOutputStream {
 public:
-  explicit FileOutputStream(std::string fileName, bool trunc = true,
-                            bool exitFailInDestructor = true);
+    explicit FileOutputStream(std::string fileName, bool trunc = true, bool exitFailInDestructor = true);
 
-  ~FileOutputStream();
+    ~FileOutputStream();
 
-  void Write(const void *buf, size_t length);
-  void Write(std::string_view buf);
+    void Write(const void *buf, size_t length);
+    void Write(std::string_view buf);
 
-  const std::string &GetName() const;
+    const std::string &GetName() const;
 
-  size_t Tellp();
+    size_t Tellp();
 
-  void Close();
+    void Close();
 
-  void Flush();
+    void Flush();
 
-  static bool IsStreaming() { return false; }
+    static bool IsStreaming()
+    {
+        return false;
+    }
 
 private:
-  const std::string fileName_;
-  const bool exitFailInDestructor_;
-  std::ofstream out_;
+    const std::string fileName_;
+    const bool exitFailInDestructor_;
+    std::ofstream out_;
 };
 
 } // namespace virtrust

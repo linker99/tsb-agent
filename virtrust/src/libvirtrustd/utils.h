@@ -6,9 +6,9 @@
 #include <optional>
 
 #include "libvirtrustd/defines.h"
+
 #include "virtrust/link/link_config_builder.h"
 
 namespace virtrust {
-std::optional<LinkConfig>
-MakeLinkConfigFromJsonFile(const std::string &configPath);
+std::optional<LinkConfig> MakeLinkConfigFromJsonFile(const std::string &configPath);
 } // namespace virtrust

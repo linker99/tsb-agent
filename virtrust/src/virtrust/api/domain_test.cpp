@@ -3,6 +3,7 @@
  */
 
 #include <gtest/gtest.h>
+
 #include <memory>
 #include <string>
 #include <vector>
@@ -20,19 +21,21 @@
 namespace virtrust {
 
 // Test that basic compilation works
-TEST(DomainTest, BasicCompilation) {
-  // Basic compile-time test - just ensure the functions exist and can be called
-  EXPECT_TRUE(true);
+TEST(DomainTest, BasicCompilation)
+{
+    // Basic compile-time test - just ensure the functions exist and can be called
+    EXPECT_TRUE(true);
 }
 
 // Test that VerifyConfig can be instantiated and used
-TEST(DomainTest, VerifyConfigBasics) {
-  // Test that VerifyConfig can be constructed with basic parameters
-  VerifyConfig config("test-guest", "/path/to/disk", "/path/to/loader");
+TEST(DomainTest, VerifyConfigBasics)
+{
+    // Test that VerifyConfig can be constructed with basic parameters
+    VerifyConfig config("test-guest", "/path/to/disk", "/path/to/loader");
 
-  // Test basic getter functions exist and work
-  EXPECT_EQ(config.GetGuestName(), "test-guest");
-  EXPECT_EQ(config.GetDiskPath(), "/path/to/disk");
-  EXPECT_EQ(config.GetLoaderPath(), "/path/to/loader");
+    // Test basic getter functions exist and work
+    EXPECT_EQ(config.GetGuestName(), "test-guest");
+    EXPECT_EQ(config.GetDiskPath(), "/path/to/disk");
+    EXPECT_EQ(config.GetLoaderPath(), "/path/to/loader");
 }
 } // namespace virtrust

@@ -18,6 +18,6 @@ constexpr std::string_view LIBVIRTRUSTD_SERVER_ADDR_MASK = "127.0.0.1/8";
 constexpr std::string_view LIBVIRTRUSTD_CA_PATH = "ca-cert.pem";
 constexpr std::string_view LIBVIRTRUSTD_CERT_PATH = "server-cert.pem";
 constexpr std::string_view LIBVIRTRUSTD_SK_PATH = "server-sk.pem";
-constexpr std::string_view LIBVIRTRUSTD_SERVER_PORT = 10086;
+constexpr uint16_t LIBVIRTRUSTD_SERVER_PORT = 10086;
 
 } // namespace virtrust
