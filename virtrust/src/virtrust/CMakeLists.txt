@@ -27,4 +27,4 @@ target_include_directories(
   virtrust-shared PRIVATE ${CMAKE_DEPS_INCLUDEDIR}
                           $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
-target_link_libraries(virtrust-shared PRIVATE Deps::spdlog Deps::secure_c)
+target_link_libraries(virtrust-shared PRIVATE Deps::spdlog boundscheck)
