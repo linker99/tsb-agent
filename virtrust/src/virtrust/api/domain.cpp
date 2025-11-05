@@ -690,7 +690,7 @@ VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
 {
     // 使用按位与操作来检查value是否包含无效的标志
     VIRTRUST_LOG_DEBUG("|DomainList||START||");
-    if ((flags & LIST_DOMAINS_MASK) != flags) {
+    if (flags == 0 || (flags & LIST_DOMAINS_MASK) != flags) {
         VIRTRUST_LOG_ERROR("|DomainList|END|returnF||invalid flags, support value "
                            "see DomainListFlags.");
         return VirtrustRc::ERROR;
@@ -828,7 +828,7 @@ VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::strin
         return VirtrustRc::ERROR;
     }
     if (flags != DOMAIN_UNDEFINE_NVRAM && flags != DOMAIN_UNDEFINE_KEEP_NVRAM && flags != 0) {
-        VIRTRUST_LOG_ERROR("DomainUndefine|END|returnF||flags only suppport:{},and {}",
+        VIRTRUST_LOG_ERROR("DomainUndefine|END|returnF||flags only suppport:0,{},and {}",
                            static_cast<int>(DOMAIN_UNDEFINE_NVRAM), static_cast<int>(DOMAIN_UNDEFINE_KEEP_NVRAM));
         return VirtrustRc::ERROR;
     }
