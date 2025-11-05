@@ -289,7 +289,7 @@ VirtrustRc CheckCreateDomainName(const std::string &arg, std::string &domainName
     }
     // 处理--name=***或-n=***或-n*****
     bool isLongContainsName = arg.length() > 7 && arg.substr(0, 7) == "--name="; // 7是--name=的长度
-    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n";     // 这里大于3是处理-n并且紧跟字符的情况
+    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n"; // 这里大于3是处理-n并且紧跟字符的情况
     if (isLongContainsName || isShortContainsName) {
         if (isLongContainsName || (isLongContainsName && arg.find('=') != std::string::npos)) {
             domainName = arg.substr(arg.find('=') + 1);
@@ -366,12 +366,12 @@ VirtrustRc CreateDomainAndVRoot(const std::unique_ptr<ConnCtx> &conn, const std:
     auto &libvirt = Libvirt::GetInstance();
     auto domain = std::make_unique<DomainCtx>(conn, domainName);
     if (domain->Get() == nullptr) {
-        VIRTRUST_LOG_ERROR("failed to find domain: {}", domainName);
+        VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF|failed to find domain: {}", domainName);
         return VirtrustRc::ERROR;
     }
     char uuid[VIR_UUID_STRING_BUFLEN];
     if (libvirt.virDomainGetUUIDString(domain->Get(), uuid) < 0) {
-        VIRTRUST_LOG_ERROR("Failed to get domain uuid: {}", domainName);
+        VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF|Failed to get domain uuid: {}", domainName);
         return VirtrustRc::ERROR;
     }
     Description description{};
@@ -393,7 +393,8 @@ VirtrustRc CreateDomainAndVRoot(const std::unique_ptr<ConnCtx> &conn, const std:
         (void)UndefineDomainWithRetry(domain, domainName, VIR_DOMAIN_UNDEFINE_NVRAM, libvirt);
         return VirtrustRc::ERROR;
     }
-    if (allowStoreMeasurements) {
+    if (!allowStoreMeasurements) {
+        VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||");
         return VirtrustRc::OK;
     }
     std::string uuidStr(uuid);
@@ -455,7 +456,7 @@ VirtrustRc UndefineTsbResource(const std::string &domainName)
         return VirtrustRc::ERROR;
     }
     FreeDescription(&tsbVmInfo);
-    VIRTRUST_LOG_DEBUG("DomainUndefine UndefineTsbResource|END|returns||", domainName);
+    VIRTRUST_LOG_DEBUG("DomainUndefine UndefineTsbResource|END|returns||domainName: {}", domainName);
     return VirtrustRc::OK;
 }
 
@@ -489,15 +490,27 @@ bool ConsistencyCheck(const std::unordered_map<std::string, Description> &tsbVmM
 
     for (const auto &tsb : tsbVmMapCopy) {
         auto virtIter = virtVmMapCopy.find(tsb.first);
-        if (virtIter == virtVmMapCopy.end() || virtIter->second.domainName != tsb.second.name ||
-            !(CompareTsbVirtState(tsb.second.state, virtIter->second.state))) {
+        if (virtIter == virtVmMapCopy.end() || virtIter->second.domainName != tsb.second.name) {
+            errMap.emplace(tsb.first,
+                           std::make_pair(LogLevel::ERROR,
+                                          fmt::format("Inconsistent vm (tsb uuid:{}, name {}) dose not exist or "
+                                                      "its data is inconsistent with virsh, consider removing this "
+                                                      "instance by \"virtrust-sh "
+                                                      "undefine --only-tsb DOMAIN_UUID\".",
+                                                      tsb.first, tsb.second.name)));
+            out = false;
+            continue;
+        }
+
+        if (!(CompareTsbVirtState(tsb.second.state, virtIter->second.state))) {
             errMap.emplace(
                 tsb.first,
-                std::make_pair(LogLevel::ERROR, fmt::format("Inconsistent vm (tsb uuid:{}, name {}) dose not exist or "
-                                                            "its data is inconsistent with tsb, consider removing this "
-                                                            "instance by \"virsh undefine DOMAIN_NAME\", or\"virtrust "
-                                                            "undefine --only-tsb DOMAIN_UUID\".",
-                                                            tsb.first, tsb.second.name)));
+                std::make_pair(LogLevel::ERROR,
+                               fmt::format("Inconsistent vm (tsb uuid:{}, name {}) "
+                                           "its data is inconsistent with tsb, consider update this "
+                                           "instance by \"virsh start/destroy DOMAIN_NAME\", or\"virtrust-sh "
+                                           "start/destroy --only-tsb DOMAIN_UUID\".",
+                                           tsb.first, tsb.second.name)));
             out = false;
             continue;
         }
@@ -841,15 +854,17 @@ VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::strin
         VIRTRUST_LOG_ERROR("|DomainUndefine|END|returnF||failed to get domain uuid: {}", domainName);
         return VirtrustRc::ERROR;
     }
+
+    if (UndefineDomainWithRetry(domain, domainName, flags, libvirt) != VirtrustRc::OK) {
+        return VirtrustRc::ERROR;
+    }
+
     int tsbRet = RemoveVRoot(uuid);
     if (tsbRet != 0) {
         VIRTRUST_LOG_ERROR("|DomainUndefine|END|returnF||tsb resource remove "
                            "failed, maybe not exist tsb resource uuid: "
                            "{},domainName: {},use virsh to undefine domain.",
                            uuid, domainName);
-        return VirtrustRc::ERROR;
-    }
-    if (UndefineDomainWithRetry(domain, domainName, flags, libvirt) != VirtrustRc::OK) {
         return VirtrustRc::ERROR;
     }
     VIRTRUST_LOG_DEBUG("|DomainUndefine|END|returnS||domainName: {}", domainName);

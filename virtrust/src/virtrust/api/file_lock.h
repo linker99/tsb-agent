@@ -44,7 +44,7 @@ public:
     }
 
 private:
-    static constexpr mode_t LOCK_FILE_PERMISSIONS = 0644;
+    static constexpr mode_t LOCK_FILE_PERMISSIONS = 0666;
     int fd_ = -1;
 };
 
