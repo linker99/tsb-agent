@@ -28,6 +28,18 @@ inline std::string GetIdStr(const std::unique_ptr<ConnCtx> &conn, const std::str
     return id == std::numeric_limits<unsigned int>::max() ? "-" : std::to_string(id);
 }
 
+inline unsigned int GetIdInt(const std::unique_ptr<ConnCtx> &conn, const std::string &name)
+{
+    auto &libvirt = Libvirt::GetInstance();
+    auto *domain = libvirt.virDomainLookupByName(conn->Get(), name.data());
+    if (domain == nullptr) {
+        return std::numeric_limits<unsigned int>::max();
+    }
+    auto id = libvirt.virDomainGetID(domain);
+    libvirt.virDomainFree(domain);
+    return id;
+}
+
 inline std::string GetStateStr(int state)
 {
     switch (state) {
@@ -45,6 +57,40 @@ inline std::string GetStateStr(int state)
             return "unknown";
     }
 }
+
+struct DomainInfoForSort {
+    unsigned int id;
+    DomainInfo domainInfo;
+};
+
+std::vector<DomainInfoForSort> GetSortedDomainInfos(const std::unique_ptr<ConnCtx> &conn,
+                                                    const std::unordered_map<std::string, DomainInfo> &domainInfos,
+                                                    size_t &maxNameLen)
+
+{
+    std::vector<DomainInfoForSort> sortedInfos;
+    sortedInfos.reserve(domainInfos.size());
+    for (const auto &[key, info] : domainInfos) {
+        DomainInfoForSort item;
+        item.id = GetIdInt(conn, info.domainName);
+        item.domainInfo = info;
+        sortedInfos.push_back(item);
+        maxNameLen = std::max(maxNameLen, info.domainName.length());
+    }
+    // 自定义排序
+    std::sort(sortedInfos.begin(), sortedInfos.end(), [](const DomainInfoForSort &lhs, const DomainInfoForSort &rhs) {
+        if (lhs.id != rhs.id) {
+            return lhs.id < rhs.id;
+        } else if (lhs.domainInfo.state != rhs.domainInfo.state) {
+            return lhs.domainInfo.state < rhs.domainInfo.state;
+
+        } else {
+            return lhs.domainInfo.domainName < rhs.domainInfo.domainName;
+        }
+    });
+    return sortedInfos;
+}
+
 } // namespace
 
 OpRc OpList::Exec()
@@ -68,11 +114,17 @@ OpRc OpList::Exec()
         return ParseVirtrustRc(rc);
     }
 
-    fmt::print("\n{:5} {:15} {:<10}\n", "ID", "NAME", "STATE");
-    fmt::print("------------------------------\n");
-    for (const auto &domain : domainInfos) {
-        fmt::print("\n{:5} {:15} {:<10}\n", GetIdStr(conn_, domain.second.domainName), domain.second.domainName,
-                   GetStateStr(domain.second.state));
+    size_t maxNameLen = 5;
+    std::vector<DomainInfoForSort> sortedInfos = GetSortedDomainInfos(conn_, domainInfos, maxNameLen);
+
+    fmt::print("\n{:5} {:{}} {:<10}\n", "Id", "Name", maxNameLen + 2, "State");
+    std::string separator(maxNameLen + 19, '-');
+
+    fmt::print("{}\n", separator);
+    for (const auto &item : sortedInfos) {
+        fmt::print("\n{:5} {:{}} {:<10}\n",
+                   item.id == std::numeric_limits<unsigned int>::max() ? "-" : std::to_string(item.id),
+                   item.domainInfo.domainName, maxNameLen + 2, GetStateStr(item.domainInfo.state));
     }
 
     return OpRc::OK;
