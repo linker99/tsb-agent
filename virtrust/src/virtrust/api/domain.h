@@ -50,14 +50,14 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
 /**
  * 删除虚拟机
  * @param conn 连接参数
- * @param flags
+ * @param flags 默认为0，其他值
  * 见DomainUndefineFlags,DOMAIN_UNDEFINE_NVRAM和DOMAIN_UNDEFINE_KEEP_NVRAM仅支持同一时间指定一种
  * @param domainName 虚拟机名称，isOnlyTsb为true时只更新tsb相关资源
  * 为虚拟机UUID，当isOnlyTsb为true时将忽略flags入参
  * @param isOnlyTsb 是否只删除tsb资源，为true时只删除tsb资源
  * @return VirtrustRc
  */
-VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags,
+VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags = 0,
                           bool isOnlyTsb = false);
 
 /**
