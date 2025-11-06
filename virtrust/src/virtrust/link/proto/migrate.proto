@@ -1,0 +1,88 @@
+syntax = "proto3";
+
+package virtrust.protos;
+
+// The greeting service definition.
+service MigrationService {
+  // 1: 准备迁移
+  rpc PrepareMigration (PrepareMigRequest) returns (PrepareMigReply) {}
+
+  // 2: 交换公钥
+  rpc ExchangePkAndReport(EXchangePkAndReportRequest) returns(EXchangePkAndReportReply) {}
+
+
+  //3: 开始迁移
+  rpc StartMigration(StartMigRequest) returns(StartMigReply) {}
+
+
+  // 4：迁移虚机密码资源
+  rpc  SendVRsourceData(VRsourceInfoRequest) returns(VRsourceInfoReply) {}
+
+  //5: 通知迁移结果
+  rpc  NotifyVRMigrateResult(MigrateResultRequest) returns (MigrateResultReply) {}
+
+  // 6: 迁移请求
+  rpc DomainMigrate(DomainMigraterRequest) returns (DomainMigraterReply) {}
+
+}
+
+message DomainMigraterRequest {
+    string domainName = 1;
+}
+
+message DomainMigraterReply {
+  uint32 result = 1;
+}
+
+message PrepareMigRequest {
+     string domainName = 1;
+     string uuid = 2;
+}
+
+message PrepareMigReply {
+     uint32 result = 1;
+}
+
+message EXchangePkAndReportRequest {
+    string domainName = 1;
+    string uuid = 2;
+	  string report = 3; // struct
+	  string publicKey = 4;  //公钥
+}
+
+message EXchangePkAndReportReply{
+  uint32 result = 1;
+  string domainName = 2;
+  string uuid = 3;
+  string report = 4; // struct
+  string publicKey = 5;  //公钥
+
+}
+
+message StartMigRequest {
+     string domainName = 1;
+     string uuid = 2;
+}
+
+message StartMigReply {
+     uint32 result = 1;
+}
+
+message VRsourceInfoRequest{
+   string data = 1;
+   string uuid = 2;
+}
+
+message  VRsourceInfoReply{
+  uint32 result = 1;
+}
+
+message MigrateResultRequest {
+  uint32 result = 1;
+  string domainName = 2;
+  string uuid = 3;
+}
+
+message MigrateResultReply {
+  uint32 result = 1;
+}
