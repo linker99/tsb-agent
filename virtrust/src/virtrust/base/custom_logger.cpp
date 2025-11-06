@@ -33,13 +33,13 @@ std::string LogLevelToStr(LogLevel level)
         case LogLevel::DEBUG:
             return "DEBUG";
         case LogLevel::INFO:
-            return "INFO ";
+            return "INFO";
         case LogLevel::WARN:
-            return "WARN ";
+            return "WARN";
         case LogLevel::ERROR:
             return "ERROR";
         case LogLevel::CRITICAL:
-            return "FATAL";
+            return "CRITICAL";
         default:
             return "UNKNOWN";
     }
@@ -103,6 +103,13 @@ VirtrustRc Logger::InitLog(int logLevel, const char *path, int rotationFileSize,
                    LogAdapt::gLastErrorMessage);
         return rc;
     }
+    
+    rc = LogAdapt::CreateInstance(logType, logLevel, path, rotationFileSize, rotationFileCount);
+    if (rc != VirtrustRc::OK) {
+        fmt::print(stderr, "LogAdapt create instance failed, return: {}", static_cast<uint32_t>(rc));
+        return rc;
+    }
+    
     displayLogLevel_ = static_cast<LogLevel>(logLevel);
     return VirtrustRc::OK;
 }

@@ -98,7 +98,7 @@ TEST(OpStartTest, ParseArgvDomainNameStorageTest)
 
     // Test with domain name is properly stored
     const char *argv[] = {"op_start", "complex-domain-123"};
-    int argc = 3;
+    int argc = 2;
 
     OpRc result = opStart.ParseArgv(argc, const_cast<char **>(argv));
 

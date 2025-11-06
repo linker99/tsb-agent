@@ -107,9 +107,6 @@ TEST(CustomLogger, DiaplayLogLevel)
     auto initial_level = Logger::Instance()->GetDisplayLogLevel();
     EXPECT_EQ(initial_level, LogLevel::INFO);
 
-    // Init log first
-    Logger::Instance()->InitLog();
-
     // Change display level
     Logger::Instance()->SetDisplayLogLevel(LogLevel::DEBUG);
 

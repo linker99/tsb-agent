@@ -161,11 +161,11 @@ int MigrationCheckPeerPk(char *pUuid, // 物理机的uuid
                          char *vUuid, // 虚拟机的uuid
                          char *pk1, char *pk2);
 
-int MigrationGetVrootCipher(char *pUuid, // 物理机的uuid
+int MigrationGetVRootCipher(char *pUuid, // 物理机的uuid
                             char *vUuid, // 虚拟机的uuid
                             char **cipher);
 
-int MigrationImportVrootCipher(char *pUuid, // 物理机的uuid
+int MigrationImportVRootCipher(char *pUuid, // 物理机的uuid
                                char *vUuid, // 虚拟机的uuid
                                char *cipher);
 

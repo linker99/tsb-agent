@@ -30,10 +30,11 @@ TEST(Exception, Compares)
     ASSERT_NO_THROW(VIRTRUST_ENFORCE_GE(1, 1));
 
     ASSERT_THROW(VIRTRUST_ENFORCE_LT(1, 0), EnforceNotMet);
+    ASSERT_THROW(VIRTRUST_ENFORCE_LT(1, 1), EnforceNotMet);
     ASSERT_NO_THROW(VIRTRUST_ENFORCE_LT(0, 1));
 
     ASSERT_THROW(VIRTRUST_ENFORCE_GT(0, 1), EnforceNotMet);
-    ASSERT_NO_THROW(VIRTRUST_ENFORCE_Gt(1, 0));
+    ASSERT_NO_THROW(VIRTRUST_ENFORCE_GT(1, 0));
 }
 
 TEST(Exception, CompareWithMessages)
@@ -43,7 +44,7 @@ TEST(Exception, CompareWithMessages)
         FAIL() << "Should have thrown EnforceNotMet exception";
     } catch (const EnforceNotMet &e) {
         EXPECT_NE(std::string(e.what()).find("1 vs 2"), std::string::npos);
-        EXPECT_NE(std::string(e.what()).find("Excepted 1 to equal 2"), std::string::npos);
+        EXPECT_NE(std::string(e.what()).find("Expected 1 to equal 2"), std::string::npos);
     }
 
     try {
@@ -61,7 +62,7 @@ TEST(Exception, EnforceThat)
     ASSERT_NO_THROW(VIRTRUST_ENFORCE_THAT(enforce_detail::Equals(1, 1), "Values should be equal"));
 
     try {
-        ASSERT_ENFORCE_THAT(enforce_detail::Equals(1, 2), "Values should be equal");
+        VIRTRUST_ENFORCE_THAT(enforce_detail::Equals(1, 2), "Values should be equal");
         FAIL() << "Should have thrown EnforceNotMet exception";
     } catch (const EnforceNotMet &e) {
         EXPECT_NE(std::string(e.what()).find("1 vs 2"), std::string::npos);

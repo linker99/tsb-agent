@@ -4,7 +4,7 @@ set(VIRTRUST_SOURCE_FILES
     ${VIRTURST_SOURCE_FILES} ${CMAKE_CURRENT_LIST_DIR}/context.cpp
     ${CMAKE_CURRENT_LIST_DIR}/domain.cpp)
 
-# add_virtrust_test_if(domain_test ${BUILD_TEST})
+add_virtrust_test_if(domain_test ${BUILD_TEST})
 
 set(VIRTRUST_SOURCE_FILES
     ${VIRTRUST_SOURCE_FILES}

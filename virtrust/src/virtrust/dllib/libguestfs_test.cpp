@@ -12,7 +12,7 @@ TEST(LibGuestfsTest, works)
 {
     // Init
     auto &libguestfs = Libguestfs::GetInstance();
-    EXPECT_EQ(libguestfs.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libguestfs.CheckOk(), DllibRc::OK);
 
     // Explicity reload
     auto ret = libguestfs.Reload();
@@ -36,14 +36,14 @@ TEST(LibGuestfsTest, SingletonPattern)
     EXPECT_EQ(&libguestfs1, &libguestfs2);
 }
 
-TEST(LibGuestfsTest, CheckOKFunction)
+TEST(LibGuestfsTest, CheckOkFunction)
 {
-    // Test the CheckOK function
+    // Test the CheckOk function
     auto &libguestfs = Libguestfs::GetInstance();
-    EXPECT_EQ(libguestfs.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libguestfs.CheckOk(), DllibRc::OK);
 
     // Test size function
-    EXPECT_GT(libguestfs.size(), (size_t)0);
+    EXPECT_GT(libguestfs.Size(), (size_t)0);
 }
 
 TEST(LibGuestfsTest, ReloadFunction)
@@ -52,14 +52,14 @@ TEST(LibGuestfsTest, ReloadFunction)
     auto &libguestfs = Libguestfs::GetInstance();
 
     // check inital state
-    EXPECT_EQ(libguestfs.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libguestfs.CheckOk(), DllibRc::OK);
 
     // Reload the library
     auto ret = libguestfs.Reload();
     EXPECT_EQ(ret, DllibRc::OK);
 
     // Verify it's still working after reload
-    EXPECT_EQ(libguestfs.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libguestfs.CheckOk(), DllibRc::OK);
 }
 
 TEST(LibGuestfsTest, FunctionPointerValidity)
@@ -72,9 +72,9 @@ TEST(LibGuestfsTest, FunctionPointerValidity)
     EXPECT_NE(libguestfs.guestfs_launch.Get(), nullptr);
     EXPECT_NE(libguestfs.guestfs_close.Get(), nullptr);
 
-    // Test that functions can be called (without actaully executing)
-    EXPECT_FALSE(libguestfs.guestfs_create.GetName());
-    EXPECT_FALSE(libguestfs.guestfs_launch.GetName());
-    EXPECT_FALSE(libguestfs.guestfs_close.GetName());
+    // Test that functions can be called (without actually executing)
+    EXPECT_FALSE(libguestfs.guestfs_create.GetName().empty());
+    EXPECT_FALSE(libguestfs.guestfs_launch.GetName().empty());
+    EXPECT_FALSE(libguestfs.guestfs_close.GetName().empty());
 }
 } // namespace virtrust

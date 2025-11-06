@@ -8,3 +8,5 @@
 virtrust/build/*
 
 .vscode
+
+*.claude
