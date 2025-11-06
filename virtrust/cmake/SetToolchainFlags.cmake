@@ -56,7 +56,10 @@ endfunction()
 macro(set_toolchain_flags)
 
   # do no add runtime path information
-  set(CMAKE_SKIP_RPATH TRUE)
+  if(NOT BUILD_TEST)
+    set(CMAKE_SKIP_RPATH TRUE)
+    set(CMAKE_SKIP_BUILD_RPATH TRUE)
+  endif()
 
   # all warnings are treated as errors
   add_compiler_flags(-Wall)

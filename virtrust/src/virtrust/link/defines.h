@@ -1,8 +1,8 @@
 /*
-* Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-#pragma  once
+#pragma once
 
 #include <array>
 #include <cstdint>

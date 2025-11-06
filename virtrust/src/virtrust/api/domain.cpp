@@ -3,13 +3,13 @@
 #include "virtrust/api/domain.h"
 
 #include <fcntl.h>
+#include <securec.h>
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include <unordered_set>
 
-#include <securec.h>
 #include "spdlog/fmt/fmt.h"
 
 #include "virtrust-sh/defines.h"
@@ -19,10 +19,10 @@
 #include "virtrust/base/logger.h"
 #include "virtrust/crypto/sm3.h"
 #include "virtrust/dllib/libvirt.h"
+#include "virtrust/link/grpc_client.h"
 #include "virtrust/utils/file_io.h"
 #include "virtrust/utils/foreign_mounter.h"
 #include "virtrust/utils/virt_xml_parser.h"
-#include "virtrust/link/grpc_client.h"
 
 #ifdef USE_MOCK_TSB_AGENT
 #include "mock/tsb_agent_itf.h"
@@ -290,7 +290,7 @@ VirtrustRc CheckCreateDomainName(const std::string &arg, std::string &domainName
     }
     // 处理--name=***或-n=***或-n*****
     bool isLongContainsName = arg.length() > 7 && arg.substr(0, 7) == "--name="; // 7是--name=的长度
-    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n"; // 这里大于3是处理-n并且紧跟字符的情况
+    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n";     // 这里大于3是处理-n并且紧跟字符的情况
     if (isLongContainsName || isShortContainsName) {
         if (isLongContainsName || (isLongContainsName && arg.find('=') != std::string::npos)) {
             domainName = arg.substr(arg.find('=') + 1);

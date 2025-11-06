@@ -3,9 +3,9 @@
  */
 #include "virtrust/crypto/sm3.h"
 
-#include <vector>
-
 #include <securec.h>
+
+#include <vector>
 
 #include "virtrust/base/logger.h"
 #include "virtrust/dllib/openssl.h"

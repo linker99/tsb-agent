@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include <securec.h>
+
 #include <array>
 #include <cstdint>
 #include <string>
@@ -11,7 +13,6 @@
 #include <vector>
 
 #include "mock/tsb_agent_itf.h"
-#include <securec.h>
 
 namespace virtrust::mock {
 

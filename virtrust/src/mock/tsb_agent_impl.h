@@ -8,6 +8,8 @@
 #error "USE_MOCK_TSB_AGENT is not defined. Please define it if your want to use mock TSB agent."
 #else
 
+#include <securec.h>
+
 #include <cstdint>
 #include <filesystem>
 #include <memory>
@@ -17,7 +19,6 @@
 
 #include "mock/tsb_agent_itf.h"
 #include "mock/v_root.h"
-#include <securec.h>
 #include "spdlog/spdlog.h"
 
 namespace virtrust::mock {
