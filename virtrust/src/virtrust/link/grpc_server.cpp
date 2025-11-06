@@ -4,12 +4,11 @@
 
 #include "virtrust/link/grpc_server.h"
 
-#include "migration_service_impl.h"
-
 #include "virtrust/base/logger.h"
 #include "virtrust/link/defines.h"
+#include "virtrust/link/migration_service_impl.h"
 
-#include "proto/migrate.grpc.pb.h"
+#include "virtrust/link/proto/migrate.grpc.pb.h"
 
 namespace virtrust {
 using grpc::Server;

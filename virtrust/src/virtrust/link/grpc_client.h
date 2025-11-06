@@ -2,11 +2,13 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-#include <grpcpp/grpcpp.h>
+#pragma once
 
 #include <string>
 
-#include "migration_service_impl.h"
+#include "virtrust/link/defines.h"
+
+#include "virtrust/link/proto/migrate.grpc.pb.h"
 
 namespace virtrust {
 // 给virsh-sh命令行使用
@@ -14,7 +16,7 @@ class UdsClient {
 public:
     explicit UdsClient(LinkConfig config);
 
-    int32_t DomainMigrate(const std::string &domainName);
+    int32_t DomainMigrate(const std::string &domainName, const std::string &uuid, const LinkConfig &config);
 
 private:
     LinkConfig config_;
