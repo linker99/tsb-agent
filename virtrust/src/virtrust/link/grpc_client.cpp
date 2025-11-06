@@ -1,20 +1,28 @@
-#include "grpc_client.h"
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+ */
+
+#include "virtrust/link/grpc_client.h"
 
 #include <grpcpp/grpcpp.h>
 
-#include <fstream>
-#include <iostream>
 #include <memory>
 #include <string>
+
+#include "virtrust/link/defines.h"
 
 namespace virtrust {
 UdsClient::UdsClient(LinkConfig config) : config_(config)
 {}
 
-int32_t UdsClient::DomainMigrate(const std::string &domainName)
+int32_t UdsClient::DomainMigrate(const std::string &domainName, const std::string &uuid, const LinkConfig &config)
 {
     protos::DomainMigraterRequest request;
     request.set_domainname(domainName);
+    request.set_uuid(uuid);
+    request.set_ip(config.ip);
+    request.set_ipmask(config.ipMask);
+    request.set_port(config.port);
 
     // Container for the response from the server.
     protos::DomainMigraterReply reply;

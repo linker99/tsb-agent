@@ -2,19 +2,15 @@
  * Copyright (C) Huawei Technologies Co., Ltd. 2025-2025.All rights reserved.
  */
 
-#include "migration_service_impl.h"
+#include "virtrust/link/migration_service_impl.h"
 
-#include <getopt.h>
-#include <unistd.h>
-
-#include <csignal>
-#include <iostream>
+#include <memory>
 #include <thread>
-
-#include "grpc_client.h"
 
 #include "virtrust/base/logger.h"
 #include "virtrust/link/defines.h"
+#include "virtrust/link/grpc_client.h"
+#include "virtrust/link/migration_session.h"
 
 namespace virtrust {
 grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context,
@@ -64,10 +60,18 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
     LinkConfig config;
     RpcClient client(config);
 
-    uint32_t timeout = 5;
-    protos::PrepareMigRequest prepareRequest;
-    protos::PrepareMigReply prepareReply;
-    client.PrepareMigration(timeout, prepareRequest, &prepareReply);
+    auto &mgr = SessionManager::GetInstance();
+    // 以 domainName 作为本次简化的 sessionId（后续可替换为真正 UUID）
+    MigrationSession *session = mgr.CreateSession(request->domainname(), MigrationSession::Role::Initiator);
+    if (!session) {
+        response->set_result(1); // already exists or failed
+        return grpc::Status::OK;
+    }
+    // 初始化会话内的 RPC 客户端
+    session->SetRpcClient(std::make_unique<RpcClient>(config));
+    // 启动状态机（内部会依次调用 Prepare/Exchange/Start）
+    session->Start();
+    response->set_result(0);
     return grpc::Status::OK;
 }
 

@@ -290,7 +290,7 @@ VirtrustRc CheckCreateDomainName(const std::string &arg, std::string &domainName
     }
     // 处理--name=***或-n=***或-n*****
     bool isLongContainsName = arg.length() > 7 && arg.substr(0, 7) == "--name="; // 7是--name=的长度
-    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n";     // 这里大于3是处理-n并且紧跟字符的情况
+    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n"; // 这里大于3是处理-n并且紧跟字符的情况
     if (isLongContainsName || isShortContainsName) {
         if (isLongContainsName || (isLongContainsName && arg.find('=') != std::string::npos)) {
             domainName = arg.substr(arg.find('=') + 1);
@@ -759,7 +759,10 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
     LinkConfig config;
     config.udsPath = UDS_PATH;
     UdsClient client(config);
-    client.DomainMigrate(domainName);
+
+    // TODO: get uuid
+    std::string uuid = "";
+    client.DomainMigrate(domainName, uuid, config);
 
     if (libvirt.virDomainMigrate3(domain->Get(), destConn->Get(), nullptr, 0, 0) == nullptr) {
         VIRTRUST_LOG_ERROR("failed to migrate domain: {}", domainName);

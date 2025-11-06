@@ -12,7 +12,7 @@
 
 #include "virtrust/link/defines.h"
 
-#include "proto/migrate.grpc.pb.h"
+#include "virtrust/link/proto/migrate.grpc.pb.h"
 
 namespace virtrust {
 class MigrationServiceImpl final : public protos::MigrationService::Service {
