@@ -8,13 +8,14 @@
 #include <csignal>
 #include <iostream>
 #include <thread>
-#include "virtrust/link/grpc_server.h"
-#include "virtrust/api/defines.h"
+
 #include "libvirtrustd/defines.h"
 #include "libvirtrustd/utils.h"
 #include "spdlog/fmt/bundled/core.h"
 
+#include "virtrust/api/defines.h"
 #include "virtrust/base/logger.h"
+#include "virtrust/link/grpc_server.h"
 
 namespace virtrust {
 namespace {
@@ -95,7 +96,7 @@ int ProcessArgs(int argc, char **argv)
     auto ret = MakeLinkConfigFromJsonFile(configPath);
     if (ret.has_value()) {
         GrpcServer sever(ret.value());
-        fmt::print("start link config. Exiting...{}, {}\n",  ret.value().udsPath, ret.value().caPath);
+        fmt::print("start link config. Exiting...{}, {}\n", ret.value().udsPath, ret.value().caPath);
         LinkRc linkRc = sever.Start();
         if (linkRc != LinkRc::OK) {
             fmt::print("Failed to start link config. Exiting...\n");

@@ -15,7 +15,7 @@ namespace virtrust::mock {
 
 // Test fixture for TSB agent interface tests
 class TsbAgentItfTest : public ::testing::Test {
-    protected:
+protected:
     // Helper method to verify that a function returns OK
     static void VerifyOK(int result, const char *function_name)
     {
@@ -201,7 +201,7 @@ TEST_F(TsbAgentItfTest, DISABLED_MigrationGetVRootCipher)
 
     // Verify the function returns OK
     VerifyOK(result, "MigrationGetVRootCipher");
-    
+
     // Clean up
     if (cipher != nullptr) {
         free(cipher);
@@ -235,4 +235,4 @@ TEST_F(TsbAgentItfTest, DISABLED_MigrationNotify)
     // Verify the function returns OK
     VerifyOK(result, "MigrationNotify");
 }
-} // namespace virtrust
+} // namespace virtrust::mock

@@ -19,9 +19,13 @@ ExternalProject_Add(
   LOG_BUILD On
   LOG_INSTALL On)
 
-import_shared_lib_from(libboundscheck libboundscheck-src)
+add_library(libboundscheck-itf INTERFACE)
+target_link_directories(libboundscheck-itf INTERFACE ${CMAKE_DEPS_LIBDIR})
+target_link_libraries(libboundscheck-itf
+                      INTERFACE libboundscheck${CMAKE_SHARED_LIBRARY_SUFFIX})
+add_dependencies(libboundscheck-itf libboundscheck-src)
 
 # -----------------------------
 # Alias Target for External Use
 # -----------------------------
-add_library(Deps::secure_c ALIAS libboundscheck)
+add_library(Deps::secure_c ALIAS libboundscheck-itf)

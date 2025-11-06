@@ -14,8 +14,8 @@ namespace virtrust {
 namespace {
 std::string GetTestXml()
 {
-  auto filePath = std::filesystem::path(__FILE__);
-  return (filePath / ".." / ".." / ".." / ".." / "test" / "data" / "test.xml").lexically_normal().string();
+    auto filePath = std::filesystem::path(__FILE__);
+    return (filePath / ".." / ".." / ".." / ".." / "test" / "data" / "test.xml").lexically_normal().string();
 }
 
 constexpr std::string_view TEST_GUEST_NAME = "open-euler-vm";
@@ -26,52 +26,51 @@ constexpr std::string_view TEST_GRUB_PATH = "/boot/efi/EFI/openEuler/grubaa64";
 constexpr std::string_view TEST_GRUB_CFG_PATH = "/boot/efi/EFI/openEuler/grub.cfg";
 } // namespace
 
-
 TEST(VirtXmlParserTest, ParseTest)
 {
-  auto parse = VirtXmlParser();
-  auto config = parse.Parse(GetTestXml());
+    auto parse = VirtXmlParser();
+    auto config = parse.Parse(GetTestXml());
 
-  EXPECT_EQ(config.GetGuestName(), TEST_GUEST_NAME);
-  EXPECT_EQ(config.GetDiskPath(), TEST_DISK_PATH);
-  EXPECT_EQ(config.GetLoaderPath(), TEST_LOADER_PATH);
-  EXPECT_EQ(config.GetShimPath(), TEST_SHIM_PATH);
-  EXPECT_EQ(config.GetGrubPath(), TEST_GRUB_PATH);
-  EXPECT_EQ(config.GetGrubCfgPath(), TEST_GRUB_CFG_PATH);
+    EXPECT_EQ(config.GetGuestName(), TEST_GUEST_NAME);
+    EXPECT_EQ(config.GetDiskPath(), TEST_DISK_PATH);
+    EXPECT_EQ(config.GetLoaderPath(), TEST_LOADER_PATH);
+    EXPECT_EQ(config.GetShimPath(), TEST_SHIM_PATH);
+    EXPECT_EQ(config.GetGrubPath(), TEST_GRUB_PATH);
+    EXPECT_EQ(config.GetGrubCfgPath(), TEST_GRUB_CFG_PATH);
 }
 
 TEST(VirtXmlParserTest, LoadFileTest)
 {
-  // Test valid file loading
-  auto parse = VirtXmlParser();
-  EXPECT_TRUE(parse.LoadFile(GetTestXml()));
+    // Test valid file loading
+    auto parse = VirtXmlParser();
+    EXPECT_TRUE(parse.LoadFile(GetTestXml()));
 
-  // Test invalid file path
-  EXPECT_FALSE(parse.LoadFile("/non/existent/file.xml"));
+    // Test invalid file path
+    EXPECT_FALSE(parse.LoadFile("/non/existent/file.xml"));
 
-  // Test empty file name
-  EXPECT_FALSE(parse.LoadFile(""));
+    // Test empty file name
+    EXPECT_FALSE(parse.LoadFile(""));
 }
 
 TEST(VirtXmlParserTest, FindNodesByPathTest)
 {
-  auto parse = VirtXmlParser();
-  EXPECT_TRUE(parse.LoadFile(GetTestXml()));
+    auto parse = VirtXmlParser();
+    EXPECT_TRUE(parse.LoadFile(GetTestXml()));
 
-  // Test valid file path
-  auto nodes = parse.FindNodesByPath("/domain/name");
-  EXPECT_EQ(nodes.size(), 1);
+    // Test valid file path
+    auto nodes = parse.FindNodesByPath("/domain/name");
+    EXPECT_EQ(nodes.size(), 1);
 
-  // Test invalid file path
-  auto emptyNodes = parse.FindNodesByPath("/domain/nonexistent");
-  EXPECT_TRUE(emptyNodes.empty());
+    // Test invalid file path
+    auto emptyNodes = parse.FindNodesByPath("/domain/nonexistent");
+    EXPECT_TRUE(emptyNodes.empty());
 
-  // Test empty path
-  auto emptyPathNodes = parse.FindNodesByPath("");
-  EXPECT_TRUE(emptyPathNodes.empty());
+    // Test empty path
+    auto emptyPathNodes = parse.FindNodesByPath("");
+    EXPECT_TRUE(emptyPathNodes.empty());
 
-  // Test non-absolute path
-  auto nonAbsNodes = parse.FindNodesByPath("domain/name");
-  EXPECT_TRUE(nonAbsNodes.empty());
+    // Test non-absolute path
+    auto nonAbsNodes = parse.FindNodesByPath("domain/name");
+    EXPECT_TRUE(nonAbsNodes.empty());
 }
 } // namespace virtrust

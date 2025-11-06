@@ -3,13 +3,13 @@
 #include "virtrust/api/domain.h"
 
 #include <fcntl.h>
+#include <securec.h>
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
 #include <unordered_set>
 
-#include <securec.h>
 #include "spdlog/fmt/fmt.h"
 
 #include "virtrust-sh/defines.h"
@@ -19,10 +19,10 @@
 #include "virtrust/base/logger.h"
 #include "virtrust/crypto/sm3.h"
 #include "virtrust/dllib/libvirt.h"
+#include "virtrust/link/grpc_client.h"
 #include "virtrust/utils/file_io.h"
 #include "virtrust/utils/foreign_mounter.h"
 #include "virtrust/utils/virt_xml_parser.h"
-#include "virtrust/link/grpc_client.h"
 
 #ifdef USE_MOCK_TSB_AGENT
 #include "mock/tsb_agent_itf.h"
@@ -759,7 +759,10 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
     LinkConfig config;
     config.udsPath = UDS_PATH;
     UdsClient client(config);
-    client.DomainMigrate(domainName);
+
+    // TODO: get uuid
+    std::string uuid = "";
+    client.DomainMigrate(domainName, uuid, config);
 
     if (libvirt.virDomainMigrate3(domain->Get(), destConn->Get(), nullptr, 0, 0) == nullptr) {
         VIRTRUST_LOG_ERROR("failed to migrate domain: {}", domainName);

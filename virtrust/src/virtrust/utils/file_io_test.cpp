@@ -3,8 +3,8 @@
  */
 
 #include <filesystem>
-#include <sstream>
 #include <fstream>
+#include <sstream>
 
 #include "gtest/gtest.h"
 
@@ -20,284 +20,283 @@ constexpr std::string_view TEST_FILE_CONTENT_LONG = "this is a test file.\nwith 
 
 std::string GetTestFilePath()
 {
-  // Get the project root path (Which is the directory)
-  auto filePath = std::filesystem::path(__FILE__);
-  return (filePath / ".." / ".." / ".." / ".." / "test" / "data" / "test.txt").lexically_normal().string();
+    // Get the project root path (Which is the directory)
+    auto filePath = std::filesystem::path(__FILE__);
+    return (filePath / ".." / ".." / ".." / ".." / "test" / "data" / "test.txt").lexically_normal().string();
 }
 
 std::string GetTempFilePath(const std::string &suffix = "")
 {
-  // Get the project root path (Which is the directory)
-  auto filePath = std::filesystem::path(__FILE__);
-  return (filePath / ".." / ".." / ".." / ".." / "test" / "data" / ("temp_file" + suffix + ".txt"))
-  .lexically_normal()
-  .string();
+    // Get the project root path (Which is the directory)
+    auto filePath = std::filesystem::path(__FILE__);
+    return (filePath / ".." / ".." / ".." / ".." / "test" / "data" / ("temp_file" + suffix + ".txt"))
+        .lexically_normal()
+        .string();
 }
 
 } // namespace
 
 TEST(FileIO, Works)
 {
-  std::string path(GetTestFilePath());
-  FileInputStream fis = FileInputStream(path);
-  std::string content = fis.ReadAll();
-  ASSERT_EQ(content, TEST_FILE_CONTENT);
+    std::string path(GetTestFilePath());
+    FileInputStream fis = FileInputStream(path);
+    std::string content = fis.ReadAll();
+    ASSERT_EQ(content, TEST_FILE_CONTENT);
 }
 
 TEST(FileIO, ReadAll)
 {
-  std::string path(GetTestFilePath());
-  FileInputStream fis = FileInputStream(path);
-  std::string content = fis.ReadAll();
-  ASSERT_EQ(content, TEST_FILE_CONTENT);
+    std::string path(GetTestFilePath());
+    FileInputStream fis = FileInputStream(path);
+    std::string content = fis.ReadAll();
+    ASSERT_EQ(content, TEST_FILE_CONTENT);
 }
 
 TEST(FileIO, GetLength)
 {
-  std::string path(GetTestFilePath());
-  FileInputStream fis = FileInputStream(path);
-  size_t length = fis.GetLength();
-  ASSERT_EQ(length, TEST_FILE_CONTENT.length());
+    std::string path(GetTestFilePath());
+    FileInputStream fis = FileInputStream(path);
+    size_t length = fis.GetLength();
+    ASSERT_EQ(length, TEST_FILE_CONTENT.length());
 }
 
 TEST(FileIO, GetName)
 {
-  std::string path(GetTestFilePath());
-  FileInputStream fis = FileInputStream(path);
-  const std::string &name = fis.GetName();
-  ASSERT_EQ(name, path);
+    std::string path(GetTestFilePath());
+    FileInputStream fis = FileInputStream(path);
+    const std::string &name = fis.GetName();
+    ASSERT_EQ(name, path);
 }
 
 TEST(FileIO, Eof)
 {
-  std::string path(GetTestFilePath());
-  FileInputStream fis = FileInputStream(path);
+    std::string path(GetTestFilePath());
+    FileInputStream fis = FileInputStream(path);
 
-  // Initially not at EOF
-  ASSERT_FALSE(fis.Eof());
-  
-  // Read all content
-  // NOTE EOF/FAIL bit get cleared inside this function
-  std::string content = fis.ReadAll();
-  EXPECT_FALSE(content.empty());
+    // Initially not at EOF
+    ASSERT_FALSE(fis.Eof());
+
+    // Read all content
+    // NOTE EOF/FAIL bit get cleared inside this function
+    std::string content = fis.ReadAll();
+    EXPECT_FALSE(content.empty());
 }
 
 TEST(FileIO, SeekgAndTellg)
 {
-  std::string path(GetTestFilePath());
-  FileInputStream fis = FileInputStream(path);
+    std::string path(GetTestFilePath());
+    FileInputStream fis = FileInputStream(path);
 
-  // Get initial position
-  size_t initialPos = fis.Tellg();
-  ASSERT_EQ(initialPos, static_cast<size_t>(0));
-  
-  // Read part of the file
-  std::string content;
-  fis.GetLine(&content, '\n');
+    // Get initial position
+    size_t initialPos = fis.Tellg();
+    ASSERT_EQ(initialPos, static_cast<size_t>(0));
 
-  // Get current position
-  size_t currentPos = fis.Tellg();
-  ASSERT_GT(currentPos, initialPos);
+    // Read part of the file
+    std::string content;
+    fis.GetLine(&content, '\n');
 
-  // Seek back to beginning
-  fis.Seekg(0);
-  size_t newPos = fis.Tellg();
-  ASSERT_EQ(newPos, static_cast<size_t>(0));
+    // Get current position
+    size_t currentPos = fis.Tellg();
+    ASSERT_GT(currentPos, initialPos);
+
+    // Seek back to beginning
+    fis.Seekg(0);
+    size_t newPos = fis.Tellg();
+    ASSERT_EQ(newPos, static_cast<size_t>(0));
 }
 
 TEST(FileIO, TransferTo)
 {
-  std::string path(GetTestFilePath());
-  FileInputStream fis = FileInputStream(path);
-  
-  std::ostringstream oss;
-  fis.TransferTo(oss);
+    std::string path(GetTestFilePath());
+    FileInputStream fis = FileInputStream(path);
 
-  ASSERT_EQ(oss.str(), TEST_FILE_CONTENT);
+    std::ostringstream oss;
+    fis.TransferTo(oss);
+
+    ASSERT_EQ(oss.str(), TEST_FILE_CONTENT);
 }
 
 TEST(FileIO, GetLine)
 {
-  std::string path(GetTestFilePath());
-  FileInputStream fis = FileInputStream(path);
-  
-  std::string line;
-  fis.GetLine(&line, '\n');
+    std::string path(GetTestFilePath());
+    FileInputStream fis = FileInputStream(path);
 
-  ASSERT_EQ(line, "this is a test file.");
+    std::string line;
+    fis.GetLine(&line, '\n');
+
+    ASSERT_EQ(line, "this is a test file.");
 }
 
 TEST(FileIO, Spawn)
 {
-  std::string path(GetTestFilePath());
-  FileInputStream fis = FileInputStream(path);
-  
-  // Save current position
-  size_t originalPos = fis.Tellg();
+    std::string path(GetTestFilePath());
+    FileInputStream fis = FileInputStream(path);
 
-  // Spawn a new stream from current position
-  auto spawnedStream = fis.Spawn();
+    // Save current position
+    size_t originalPos = fis.Tellg();
 
-  // Both streams should be at same position
-  ASSERT_EQ(spawnedStream->Tellg(), originalPos);
+    // Spawn a new stream from current position
+    auto spawnedStream = fis.Spawn();
 
-  // Original stream should still work
-  std::string line;
-  fis.GetLine(&line, '\n');
-  EXPECT_FALSE(line, "this is a test file.");
+    // Both streams should be at same position
+    ASSERT_EQ(spawnedStream->Tellg(), originalPos);
+
+    // Original stream should still work
+    std::string line;
+    fis.GetLine(&line, '\n');
+    EXPECT_FALSE(line, "this is a test file.");
 }
 
 TEST(FileIO, FileStreamOperators)
 {
-  std::string path(GetTestFilePath());
-  FileInputStream fis = FileInputStream(path);
-  
-  // Test boolean conversion operators
-  ASSERT_TRUE(static_cast<bool>(fis));
-  ASSERT_FALSE(!fis);
+    std::string path(GetTestFilePath());
+    FileInputStream fis = FileInputStream(path);
 
-  // Test with invalid file (should throw)
-  try {
-    FileInputStream invalidFis("nonexistent_file.txt");
-    FAIL() << "Should have thrown exception";
-  } catch (...) {
-    // Excepted
-  }
+    // Test boolean conversion operators
+    ASSERT_TRUE(static_cast<bool>(fis));
+    ASSERT_FALSE(!fis);
+
+    // Test with invalid file (should throw)
+    try {
+        FileInputStream invalidFis("nonexistent_file.txt");
+        FAIL() << "Should have thrown exception";
+    } catch (...) {
+        // Excepted
+    }
 }
 
 TEST(FileIO, FileInputStreamRead)
 {
-  std::string path(GetTestFilePath());
-  FileInputStream fis = FileInputStream(path);
-  size_t length = TEST_FILE_CONTENT.size();
-  //Test Read method with buffer
-  char buffer[MAX_BYTES_LENGTH];
-  fis.Read(buffer, length);
+    std::string path(GetTestFilePath());
+    FileInputStream fis = FileInputStream(path);
+    size_t length = TEST_FILE_CONTENT.size();
+    // Test Read method with buffer
+    char buffer[MAX_BYTES_LENGTH];
+    fis.Read(buffer, length);
 
-  std::string content(buffer, length);
-  ASSERT_EQ(content, TEST_FILE_CONTENT);
-  fis.Close();
+    std::string content(buffer, length);
+    ASSERT_EQ(content, TEST_FILE_CONTENT);
+    fis.Close();
 }
 
 TEST(FileIO, FileOutputStreamConstructAndDestroy)
 {
-  std::string tempPath = GetTempFilePath("_construct");
-  
-  // Test construction with trunc=true (default)
-  {
-    FileOutputStream fos(tempPath, true);
-    ASSERT_EQ(fos.GetName(), tempPath);
-  }
+    std::string tempPath = GetTempFilePath("_construct");
 
-  // Verify file was created
-  std::ifstream testFile(tempPath);
-  ASSERT_TRUE(testFile.good());
-  testFile.close();
+    // Test construction with trunc=true (default)
+    {
+        FileOutputStream fos(tempPath, true);
+        ASSERT_EQ(fos.GetName(), tempPath);
+    }
 
-  // Test construction with trunc=false (append mode)
-  {
-    FileOutputStream fos(tempPath, false);
-    ASSERT_EQ(fos.GetName(), tempPath);
-  }
+    // Verify file was created
+    std::ifstream testFile(tempPath);
+    ASSERT_TRUE(testFile.good());
+    testFile.close();
 
-  // Clean up
-  std::filesystem::remove(tempPath);
+    // Test construction with trunc=false (append mode)
+    {
+        FileOutputStream fos(tempPath, false);
+        ASSERT_EQ(fos.GetName(), tempPath);
+    }
+
+    // Clean up
+    std::filesystem::remove(tempPath);
 }
 
 TEST(FileIO, FileOutputStreamWrite)
 {
-  std::string tempPath = GetTempFilePath("_write");
-  
-  {
-    FileOutputStream fos(tempPath);
+    std::string tempPath = GetTempFilePath("_write");
 
-    // Test Write with buffer
-    const char* testData = "Hello World!";
-    fos.Write(testData, strlen(testData));
+    {
+        FileOutputStream fos(tempPath);
 
-    // Test Write with string_view
-    std::string_view testStr = "Test string";
-    fos.Write(testStr);
+        // Test Write with buffer
+        const char *testData = "Hello World!";
+        fos.Write(testData, strlen(testData));
 
-    // Test Write with string
-    std::string testStr2 = "Another test";
-    fos.Write(testStr2.data(), testStr2.size());
-  }
+        // Test Write with string_view
+        std::string_view testStr = "Test string";
+        fos.Write(testStr);
 
-  // Verify content was written
-  std::ifstream testFile(tempPath);
-  std::ostringstream oss;
-  oss << testFile.rdbuf();
-  std::string content = oss.str();
+        // Test Write with string
+        std::string testStr2 = "Another test";
+        fos.Write(testStr2.data(), testStr2.size());
+    }
 
-  ASSERT_NE(content.find("Hello World!"), std::string::npos);
-  ASSERT_NE(content.find("Test string"), std::string::npos);
-  ASSERT_NE(content.find("Another test"), std::string::npos);
+    // Verify content was written
+    std::ifstream testFile(tempPath);
+    std::ostringstream oss;
+    oss << testFile.rdbuf();
+    std::string content = oss.str();
 
-  testFile.close();
-  std::filesystem::remove(tempPath);
+    ASSERT_NE(content.find("Hello World!"), std::string::npos);
+    ASSERT_NE(content.find("Test string"), std::string::npos);
+    ASSERT_NE(content.find("Another test"), std::string::npos);
+
+    testFile.close();
+    std::filesystem::remove(tempPath);
 }
 
 TEST(FileIO, FileOutputStreamTellpAndFlush)
 {
-  std::string tempPath = GetTempFilePath("_tellp");
-  
-  {
-    FileOutputStream fos(tempPath);
+    std::string tempPath = GetTempFilePath("_tellp");
 
-    // Initial position should be 0
-    size_t initialPos = fos.Tellp();
-    ASSERT_EQ(initialPos, static_cast<size_t>(0));
+    {
+        FileOutputStream fos(tempPath);
 
-    // Write some data
-    const char* testData = "Test data";
-    fos.Write(testData, strlen(testData));
+        // Initial position should be 0
+        size_t initialPos = fos.Tellp();
+        ASSERT_EQ(initialPos, static_cast<size_t>(0));
 
-    // Position should be advanced
-    size_t afterWritePos = fos.Tellp();
-    ASSERT_EQ(afterWritePos, strlen(testData));
+        // Write some data
+        const char *testData = "Test data";
+        fos.Write(testData, strlen(testData));
 
-    // Test flush
-    fos.Flush();
-  }
+        // Position should be advanced
+        size_t afterWritePos = fos.Tellp();
+        ASSERT_EQ(afterWritePos, strlen(testData));
 
-  // Verify content was written
-  std::ifstream testFile(tempPath);
-  std::ostringstream oss;
-  oss << testFile.rdbuf();
-  std::string content = oss.str();
+        // Test flush
+        fos.Flush();
+    }
 
-  ASSERT_EQ(content, "Test data");
+    // Verify content was written
+    std::ifstream testFile(tempPath);
+    std::ostringstream oss;
+    oss << testFile.rdbuf();
+    std::string content = oss.str();
 
-  testFile.close();
-  std::filesystem::remove(tempPath);
+    ASSERT_EQ(content, "Test data");
+
+    testFile.close();
+    std::filesystem::remove(tempPath);
 }
 
 TEST(FileIO, FileOutputStreamClose)
 {
-  std::string tempPath = GetTempFilePath("_close");
-  
-  {
-    FileOutputStream fos(tempPath);
-    const char* testData = "Test data";
-    fos.Write(testData, strlen(testData));
-  }
+    std::string tempPath = GetTempFilePath("_close");
 
-  // File should be closed and accessible
-  std::ifstream testFile(tempPath);
-  ASSERT_TRUE(testFile.good());
+    {
+        FileOutputStream fos(tempPath);
+        const char *testData = "Test data";
+        fos.Write(testData, strlen(testData));
+    }
 
-  std::string content((std::istreambuf_iterator<char>(testFile)),
-  std::istreambuf_iterator<char>());
+    // File should be closed and accessible
+    std::ifstream testFile(tempPath);
+    ASSERT_TRUE(testFile.good());
 
-  ASSERT_EQ(content, "Test data");
+    std::string content((std::istreambuf_iterator<char>(testFile)), std::istreambuf_iterator<char>());
 
-  testFile.close();
-  std::filesystem::remove(tempPath);
+    ASSERT_EQ(content, "Test data");
+
+    testFile.close();
+    std::filesystem::remove(tempPath);
 }
 
 TEST(FileIO, FileOutputStreamIsStreaming)
 {
-  ASSERT_FALSE(FileOutputStream::IsStreaming());
+    ASSERT_FALSE(FileOutputStream::IsStreaming());
 }
 } // namespace virtrust
