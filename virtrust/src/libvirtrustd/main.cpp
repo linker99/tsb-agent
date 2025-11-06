@@ -8,7 +8,8 @@
 #include <csignal>
 #include <iostream>
 #include <thread>
-
+#include "virtrust/link/grpc_server.h"
+#include "virtrust/api/defines.h"
 #include "libvirtrustd/defines.h"
 #include "libvirtrustd/utils.h"
 #include "spdlog/fmt/bundled/core.h"
@@ -93,14 +94,18 @@ int ProcessArgs(int argc, char **argv)
 
     auto ret = MakeLinkConfigFromJsonFile(configPath);
     if (ret.has_value()) {
-        // auto server = virtrust::LinkServer(ret.value());
-        // server.Start();
-        // REVIEW
+        GrpcServer sever(ret.value());
+        fmt::print("start link config. Exiting...{}, {}\n",  ret.value().udsPath, ret.value().caPath);
+        LinkRc linkRc = sever.Start();
+        if (linkRc != LinkRc::OK) {
+            fmt::print("Failed to start link config. Exiting...\n");
+            return 1;
+        }
 
-        // hold server until receives stop signal
         while (g_stopFlag == 0) {
             std::this_thread::sleep_for(std::chrono::seconds(1));
         }
+        sever.Stop();
     } else {
         // make link config failed
         return 1;

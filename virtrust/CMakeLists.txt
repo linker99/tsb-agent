@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.14.1)
+cmake_minimum_required(VERSION 3.22)
 project(virtrust CXX C)
 
 option(BUILD_TEST "Enable/Disable tests" On)
@@ -128,7 +128,7 @@ set(FETCHCONTENT_BASE_DIR ${CMAKE_DEPS_INSTALL_PREFIX}/src)
 
 include(ImportLibs)
 include(deps/openssl)
-#include(deps/libboundscheck)
+include(deps/libboundscheck)
 include(deps/spdlog)
 include(deps/gtest)
 include(deps/rapidjson)

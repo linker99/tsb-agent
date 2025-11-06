@@ -1,6 +1,8 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
+* Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
+
+#pragma  once
 
 #include <array>
 #include <cstdint>
@@ -22,6 +24,7 @@ struct LinkConfig {
     std::string ip;
     std::string ipMask;
     uint16_t port;
+    std::string udsPath;
 };
 
 } // namespace virtrust

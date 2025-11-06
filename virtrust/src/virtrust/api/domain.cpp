@@ -22,6 +22,7 @@
 #include "virtrust/utils/file_io.h"
 #include "virtrust/utils/foreign_mounter.h"
 #include "virtrust/utils/virt_xml_parser.h"
+#include "virtrust/link/grpc_client.h"
 
 #ifdef USE_MOCK_TSB_AGENT
 #include "mock/tsb_agent_itf.h"
@@ -754,10 +755,12 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
         return VirtrustRc::ERROR;
     }
     auto domain = std::make_unique<DomainCtx>();
-    if (domain->Get() == nullptr) {
-        VIRTRUST_LOG_ERROR("failed to find domain: {}", domainName);
-        return VirtrustRc::ERROR;
-    }
+
+    LinkConfig config;
+    config.udsPath = UDS_PATH;
+    UdsClient client(config);
+    client.DomainMigrate(domainName);
+
     if (libvirt.virDomainMigrate3(domain->Get(), destConn->Get(), nullptr, 0, 0) == nullptr) {
         VIRTRUST_LOG_ERROR("failed to migrate domain: {}", domainName);
         return VirtrustRc::ERROR;
