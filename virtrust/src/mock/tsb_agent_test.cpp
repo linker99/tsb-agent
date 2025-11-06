@@ -105,7 +105,7 @@ class TsbAgentTest : public ::testing::Test {
 };
 
 // Test case: Verify that the TSB agent instance is a singleton
-TEST(TsbAgentTest, SingletonInstance)
+TEST_F(TsbAgentTest, SingletonInstance)
 {
     auto &instance1 = TsbAgentImpl::GetInstance();
     auto &instance2 = TsbAgentImpl::GetInstance();
@@ -113,7 +113,7 @@ TEST(TsbAgentTest, SingletonInstance)
 }
 
 // Test case: Test creating a virtual root
-TEST(TsbAgentTest, CreateVRoot)
+TEST_F(TsbAgentTest, CreateVRoot)
 {
     auto &agent = TsbAgentImpl::GetInstance();
     
@@ -130,7 +130,7 @@ TEST(TsbAgentTest, CreateVRoot)
 }
 
 // Test case: Test creating multiple virtual roots
-TEST(TsbAgentTest, CreateMultipleVRoots)
+TEST_F(TsbAgentTest, CreateMultipleVRoots)
 {
     auto &agent = TsbAgentImpl::GetInstance();
     
@@ -164,7 +164,7 @@ TEST(TsbAgentTest, CreateMultipleVRoots)
 }
 
 // Test case: Test destroying a virtual root
-TEST(TsbAgentTest, DestroyVRoots)
+TEST_F(TsbAgentTest, DestroyVRoots)
 {
     auto &agent = TsbAgentImpl::GetInstance();
     
@@ -191,7 +191,7 @@ TEST(TsbAgentTest, DestroyVRoots)
 }
 
 // Test case: Test destroying a virtual root
-TEST(TsbAgentTest, DestroyVRoots)
+TEST_F(TsbAgentTest, DestroyVRoots)
 {
     auto &agent = TsbAgentImpl::GetInstance();
 
@@ -205,7 +205,7 @@ TEST(TsbAgentTest, DestroyVRoots)
 }
 
 // Test case: Test starting a virtual root
-TEST(TsbAgentTest, StartVRoots)
+TEST_F(TsbAgentTest, StartVRoots)
 {
     auto &agent = TsbAgentImpl::GetInstance();
 
@@ -227,7 +227,7 @@ TEST(TsbAgentTest, StartVRoots)
 }
 
 // Test case: Test starting a virtual root
-TEST(TsbAgentTest, StartVRoots)
+TEST_F(TsbAgentTest, StartVRoots)
 {
     auto &agent = TsbAgentImpl::GetInstance();
 
@@ -241,7 +241,7 @@ TEST(TsbAgentTest, StartVRoots)
 }
 
 // Test case: Test undefining a virtual root
-TEST(TsbAgentTest, UndefineVRoot)
+TEST_F(TsbAgentTest, UndefineVRoot)
 {
     auto &agent = TsbAgentImpl::GetInstance();
 
@@ -262,7 +262,7 @@ TEST(TsbAgentTest, UndefineVRoot)
 }
 
 // Test case: Test undefining a non-existent virtual root
-TEST(TsbAgentTest, UndefineNonExistentVRoot)
+TEST_F(TsbAgentTest, UndefineNonExistentVRoot)
 {
     auto &agent = TsbAgentImpl::GetInstance();
 
@@ -276,7 +276,7 @@ TEST(TsbAgentTest, UndefineNonExistentVRoot)
 }
 
 // Test case: Test getting all virtual roots
-TEST(TsbAgentTest, GetVRoots)
+TEST_F(TsbAgentTest, GetVRoots)
 {
     auto &agent = TsbAgentImpl::GetInstance();
 
@@ -313,7 +313,7 @@ TEST(TsbAgentTest, GetVRoots)
 }
 
 // Test case: Test persistence across restarts
-TEST(TsbAgentTest, PersistenceAcrossRestarts)
+TEST_F(TsbAgentTest, PersistenceAcrossRestarts)
 {
     // First, create a virtual root and save it
     auto &agent1 = TsbAgentImpl::GetInstance();
@@ -332,7 +332,7 @@ TEST(TsbAgentTest, PersistenceAcrossRestarts)
 }
 
 // Test case: Test state file creation and format
-TEST(TsbAgentTest, StateFileFormat)
+TEST_F(TsbAgentTest, StateFileFormat)
 {
     auto &agent = TsbAgentImpl::GetInstance();
     
