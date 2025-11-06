@@ -16,7 +16,7 @@ class UdsClient {
 public:
     explicit UdsClient(LinkConfig config);
 
-    int32_t DomainMigrate(const std::string &domainName, const std::string &uuid, const LinkConfig &config);
+    int32_t DomainMigrate(const MigrationConfig &config);
 
 private:
     LinkConfig config_;

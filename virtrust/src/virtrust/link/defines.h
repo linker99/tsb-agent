@@ -27,4 +27,12 @@ struct LinkConfig {
     std::string udsPath;
 };
 
+struct MigrationConfig {
+    std::string domainName;
+    std::string uuid;
+    std::string destUri;
+    std::string localUri;
+    unsigned int flags;
+};
+
 } // namespace virtrust

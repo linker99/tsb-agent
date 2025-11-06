@@ -29,9 +29,9 @@ service MigrationService {
 message DomainMigraterRequest {
     string domainName = 1;
     string uuid = 2;
-    string ip = 3;
-    string ipMask = 4;
-    uint32 port = 5;
+    string destUri = 3;
+    string localUri = 4;
+    uint32 flags = 5;
 }
 
 message DomainMigraterReply {
@@ -41,6 +41,7 @@ message DomainMigraterReply {
 message PrepareMigRequest {
      string domainName = 1;
      string uuid = 2;
+     string destUri = 3;
 }
 
 message PrepareMigReply {

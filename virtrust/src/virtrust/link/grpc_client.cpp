@@ -15,14 +15,12 @@ namespace virtrust {
 UdsClient::UdsClient(LinkConfig config) : config_(config)
 {}
 
-int32_t UdsClient::DomainMigrate(const std::string &domainName, const std::string &uuid, const LinkConfig &config)
+int32_t UdsClient::DomainMigrate(const MigrationConfig &config)
 {
     protos::DomainMigraterRequest request;
-    request.set_domainname(domainName);
-    request.set_uuid(uuid);
-    request.set_ip(config.ip);
-    request.set_ipmask(config.ipMask);
-    request.set_port(config.port);
+    request.set_domainname(config.domainName);
+    request.set_uuid(config.uuid);
+    request.set_desturi(config.destUri);
 
     // Container for the response from the server.
     protos::DomainMigraterReply reply;

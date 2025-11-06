@@ -15,7 +15,10 @@
 
 namespace virtrust {
 
-class SessionManager;
+enum class MigrateSessionRc : uint32_t {
+    OK = 0,
+    ERROR = 1,
+};
 
 class MigrationSession {
 public:
@@ -32,21 +35,11 @@ public:
         Failed
     };
 
-    MigrationSession(Role role, const std::string &sessionId);
+    MigrationSession(Role role, const std::string &sessionId, const std::string &domainName,
+                     const std::string &destUri = "");
 
     // 主动方起步
-    void Start();
-
-    // 这几个是收到对端应答时要调用的
-    void OnMigrateResponseReceived(bool agree);
-
-    void OnExchangeKeyResponseReceived(const std::string &peerPubKey);
-
-    void OnStartMigrationResponseReceived(bool agree);
-
-    void OnTransferResponseReceived(bool finished);
-
-    void OnFinishedResponseReceived(bool finished);
+    MigrateSessionRc Start();
 
     // 定时器触发时调用
     void OnTimeout(State stateWhenSet);
@@ -66,17 +59,28 @@ public:
     }
 
     // 响应方使用
-    void OnMigrateRequestReceived(const std::string &domainName);
+    MigrateSessionRc OnMigrateRequestReceived();
 
-    void OnExchangeKeyRequestReceived(const std::string &peerPubKey);
+    MigrateSessionRc OnExchangeKeyRequestReceived(const std::string &peerPubKey);
 
-    void OnStartMigrationRequestReceived(const std::string &domainName);
+    MigrateSessionRc OnStartMigrationRequestReceived(const std::string &domainName);
 
-    void OnTransferDataRequestReceived(const std::string &vmData, bool finished);
+    MigrateSessionRc OnTransferDataRequestReceived(const std::string &vmData, bool finished);
 
-    void OnFinishedRequestReceived(const std::string &vmData, bool finished);
+    MigrateSessionRc OnFinishedRequestReceived(const std::string &vmData, bool finished);
 
 private:
+    // 这几个是收到对端应答时要调用的
+    MigrateSessionRc OnMigrateResponseReceived(bool agree);
+
+    MigrateSessionRc OnExchangeKeyResponseReceived(const std::string &peerReport, const std::string &peerPubKey);
+
+    MigrateSessionRc OnStartMigrationResponseReceived(bool agree);
+
+    MigrateSessionRc OnTransferResponseReceived(bool finished);
+
+    MigrateSessionRc OnFinishedResponseReceived(bool finished);
+
     void EnterState(State s);
 
     void StartTimerFor(State s);
@@ -84,20 +88,22 @@ private:
     void CancelTimer();
 
     // 主动方要发的几步
-    void SendMigrateRequest();
+    MigrateSessionRc SendMigrateRequest();
 
-    void SendExchangeKey();
+    MigrateSessionRc SendExchangeKey();
 
-    void SendStartMigration();
+    MigrateSessionRc SendStartMigration();
 
-    void SendTransferOnce();
+    MigrateSessionRc SendTransferOnce();
 
-    void SendFinishedNotify();
+    MigrateSessionRc SendFinishedNotify();
 
 private:
     Role role_;
     State state_;
     std::string sessionId_;
+    std::string domainName_;
+    std::string destUri_;
 
     std::string myPubKey_;
     std::string peerPubKey_;
@@ -105,7 +111,6 @@ private:
     // 仅 Initiator 侧使用
     std::unique_ptr<RpcClient> rpcClient_;
 
-    State timerForState_;
     std::atomic<bool> timerActive_{false};
 
     AsyncTimer timer_;
@@ -125,7 +130,8 @@ public:
     SessionManager &operator=(const SessionManager &) = delete;
 
     // 创建并托管一个会话，返回裸指针，所有权仍在manager内
-    MigrationSession *CreateSession(const std::string &sessionId, MigrationSession::Role role);
+    MigrationSession *CreateSession(MigrationSession::Role role, const std::string &sessionId,
+                                    const std::string &domainName, const std::string &destUri);
 
     // 查找会话（比如 gRPC handler 用这个）
     MigrationSession *GetSession(const std::string &sessionId);

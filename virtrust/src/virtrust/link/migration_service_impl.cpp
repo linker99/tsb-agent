@@ -17,6 +17,25 @@ grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context
                                                     const protos::PrepareMigRequest *request,
                                                     protos::PrepareMigReply *response)
 {
+    VIRTRUST_LOG_ERROR("|PrepareMigration|START||uuid:" + request->uuid() + "|domainName:" + request->domainname());
+
+    auto &uuid = request->uuid();
+    auto &mgr = SessionManager::GetInstance();
+
+    // 已存在session，说明正在迁移
+    if (mgr.GetSession(uuid) != nullptr) {
+        VIRTRUST_LOG_ERROR("|PrepareMigration|END|returnF|uuid:" + uuid + "|Session already exists");
+        response->set_result(1); // session already exists
+        return grpc::Status(grpc::StatusCode::FAILED_PRECONDITION, "This VM is already migrating");
+    }
+
+    // 否则创建session
+    MigrationSession *session =
+        mgr.CreateSession(MigrationSession::Role::Responder, uuid, request->domainname(), request->desturi());
+    MigrateSessionRc rc = session->OnMigrateRequestReceived();
+    if (rc != MigrateSessionRc::OK) {
+        return grpc::Status(grpc::StatusCode::ABORTED, "This VM is already migrating");
+    }
     return grpc::Status::OK;
 }
 
@@ -56,13 +75,12 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
                                                  const protos::DomainMigraterRequest *request,
                                                  protos::DomainMigraterReply *response)
 {
-    fmt::print("domain: {}\n", request->domainname());
     LinkConfig config;
     RpcClient client(config);
 
     auto &mgr = SessionManager::GetInstance();
-    // 以 domainName 作为本次简化的 sessionId（后续可替换为真正 UUID）
-    MigrationSession *session = mgr.CreateSession(request->domainname(), MigrationSession::Role::Initiator);
+    MigrationSession *session = mgr.CreateSession(MigrationSession::Role::Initiator, request->uuid(),
+                                                  request->domainname(), request->desturi());
     if (!session) {
         response->set_result(1); // already exists or failed
         return grpc::Status::OK;
