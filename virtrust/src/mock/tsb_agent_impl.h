@@ -50,6 +50,9 @@ public:
         return storageFilePath_.c_str();
     }
 
+    // Clear all virtual roots (for testing)
+    void ClearAllVRoots();
+
     // Lifetime management
 
     std::vector<Description> GetVRoots();

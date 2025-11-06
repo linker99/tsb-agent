@@ -119,10 +119,10 @@ BINARY_COMP_HELPER(LessEquals, <=)
     VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::NotEquals((x), (y)), #x "!=" #y, __VA_ARGS__)
 
 #define VIRTRUST_ENFORCE_LE(x, y, ...) \
-    VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::Less((x), (y)), #x "<" #y, __VA_ARGS__)
+    VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::LessEquals((x), (y)), #x "<=" #y, __VA_ARGS__)
 
 #define VIRTRUST_ENFORCE_LT(x, y, ...) \
-    VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::LessEquals((x), (y)), #x "<=" #y, __VA_ARGS__)
+    VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::Less((x), (y)), #x "<" #y, __VA_ARGS__)
 
 #define VIRTRUST_ENFORCE_GE(x, y, ...) \
     VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::GreaterEquals((x), (y)), #x ">=" #y, __VA_ARGS__)

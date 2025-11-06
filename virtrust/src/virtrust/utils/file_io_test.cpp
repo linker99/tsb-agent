@@ -21,15 +21,15 @@ constexpr std::string_view TEST_FILE_CONTENT_LONG = "this is a test file.\nwith 
 std::string GetTestFilePath()
 {
     // Get the project root path (Which is the directory)
-    auto filePath = std::filesystem::path(__FILE__);
-    return (filePath / ".." / ".." / ".." / ".." / "test" / "data" / "test.txt").lexically_normal().string();
+    auto filePath = std::filesystem::path(__FILE__).parent_path();
+    return (filePath / ".." / ".." / ".." / "test" / "data" / "test.txt").lexically_normal().string();
 }
 
 std::string GetTempFilePath(const std::string &suffix = "")
 {
     // Get the project root path (Which is the directory)
-    auto filePath = std::filesystem::path(__FILE__);
-    return (filePath / ".." / ".." / ".." / ".." / "test" / "data" / ("temp_file" + suffix + ".txt"))
+    auto filePath = std::filesystem::path(__FILE__).parent_path();
+    return (filePath / ".." / ".." / ".." / "test" / "data" / ("temp_file" + suffix + ".txt"))
         .lexically_normal()
         .string();
 }

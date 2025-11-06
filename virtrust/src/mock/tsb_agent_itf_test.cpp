@@ -8,6 +8,7 @@
 #include <memory>
 
 // Include the TSB agent interface header
+#include "mock/tsb_agent_impl.h"
 #include "mock/tsb_agent_itf.h"
 #include "securec.h"
 
@@ -44,6 +45,9 @@ protected:
 // Test case: Test GetVRoots function
 TEST_F(TsbAgentItfTest, GetVRoots)
 {
+    // Clear any existing state to ensure clean test
+    TsbAgentImpl::GetInstance().ClearAllVRoots();
+
     int vtpcmNums = 0;
     struct Description *vtpcmInfo = nullptr;
 

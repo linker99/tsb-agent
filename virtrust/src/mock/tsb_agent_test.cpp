@@ -254,7 +254,7 @@ TEST_F(TsbAgentTest, UndefineNonExistentVRoot)
 
     // Try to undefine a virtual root that doesn't exist
     const std::string &uuid = "99999";
-    EXPECT_EQ(agent.RemoveVRoot(uuid), TsbAgentRc::OK) << "Undefining non-existent virtual root should fail";
+    EXPECT_NE(agent.RemoveVRoot(uuid), TsbAgentRc::OK) << "Undefining non-existent virtual root should fail";
 
     // Verify no virtual roots exist
     auto vroots = agent.GetVRoots();

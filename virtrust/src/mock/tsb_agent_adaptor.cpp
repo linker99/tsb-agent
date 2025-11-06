@@ -34,14 +34,14 @@ int GetVRoots(int *vtpcmNums, struct Description **vtpcmInfo)
 
     // 分配内存
     if (*vtpcmNums > 0) {
-        return 0;
-    }
+        *vtpcmInfo = static_cast<Description *>(malloc(*vtpcmNums * sizeof(Description)));
 
-    *vtpcmInfo = static_cast<Description *>(malloc(*vtpcmNums * sizeof(Description)));
-
-    // 将 instances 中的数据复制到 *vtpcmInfo中
-    for (int i = 0; i < *vtpcmNums; i++) {
-        (*vtpcmInfo)[i] = instances[i];
+        // 将 instances 中的数据复制到 *vtpcmInfo中
+        for (int i = 0; i < *vtpcmNums; i++) {
+            (*vtpcmInfo)[i] = instances[i];
+        }
+    } else {
+        *vtpcmInfo = nullptr;
     }
 
     return 0; // success
