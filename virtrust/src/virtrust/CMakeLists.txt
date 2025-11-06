@@ -10,9 +10,9 @@ add_subdirectory(dllib)
 add_subdirectory(crypto)
 add_subdirectory(link)
 add_subdirectory(utils)
-
 # Object lib
 
+add_dependencies(virtrust-obj build_proto)
 target_sources(virtrust-obj PRIVATE ${VIRTRUST_SOURCE_FILES})
 
 target_include_directories(
@@ -28,3 +28,7 @@ target_include_directories(
                           $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
 target_link_libraries(virtrust-shared PRIVATE Deps::spdlog Deps::secure_c)
+
+target_link_libraries(virtrust-shared PRIVATE grpc++ grpc++ grpc grpc++_reflection gpr protobuf absl_synchronization absl_strings
+        absl_str_format_internal absl_hash absl_cord absl_cordz_info absl_cordz_functions  absl_log_internal_check_op
+        absl_log_internal_message absl_log_internal_nullguard)
