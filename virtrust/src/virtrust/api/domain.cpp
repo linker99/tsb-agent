@@ -748,7 +748,6 @@ VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
 VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName,
                          const std::string &destUri)
 {
-    auto &libvirt = Libvirt::GetInstance();
     auto destConn = std::make_unique<ConnCtx>();
     if (!destConn->SetUri(destUri)) {
         VIRTRUST_LOG_ERROR("destUri is not valid: {}", destUri);
@@ -760,14 +759,23 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
     config.udsPath = UDS_PATH;
     UdsClient client(config);
 
-    // TODO: get uuid
-    std::string uuid = "";
-    client.DomainMigrate(domainName, uuid, config);
+    // TODO: Obtain the necessary parameters here.
+    auto uuid = "";
+    auto localUri = "";
+    unsigned int flags = 0;
+    MigrationConfig migration_config{
+        .domainName = domainName,
+        .uuid = uuid,
+        .destUri = destUri,
+        .localUri = localUri,
+        .flags = flags,
+    };
 
-    if (libvirt.virDomainMigrate3(domain->Get(), destConn->Get(), nullptr, 0, 0) == nullptr) {
-        VIRTRUST_LOG_ERROR("failed to migrate domain: {}", domainName);
+    auto ret = client.DomainMigrate(migration_config);
+    if (ret != 0) {
         return VirtrustRc::ERROR;
     }
+
     return VirtrustRc::OK;
 }
 
