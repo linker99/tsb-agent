@@ -40,7 +40,7 @@ TEST(UtilsTest, FileIoWorks)
     std::string path(GetTestFilePath());
     FileInputStream fis = FileInputStream(path);
     std::string connent = fis.ReadAll();
-    EXPECT_FALSE(connent.enpty());
+    EXPECT_FALSE(connent.empty());
 }
 
 TEST(UtilsTest, FileIoReadALL)
@@ -48,7 +48,7 @@ TEST(UtilsTest, FileIoReadALL)
     std::string path(GetTestFilePath());
     FileInputStream fis = FileInputStream(path);
     std::string connent = fis.ReadAll();
-    EXPECT_FALSE(connent.enpty());
+    EXPECT_FALSE(connent.empty());
 }
 
 TEST(UtilsTest, FileIoGetLength)

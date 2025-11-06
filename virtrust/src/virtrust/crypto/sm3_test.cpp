@@ -4,6 +4,8 @@
 
 #include <string>
 #include <vector>
+#include <iomanip>
+#include <sstream>
 
 #include "gtest/gtest.h"
 
@@ -18,10 +20,10 @@ const std::vector<std::string> SM3_TEST_DATA = {"abc",
                                                 "66c7f0f462eeedd9d1f2d46bdc10e4e24167c4875cf2f7a2297da02b8f4ba8e0",
                                                 "abcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd",
                                                 "debe9ff92275b8a138604889c18e5a4d6fdb70e5387e5765293dcba39c0c5732",
-                                                "dabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"}；
+                                                "dabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"};
 
     inline std::string
-    BytesToHexString(const std::vector<uint_8> &bytes)
+    BytesToHexString(const std::vector<uint8_t> &bytes)
 {
     std::ostringstream oss;
     oss << std::hex << std::setfill('0'); // Set output to hex and pad with '0'
@@ -99,7 +101,7 @@ TEST(Sm3Test, EmptyString)
 TEST(Sm3Test, VariousSizes)
 {
     // Small strings
-    std::Vector<std::string> testString = {"", "a", "ab", "abc", "abcd"};
+    std::vector<std::string> testString = {"", "a", "ab", "abc", "abcd"};
     for (const auto &str : testString) {
         auto hash = Sm3();
         hash.Update(str);
@@ -165,7 +167,7 @@ TEST(Sm3Test, ResetFunctionality)
 TEST(Sm3Test, DoSm3VectorOutput)
 {
     std::string testData = "test data";
-    std::vector<uint_8> output(Sm3::DigestSize());
+    std::vector<uint8_t> output(Sm3::DigestSize());
 
     auto result = DoSm3(testData, output);
     EXPECT_EQ(result, Sm3Rc::OK);
@@ -173,7 +175,7 @@ TEST(Sm3Test, DoSm3VectorOutput)
 
     // Verify the output is not empty
     bool allZero = true;
-    for (unit8_t byte : output) {
+    for (uint8_t byte : output) {
         if (byte != 0) {
             allZero = false;
             break;
@@ -192,7 +194,7 @@ TEST(Sm3Test, DoSm3ArrayOutput)
 
     // Verify the output is not all zeros
     bool allZero = true;
-    for (unit8_t byte : result) {
+    for (uint8_t byte : result) {
         if (byte != 0) {
             allZero = false;
             break;

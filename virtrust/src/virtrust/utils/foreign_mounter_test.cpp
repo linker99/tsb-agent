@@ -44,7 +44,7 @@ TEST(VerifyConfig, Works)
 TEST(DISABLED_ForeignMounterTest, Works)
 {
     auto mounter = ForeignMounter();
-    EXPECT_TRUE(mounter.CheckOK());
+    EXPECT_TRUE(mounter.CheckOk());
 
     ForeignMounterRc rc;
 
@@ -58,7 +58,7 @@ TEST(DISABLED_ForeignMounterTest, Works)
 TEST(DISABLED_ForeignMounterTest, Mount)
 {
     auto mounter = ForeignMounter();
-    EXPECT_TRUE(mounter.CheckOK());
+    EXPECT_TRUE(mounter.CheckOk());
 
     ForeignMounterRc rc;
 
@@ -72,7 +72,7 @@ TEST(DISABLED_ForeignMounterTest, Mount)
     mounter.ReadFile(VM_FILE_PATH, content);
     EXPECT_EQ(content, VM_FILE_CONTENT);
 
-    rc = mounter.UnMount();
+    rc = mounter.Unmount();
     EXPECT_EQ(rc, ForeignMounterRc::OK);
 }
 } // namespace virtrust::test

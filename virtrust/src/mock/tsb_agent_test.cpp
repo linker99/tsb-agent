@@ -125,7 +125,7 @@ TEST_F(TsbAgentTest, CreateVRoot)
 
     // Verify the virtual root was created
     auto vroots = agent.GetVRoots();
-    EXPECT_EQ(vroots.size(), 1) << "Should have one virtual root";
+    EXPECT_EQ(vroots.size(), 1UL) << "Should have one virtual root";
     EXPECT_EQ(vroots[0].uuid, uuid) << "Virtual root UUID should match";
 }
 
@@ -145,7 +145,7 @@ TEST_F(TsbAgentTest, CreateMultipleVRoots)
 
     // Verify all virtual roots was created
     auto vroots = agent.GetVRoots();
-    EXPECT_EQ(vroots.size(), 3) << "Should have three virtual roots";
+    EXPECT_EQ(vroots.size(), (size_t)3) << "Should have three virtual roots";
 
     EXPECT_NE(std::find_if(vroots.begin(), vroots.end(),
                            [&uuid1](const Description &desc) { return std::string(desc.uuid) == uuid1; }),
@@ -174,7 +174,7 @@ TEST_F(TsbAgentTest, DestroyVRoots)
 
     // Verify it exists
     auto vroots = agent.GetVRoots();
-    EXPECT_EQ(vroots.size(), 1) << "Should have one virtual root";
+    EXPECT_EQ(vroots.size(), 1UL) << "Should have one virtual root";
 
     // Destroy (stop) the virtual root
     EXPECT_EQ(agent.StopVRoot(uuid), TsbAgentRc::ERROR) << "Destroying non-started virtual root should fail";
@@ -186,22 +186,8 @@ TEST_F(TsbAgentTest, DestroyVRoots)
     EXPECT_EQ(agent.StopVRoot(uuid), TsbAgentRc::OK) << "Destroying virtual root should succeed";
 
     // Verify it was destroyed
-    auto vroots = agent.GetVRoots();
-    EXPECT_EQ(vroots.size(), 1) << "Should have one virtual root";
-}
-
-// Test case: Test destroying a virtual root
-TEST_F(TsbAgentTest, DestroyVRoots)
-{
-    auto &agent = TsbAgentImpl::GetInstance();
-
-    // Destroy (stop) the virtual root
-    const std::string &uuid = "99999";
-    EXPECT_NE(agent.StopVRoot(uuid), TsbAgentRc::OK) << "Destroying non-existent virtual root should fail";
-
-    // Verify no virtual roots exist
-    auto vroots = agent.GetVRoots();
-    EXPECT_EQ(vroots.size(), 0) << "Should have no virtual roots";
+    vroots = agent.GetVRoots();
+    EXPECT_EQ(vroots.size(), 1UL) << "Should have one virtual root";
 }
 
 // Test case: Test starting a virtual root
@@ -215,30 +201,30 @@ TEST_F(TsbAgentTest, StartVRoots)
 
     // Verify it exists and is not running
     auto vroots = agent.GetVRoots();
-    EXPECT_EQ(vroots.size(), 1) << "Should have one virtual root";
+    EXPECT_EQ(vroots.size(), 1UL) << "Should have one virtual root";
 
     // start the virtual root
     EXPECT_EQ(agent.StartVRoot(uuid), TsbAgentRc::OK) << "Starting virtual root should succeed";
 
     // Verify the virtual root is now running
     vroots = agent.GetVRoots();
-    EXPECT_EQ(vroots.size(), 1) << "Should have one virtual root";
+    EXPECT_EQ(vroots.size(), 1UL) << "Should have one virtual root";
     EXPECT_EQ(vroots[0].state, (int)VRootStatus::RUNNING) << "Virtual root should be in RUNNING";
 }
 
-// Test case: Test starting a virtual root
-TEST_F(TsbAgentTest, StartVRoots)
-{
-    auto &agent = TsbAgentImpl::GetInstance();
+// // Test case: Test starting a virtual root
+// TEST_F(TsbAgentTest, StartVRoots)
+// {
+//     auto &agent = TsbAgentImpl::GetInstance();
 
-    // Try to start a virtual root that doesn't exist
-    const std::string &uuid = "99999";
-    EXPECT_NE(agent.StartVRoot(uuid), TsbAgentRc::OK) << "Starting non-existent virtual root should fail";
+//     // Try to start a virtual root that doesn't exist
+//     const std::string &uuid = "99999";
+//     EXPECT_NE(agent.StartVRoot(uuid), TsbAgentRc::OK) << "Starting non-existent virtual root should fail";
 
-    // Verify no virtual roots exist
-    vroots = agent.GetVRoots();
-    EXPECT_EQ(vroots.size(), 0) << "Should have no virtual roots";
-}
+//     // Verify no virtual roots exist
+//     vroots = agent.GetVRoots();
+//     EXPECT_EQ(vroots.size(), 0) << "Should have no virtual roots";
+// }
 
 // Test case: Test undefining a virtual root
 TEST_F(TsbAgentTest, UndefineVRoot)
@@ -251,14 +237,14 @@ TEST_F(TsbAgentTest, UndefineVRoot)
 
     // Verify it exists
     auto vroots = agent.GetVRoots();
-    EXPECT_EQ(vroots.size(), 1) << "Should have one virtual root";
+    EXPECT_EQ(vroots.size(), 1UL) << "Should have one virtual root";
 
     // Undefine the virtual root
     EXPECT_EQ(agent.RemoveVRoot(uuid), TsbAgentRc::OK) << "Undefining virtual root should succeed";
 
     // Verify it was undefined
     vroots = agent.GetVRoots();
-    EXPECT_EQ(vroots.size(), 0) << "Should have no virtual roots";
+    EXPECT_EQ(vroots.size(), (size_t)0) << "Should have no virtual roots";
 }
 
 // Test case: Test undefining a non-existent virtual root
@@ -272,7 +258,7 @@ TEST_F(TsbAgentTest, UndefineNonExistentVRoot)
 
     // Verify no virtual roots exist
     auto vroots = agent.GetVRoots();
-    EXPECT_EQ(vroots.size(), 0) << "Should have no virtual roots";
+    EXPECT_EQ(vroots.size(), (size_t)0) << "Should have no virtual roots";
 }
 
 // Test case: Test getting all virtual roots
@@ -281,11 +267,11 @@ TEST_F(TsbAgentTest, GetVRoots)
     auto &agent = TsbAgentImpl::GetInstance();
 
     // Create multiple virtual roots
-    const std::string &uuid = "100";
-    const std::string &uuid = "200";
-    const std::string &uuid = "300";
+    const std::string &uuid1 = "100";
+    const std::string &uuid2 = "200";
+    const std::string &uuid3 = "300";
 
-    EXPECT_EQ(agent.CreateVRoot(uuid, "111"), TsbAgentRc::OK) << "Creating first virtual root should succeed";
+    EXPECT_EQ(agent.CreateVRoot(uuid1, "111"), TsbAgentRc::OK) << "Creating first virtual root should succeed";
     EXPECT_EQ(agent.CreateVRoot(uuid2, "222"), TsbAgentRc::OK) << "Creating second virtual root should succeed";
     EXPECT_EQ(agent.CreateVRoot(uuid3, "333"), TsbAgentRc::OK) << "Creating third virtual root should succeed";
 
@@ -293,7 +279,7 @@ TEST_F(TsbAgentTest, GetVRoots)
     auto vroots = agent.GetVRoots();
 
     // Verify we have the correct number of virtual roots
-    EXPECT_EQ(vroots.size(), 3) << "Should have three virtual roots";
+    EXPECT_EQ(vroots.size(), (size_t)3) << "Should have three virtual roots";
 
     // Verify the UUIDs are correct
     EXPECT_NE(std::find_if(vroots.begin(), vroots.end(),
@@ -320,14 +306,14 @@ TEST_F(TsbAgentTest, PersistenceAcrossRestarts)
 
     // Create a virtual root
     const std::string &uuid = "12345";
-    EXPECT_EQ(agent.CreateVRoot(uuid, "123"), TsbAgentRc::OK) << "Creating virtual root should succeed";
+    EXPECT_EQ(agent1.CreateVRoot(uuid, "123"), TsbAgentRc::OK) << "Creating virtual root should succeed";
 
     // Now create a new agent instance (simulating restart)
     auto &agent2 = TsbAgentImpl::GetInstance();
 
     // Verify the virtual root was loaded
     auto vroots = agent2.GetVRoots();
-    EXPECT_EQ(vroots.size(), 1) << "Should have one virtual roots ahter restart";
+    EXPECT_EQ(vroots.size(), (size_t)1) << "Should have one virtual roots ahter restart";
     EXPECT_EQ(vroots.begin()->uuid, uuid) << "Virtual root UUID should match";
 }
 

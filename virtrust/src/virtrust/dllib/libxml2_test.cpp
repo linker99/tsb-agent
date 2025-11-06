@@ -12,7 +12,7 @@ TEST(Libxml2Test, works)
 {
     // Init
     auto &libxml2 = Libxml2::GetInstance();
-    EXPECT_EQ(libxml2.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libxml2.CheckOk(), DllibRc::OK);
 
     // Explicity reload
     auto ret = libxml2.Reload();
@@ -31,14 +31,14 @@ TEST(Libxml2Test, SingletonPattern)
     EXPECT_EQ(&libxml21, &libxml22);
 }
 
-TEST(Libxml2Test, CheckOKFunction)
+TEST(Libxml2Test, CheckOkFunction)
 {
-    // Test the CheckOK function
+    // Test the CheckOk function
     auto &libxml2 = Libxml2::GetInstance();
-    EXPECT_EQ(libxml2.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libxml2.CheckOk(), DllibRc::OK);
 
     // Test size function
-    EXPECT_GT(libxml2.size(), (size_t)0);
+    EXPECT_GT(libxml2.Size(), (size_t)0);
 }
 
 TEST(Libxml2Test, ReloadFunction)
@@ -47,14 +47,14 @@ TEST(Libxml2Test, ReloadFunction)
     auto &libxml2 = Libxml2::GetInstance();
 
     // check inital state
-    EXPECT_EQ(libxml2.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libxml2.CheckOk(), DllibRc::OK);
 
     // Reload the library
     auto ret = libxml2.Reload();
     EXPECT_EQ(ret, DllibRc::OK);
 
     // Verify it's still working after reload
-    EXPECT_EQ(libxml2.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libxml2.CheckOk(), DllibRc::OK);
 }
 
 TEST(Libxml2Test, FunctionPointerValidity)
@@ -67,10 +67,10 @@ TEST(Libxml2Test, FunctionPointerValidity)
     EXPECT_NE(libxml2.xmlFreeDoc.Get(), nullptr);
     EXPECT_NE(libxml2.xmlDocGetRootElement.Get(), nullptr);
 
-    // Test that functions can be called (without actaully executing)
-    EXPECT_FALSE(libxml2.xmlParseFile.GetName());
-    EXPECT_FALSE(libxml2.xmlFreeDoc.GetName());
-    EXPECT_FALSE(libxml2.xmlDocGetRootElement.GetName());
+    // Test that functions can be called (without actually executing)
+    EXPECT_FALSE(libxml2.xmlParseFile.GetName().empty());
+    EXPECT_FALSE(libxml2.xmlFreeDoc.GetName().empty());
+    EXPECT_FALSE(libxml2.xmlDocGetRootElement.GetName().empty());
 }
 
 TEST(Libxml2Test, XmlParsingFunctionality)

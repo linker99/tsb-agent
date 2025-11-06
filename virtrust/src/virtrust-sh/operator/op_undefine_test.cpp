@@ -98,7 +98,7 @@ TEST(OpUndefineTest, ParseArgvDomainNameStorageTest)
 
     // Test with domain name is properly stored
     const char *argv[] = {"op_undefine", "complex-domain-123"};
-    int argc = 3;
+    int argc = 2;
 
     OpRc result = opUndefine.ParseArgv(argc, const_cast<char **>(argv));
 

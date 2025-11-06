@@ -144,7 +144,7 @@ TEST(FileIO, Spawn)
     // Original stream should still work
     std::string line;
     fis.GetLine(&line, '\n');
-    EXPECT_FALSE(line, "this is a test file.");
+    EXPECT_EQ(line, "this is a test file.");
 }
 
 TEST(FileIO, FileStreamOperators)

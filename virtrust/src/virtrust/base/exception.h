@@ -101,7 +101,7 @@ BINARY_COMP_HELPER(LessEquals, <=)
 
 #define VIRTRUST_ENFORCE_THAT_IMPL(condition, expr, ...)                                      \
     do {                                                                                      \
-        const ::virtrust::enforce_detail::EnforceFailMessage &r = (condition);                \
+        const ::virtrust::enforce_detail::EnforceFailMessage r = (condition);                 \
         if (r.bad()) {                                                                        \
             throw ::virtrust::EnforceNotMet(__FILE__, __LINE__, expr,                         \
                                             r.get_message_and_free(MakeString(__VA_ARGS__))); \

@@ -101,12 +101,12 @@ int MigrationCheckPeerPk(char *pUuid, char *vUuid, char *pk1, char *pk2)
     return 0;
 }
 
-int MigrationGetVrootCipher(char *pUuid, char *vUuid, char **cipher)
+int MigrationGetVRootCipher(char *pUuid, char *vUuid, char **cipher)
 {
     return 0;
 }
 
-int MigrationImportVrootCipher(char *pUuid, char *vUuid, char *cipher)
+int MigrationImportVRootCipher(char *pUuid, char *vUuid, char *cipher)
 {
     return 0;
 }

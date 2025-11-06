@@ -59,7 +59,7 @@ TEST(VirtXmlParserTest, FindNodesByPathTest)
 
     // Test valid file path
     auto nodes = parse.FindNodesByPath("/domain/name");
-    EXPECT_EQ(nodes.size(), 1);
+    EXPECT_EQ(nodes.size(), 1UL);
 
     // Test invalid file path
     auto emptyNodes = parse.FindNodesByPath("/domain/nonexistent");
