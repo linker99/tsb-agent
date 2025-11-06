@@ -8,9 +8,8 @@ ExternalProject_Add(
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ${CMAKE_MAKE_PROGRAM}
   UPDATE_COMMAND ""
-  INSTALL_COMMAND mkdir -p ${CMAKE_DEPS_INCLUDEDIR}/securec
-  COMMAND cp include/securec.h ${CMAKE_DEPS_INCLUDEDIR}/securec
-  COMMAND cp include/securectype.h ${CMAKE_DEPS_INCLUDEDIR}/securec
+  INSTALL_COMMAND cp include/securec.h ${CMAKE_DEPS_INCLUDEDIR}
+  COMMAND cp include/securectype.h ${CMAKE_DEPS_INCLUDEDIR}
   COMMAND cp lib/libboundscheck${CMAKE_SHARED_LIBRARY_SUFFIX}
           ${CMAKE_DEPS_LIBDIR}
   BUILD_IN_SOURCE On

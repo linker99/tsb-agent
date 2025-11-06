@@ -11,9 +11,17 @@ macro(add_virtrust_test_if NAME)
     set_tests_properties(
       ${NAME}
       PROPERTIES
+        WORKING_DIRECTORY
+        ${CMAKE_BINARY_DIR}
         ENVIRONMENT
-        "LD_LIBRARY_PATH:${CMAKE_LIBRARY_OUTPUT_DIRECTORY}:$ENV{LD_LIBRARY_PATH}"
+        "LD_LIBRARY_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}:${CMAKE_DEPS_LIBDIR}:$ENV{LD_LIBRARY_PATH}"
     )
+    # Set RPATH for the test executable
+    set_target_properties(
+      ${NAME}
+      PROPERTIES INSTALL_RPATH
+                 "${CMAKE_LIBRARY_OUTPUT_DIRECTORY};${CMAKE_DEPS_LIBDIR}"
+                 BUILD_WITH_INSTALL_RPATH TRUE)
   endif()
 endmacro()
 
@@ -29,9 +37,17 @@ macro(add_virtrust_sh_test_if NAME)
     set_tests_properties(
       ${NAME}
       PROPERTIES
+        WORKING_DIRECTORY
+        ${CMAKE_BINARY_DIR}
         ENVIRONMENT
-        "LD_LIBRARY_PATH:${CMAKE_LIBRARY_OUTPUT_DIRECTORY}:$ENV{LD_LIBRARY_PATH}"
+        "LD_LIBRARY_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}:${CMAKE_DEPS_LIBDIR}:$ENV{LD_LIBRARY_PATH}"
     )
+    # Set RPATH for the test executable
+    set_target_properties(
+      ${NAME}
+      PROPERTIES INSTALL_RPATH
+                 "${CMAKE_LIBRARY_OUTPUT_DIRECTORY};${CMAKE_DEPS_LIBDIR}"
+                 BUILD_WITH_INSTALL_RPATH TRUE)
   endif()
 endmacro()
 
@@ -47,8 +63,16 @@ macro(add_libvirtrustd_test_if NAME)
     set_tests_properties(
       ${NAME}
       PROPERTIES
+        WORKING_DIRECTORY
+        ${CMAKE_BINARY_DIR}
         ENVIRONMENT
-        "LD_LIBRARY_PATH:${CMAKE_LIBRARY_OUTPUT_DIRECTORY}:$ENV{LD_LIBRARY_PATH}"
+        "LD_LIBRARY_PATH=${CMAKE_LIBRARY_OUTPUT_DIRECTORY}:${CMAKE_DEPS_LIBDIR}:$ENV{LD_LIBRARY_PATH}"
     )
+    # Set RPATH for the test executable
+    set_target_properties(
+      ${NAME}
+      PROPERTIES INSTALL_RPATH
+                 "${CMAKE_LIBRARY_OUTPUT_DIRECTORY};${CMAKE_DEPS_LIBDIR}"
+                 BUILD_WITH_INSTALL_RPATH TRUE)
   endif()
 endmacro()
