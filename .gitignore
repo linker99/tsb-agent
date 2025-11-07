@@ -17,3 +17,7 @@ transcript.txt
 
 *.pb.cc
 *.pb.h
+
+# ides
+
+.idea
