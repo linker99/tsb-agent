@@ -4,6 +4,7 @@
 
 #include <fcntl.h>
 #include <sys/file.h>
+#include <sys/stat.h>
 #include <unistd.h>
 
 #include <cerrno>
@@ -20,9 +21,18 @@ public:
         if (fd_ == -1) {
             VIRTRUST_LOG_ERROR("Failed to open file {}, msg {}", fileName, strerror(errno));
         } else {
-            VIRTRUST_LOG_ERROR("Failed to lock file {}, msg {}", fileName, strerror(errno));
-            close(fd_);
-            fd_ = -1;
+
+            // Force permissions to 666 regardless of umask
+            if (fchmod(fd_, 0666) == -1) {
+                VIRTRUST_LOG_ERROR("Failed to set permissions for file {}, msg {}", fileName, strerror(errno));
+            }
+
+            // Try to acquire the lock
+            if (flock(fd_, LOCK_EX | LOCK_NB) == -1) {
+                VIRTRUST_LOG_ERROR("Failed to lock file {}, msg {}", fileName, strerror(errno));
+                close(fd_);
+                fd_ = -1;
+            }
         }
     }
 
