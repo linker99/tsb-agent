@@ -1,4 +1,6 @@
-// Copyright (C) 2025 by Huawei Technologies Co., Ltd. All rights reserved.
+/*
+ * Copyright (C) Huawei Technologies Co., Ltd. 2025-2025.All rights reserved.
+ */
 
 #include "virtrust/base/exception.h"
 

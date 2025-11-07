@@ -1,5 +1,9 @@
-#ifndef LOG_ADAPT_H
-#define LOG_ADAPT_H
+/*
+ * Copyright (C) Huawei Technologies Co., Ltd. 2025-2025.All rights reserved.
+ */
+
+#pragma once
+
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -16,7 +20,7 @@ const int FILE_TYPE = 0;
 class LogAdapt {
 public:
     LogAdapt(int logType, std::string path, int rotationFileSize, int rotationFileCount)
-        : logType_(logType), rotationFileSize_(rotationFileSize), rotationFileCount_(rotationFileCount){};
+        : logType_(logType), rotationFileSize_(rotationFileSize), rotationFileCount_(rotationFileCount) {};
     ~LogAdapt() = default;
 
     VirtrustRc Initialize();
@@ -57,4 +61,3 @@ private:
 };
 
 } // namespace virtrust
-#endif

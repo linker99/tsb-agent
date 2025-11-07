@@ -3,11 +3,10 @@
  */
 
 #pragma once
+
 #include <optional>
 
-#include "libvirtrustd/defines.h"
-
-#include "virtrust/link/link_config_builder.h"
+#include "virtrust/link/defines.h"
 
 namespace virtrust {
 std::optional<LinkConfig> MakeLinkConfigFromJsonFile(const std::string &configPath);

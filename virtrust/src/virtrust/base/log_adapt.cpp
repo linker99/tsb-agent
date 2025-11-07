@@ -1,3 +1,7 @@
+/*
+ * Copyright (C) Huawei Technologies Co., Ltd. 2025-2025.All rights reserved.
+ */
+
 #include "log_adapt.h"
 
 #include <sys/stat.h>
