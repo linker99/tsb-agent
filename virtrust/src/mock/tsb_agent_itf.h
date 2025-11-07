@@ -153,22 +153,27 @@ int GetReport(char *pUuid, // 物理机的uuid
               char *vUuid, // 虚拟机的uuid
               struct trust_report_new *hostreport, struct trust_report_new *vmreport);
 
-int MigrationGetCert(char *pUuid, // 物理机的uuid
-                     char *vUuid, // 虚拟机的uuid
-                     char *cert, char *pubkey);
+int MigrationGetCert(
+    // char *pUuid, // 物理机的uuid
+    char *vUuid, // 虚拟机的uuid
+    char *cert, char *pubkey);
 
-int MigrationCheckPeerPk(char *pUuid, // 物理机的uuid
-                         char *vUuid, // 虚拟机的uuid
-                         char *pk1, char *pk2);
+int MigrationCheckPeerPk(
+    // char *pUuid, // 物理机的uuid
+    char *vUuid, // 虚拟机的uuid
+    char *pk1, char *pk2);
 
-int MigrationGetVRootCipher(char *pUuid, // 物理机的uuid
-                            char *vUuid, // 虚拟机的uuid
-                            char **cipher);
+int MigrationGetVRootCipher(
+    // char *pUuid, // 物理机的uuid
+    char *vUuid, // 虚拟机的uuid
+    char **cipher);
 
-int MigrationImportVRootCipher(char *pUuid, // 物理机的uuid
-                               char *vUuid, // 虚拟机的uuid
-                               char *cipher);
+int MigrationImportVRootCipher(
+    // char *pUuid, // 物理机的uuid
+    char *vUuid, // 虚拟机的uuid
+    char *cipher);
 
-int MigrationNotify(char *pUuid, // 物理机的uuid
-                    char *vUuid, // 虚拟机的uuid
-                    int status);
+int MigrationNotify(
+    // char *pUuid, // 物理机的uuid
+    char *vUuid, // 虚拟机的uuid
+    int status);
