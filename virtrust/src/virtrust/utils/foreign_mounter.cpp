@@ -303,7 +303,7 @@ ForeignMounterRc ForeignMounter::ReadFile(std::string_view filePath, std::string
     // check file whether exist in image
     int exists = libguestfs_.guestfs_exists(handle_, filePath.data());
     if (exists != 1) {
-        VIRTRUST_LOG_ERROR("|ReadFile|END||file path is: {}|File not exist in image.", filePath);
+        VIRTRUST_LOG_WARN("|ReadFile|END||file path is: {}|File not exist in image.", filePath);
         return ForeignMounterRc::FILE_NOT_EXIST;
     }
 
