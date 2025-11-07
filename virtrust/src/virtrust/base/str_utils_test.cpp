@@ -118,7 +118,7 @@ TEST(StrUtils, SplitWhitespace)
 TEST(StrUtils, Trim)
 {
     // Test Trim with specified character
-    EXPECT_EQ(StrTrim("aaaHelloaaa", 'a'), "hello");
+    EXPECT_EQ(StrTrim("aaaHelloaaa", 'a'), "Hello");
     EXPECT_EQ(StrTrim("bbbWorldbbb", 'b'), "World");
     EXPECT_EQ(StrTrim("Hello", 'x'), "Hello");
     EXPECT_EQ(StrTrim("aaaa", 'a'), "");
@@ -129,7 +129,7 @@ TEST(StrUtils, Trim)
 TEST(StrUtils, TrimWhitespace)
 {
     // Test TrimWhitespace
-    EXPECT_EQ(StrTrimWhitespace("  Hello  "), "hello");
+    EXPECT_EQ(StrTrimWhitespace("  Hello  "), "Hello");
     EXPECT_EQ(StrTrimWhitespace("\t\nHello\r\f"), "Hello");
     EXPECT_EQ(StrTrimWhitespace("Hello"), "Hello");
     EXPECT_EQ(StrTrimWhitespace(""), "");

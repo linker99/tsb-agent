@@ -130,7 +130,7 @@ TEST(OpListTest, ParseArgvFlagCombinationTest)
 
     OpRc result = opList.ParseArgv(argc, const_cast<char **>(argv));
 
-    // Verify ParseArgv returns OK for valid flag combination
-    EXPECT_EQ(result, OpRc::ERROR);
+    // Verify ParseArgv returns OK for valid flag combination (help takes precedence)
+    EXPECT_EQ(result, OpRc::OK);
 }
 } // namespace virtrust

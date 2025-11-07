@@ -19,8 +19,8 @@ constexpr std::string_view VM_FILE_CONTENT = "This is a file in VM.\n";
 } // namespace
 
 namespace {
-constexpr std::string_view TEST_INITRD_PATH = "/boot/initramfs-6.6.0-72.0.0.76.oe2403sp1.aarch64.img";
-constexpr std::string_view TEST_LINUZ_PATH = "/boot/vmlinuz-6.6.0-72.0.0.76.oe2403sp1.aarch64";
+constexpr std::string_view TEST_INITRD_PATH = "/boot/initramfs-5.10.0-60.18.0.50.oe1.x86_64.img";
+constexpr std::string_view TEST_LINUZ_PATH = "/boot/vmlinuz-5.10.0-60.18.0.50.oe1.x86_64";
 std::string GetTestFilePath()
 {
     auto filePath = std::filesystem::path(__FILE__);
@@ -44,7 +44,7 @@ TEST(VerifyConfig, Works)
 TEST(DISABLED_ForeignMounterTest, Works)
 {
     auto mounter = ForeignMounter();
-    EXPECT_TRUE(mounter.CheckOK());
+    EXPECT_TRUE(mounter.CheckOk());
 
     ForeignMounterRc rc;
 
@@ -58,7 +58,7 @@ TEST(DISABLED_ForeignMounterTest, Works)
 TEST(DISABLED_ForeignMounterTest, Mount)
 {
     auto mounter = ForeignMounter();
-    EXPECT_TRUE(mounter.CheckOK());
+    EXPECT_TRUE(mounter.CheckOk());
 
     ForeignMounterRc rc;
 
@@ -72,7 +72,7 @@ TEST(DISABLED_ForeignMounterTest, Mount)
     mounter.ReadFile(VM_FILE_PATH, content);
     EXPECT_EQ(content, VM_FILE_CONTENT);
 
-    rc = mounter.UnMount();
+    rc = mounter.Unmount();
     EXPECT_EQ(rc, ForeignMounterRc::OK);
 }
 } // namespace virtrust::test

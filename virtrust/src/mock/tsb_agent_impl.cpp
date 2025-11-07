@@ -281,4 +281,10 @@ TsbAgentRc TsbAgentImpl::Migration1GetRandPk(const std::string &uuid)
     return TsbAgentRc::OK; // always true
 }
 
+void TsbAgentImpl::ClearAllVRoots()
+{
+    vRootMap_.clear();
+    SaveVRootsToFile(storageFilePath_, vRootMap_);
+}
+
 } // namespace virtrust::mock

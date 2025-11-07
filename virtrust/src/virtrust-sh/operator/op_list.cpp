@@ -138,7 +138,7 @@ OpRc OpList::ParseArgv(int argc, char **argv)
     optind = 1; // reset
 
     std::vector<option> opt = {
-        {"help", no_argument, nullptr, 'h'}, {"all", required_argument, nullptr, 'a'}, {nullptr, 0, nullptr, 0}};
+        {"help", no_argument, nullptr, 'h'}, {"all", no_argument, nullptr, 'a'}, {nullptr, 0, nullptr, 0}};
 
     opterr = 0;
     // The leading + means no re-ordering, see man page of getopt_long

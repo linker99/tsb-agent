@@ -12,15 +12,17 @@
 
 namespace virtrust {
 
-MigrationSession *SessionManager::CreateSession(const std::string &sessionId, MigrationSession::Role role)
+MigrationSession *SessionManager::CreateSession(MigrationSession::Role role, const std::string &sessionId,
+                                                const std::string &domainName, const std::string &destUri)
 {
     std::lock_guard<std::mutex> lock(mtx_);
-    if (sessions_.count(sessionId)) {
-        return nullptr; // 已存在
+
+    auto it = sessions_.find(sessionId);
+    if (it != sessions_.end()) {
+        return it->second.get();
     }
 
-    auto session = std::make_unique<MigrationSession>(role, sessionId);
-
+    auto session = std::make_unique<MigrationSession>(role, sessionId, domainName, destUri);
     MigrationSession *raw = session.get();
     sessions_[sessionId] = std::move(session);
     return raw;
@@ -41,51 +43,56 @@ void SessionManager::RemoveSession(const std::string &sessionId)
     sessions_.erase(sessionId);
 }
 
-MigrationSession::MigrationSession(Role role, const std::string &sessionId)
-    : role_(role), state_(State::Init), sessionId_(sessionId), timerForState_(State::Init)
+MigrationSession::MigrationSession(Role role, const std::string &sessionId, const std::string &domainName,
+                                   const std::string &destUri)
+    : role_(role), state_(State::Init), sessionId_(sessionId), domainName_(domainName), destUri_(destUri)
 {}
 
-void MigrationSession::Start()
+MigrateSessionRc MigrationSession::Start()
 {
     if (role_ != Role::Initiator) {
-        return;
+        return MigrateSessionRc::ERROR;
     }
     EnterState(State::Init);
-    SendMigrateRequest();
+    return SendMigrateRequest();
 }
 
-void MigrationSession::SendMigrateRequest()
+MigrateSessionRc MigrationSession::SendMigrateRequest()
 {
     if (!rpcClient_) {
         EnterState(State::Failed);
         Cleanup();
-        return;
+        return MigrateSessionRc::ERROR;
     }
+
     protos::PrepareMigRequest req;
+    req.set_uuid(sessionId_);
     req.set_domainname(sessionId_);
+
     protos::PrepareMigReply reply;
+
     int32_t rc = rpcClient_->PrepareMigration(5, req, &reply);
     bool ok = (rc == 0 && reply.result() == 0);
-    OnMigrateResponseReceived(ok);
+    return OnMigrateResponseReceived(ok);
 }
 
-void MigrationSession::OnMigrateResponseReceived(bool agree)
+MigrateSessionRc MigrationSession::OnMigrateResponseReceived(bool agree)
 {
     if (!agree) {
         EnterState(State::Failed);
         Cleanup();
-        return;
+        return MigrateSessionRc::ERROR;
     }
     EnterState(State::WaitingKey);
-    SendExchangeKey();
+    return SendExchangeKey();
 }
 
-void MigrationSession::SendExchangeKey()
+MigrateSessionRc MigrationSession::SendExchangeKey()
 {
     if (!rpcClient_) {
         EnterState(State::Failed);
         Cleanup();
-        return;
+        return MigrateSessionRc::ERROR;
     }
     // TODO: 生成远端可验证的报告，并获取/生成本端公钥
     myPubKey_ = "local_pub_key_bytes";
@@ -97,31 +104,31 @@ void MigrationSession::SendExchangeKey()
     protos::EXchangePkAndReportReply res;
     int32_t rc = rpcClient_->ExchangePkAndReport(5, req, &res);
     if (rc != 0) {
-        OnExchangeKeyResponseReceived("");
-        return;
+        return MigrateSessionRc::ERROR;
     }
-    OnExchangeKeyResponseReceived(res.publickey());
+    return OnExchangeKeyResponseReceived("", "");
 }
 
-void MigrationSession::OnExchangeKeyResponseReceived(const std::string &peerPubKey)
+MigrateSessionRc MigrationSession::OnExchangeKeyResponseReceived(const std::string &peerReport,
+                                                                 const std::string &peerPubKey)
 {
     if (peerPubKey.empty()) {
         EnterState(State::Failed);
         Cleanup();
-        return;
+        return MigrateSessionRc::ERROR;
     }
     peerPubKey_ = peerPubKey;
     // 交换完成后发送开始迁移控制
     EnterState(State::WaitingKey);
-    SendStartMigration();
+    return SendStartMigration();
 }
 
-void MigrationSession::SendStartMigration()
+MigrateSessionRc MigrationSession::SendStartMigration()
 {
     if (!rpcClient_) {
         EnterState(State::Failed);
         Cleanup();
-        return;
+        return MigrateSessionRc::ERROR;
     }
     protos::StartMigRequest req;
     // TODO: 设置真实的 domainName
@@ -130,27 +137,27 @@ void MigrationSession::SendStartMigration()
     req.set_uuid(sessionId_);
     protos::StartMigReply res;
     int32_t rc = rpcClient_->StartMigration(5, req, &res);
-    OnStartMigrationResponseReceived(rc == 0);
+    return OnStartMigrationResponseReceived(rc == 0);
 }
 
-void MigrationSession::OnStartMigrationResponseReceived(bool agree)
+MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived(bool agree)
 {
     if (!agree) {
         EnterState(State::Failed);
         Cleanup();
-        return;
+        return MigrateSessionRc::ERROR;
     }
     // 进入传输阶段
     EnterState(State::Transferring);
-    SendTransferOnce();
+    return SendTransferOnce();
 }
 
-void MigrationSession::SendTransferOnce()
+MigrateSessionRc MigrationSession::SendTransferOnce()
 {
     if (!rpcClient_) {
         EnterState(State::Failed);
         Cleanup();
-        return;
+        return MigrateSessionRc::ERROR;
     }
     // TODO: 准备一次传输的数据块（敏感资源/迁移数据）
     protos::VRsourceInfoRequest req;
@@ -161,41 +168,66 @@ void MigrationSession::SendTransferOnce()
     int32_t rc = rpcClient_->SendVRsourceData(5, req, &res);
     // TODO: 如果有分块传输，按返回状态决定是否继续
     bool finished = (rc == 0);
-    OnTransferResponseReceived(finished);
+    return OnTransferResponseReceived(finished);
 }
 
-void MigrationSession::OnTransferResponseReceived(bool finished)
+MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool finished)
 {
     if (!finished) {
         EnterState(State::Failed);
         Cleanup();
-        return;
+        return MigrateSessionRc::ERROR;
     }
     // 数据传输完成后，进入完成阶段
-    OnFinishedResponseReceived(true);
+    // TODO: do real migration
+
+    return OnFinishedResponseReceived(true);
 }
 
-void MigrationSession::OnFinishedResponseReceived(bool finished)
+MigrateSessionRc MigrationSession::OnFinishedResponseReceived(bool finished)
 {
     if (!finished) {
         EnterState(State::Failed);
         Cleanup();
-        return;
+        return MigrateSessionRc::ERROR;
     }
     EnterState(State::Finished);
     Cleanup();
+    return MigrateSessionRc::OK;
 }
 
 void MigrationSession::EnterState(State s)
 {
     state_ = s;
     CancelTimer();
+
+    // 终态不再开定时器
+    if (s == State::Failed || s == State::Finished) {
+        return;
+    }
+
     StartTimerFor(s);
+}
+
+static std::chrono::seconds TimeoutForState(MigrationSession::State s)
+{
+    switch (s) {
+        case MigrationSession::State::Init:
+            return std::chrono::seconds(10);
+        case MigrationSession::State::WaitingKey:
+            return std::chrono::seconds(30);
+        case MigrationSession::State::Transferring:
+            return std::chrono::seconds(60);
+        default:
+            return std::chrono::seconds(60);
+    }
 }
 
 void MigrationSession::StartTimerFor(State s)
 {
-    timer_.Start(std::chrono::seconds(60), [this, s] { this->OnTimeout(s); });
+    timerActive_.store(true);
+    auto dur = TimeoutForState(s);
+    timer_.Start(dur, [this, s] { this->OnTimeout(s); });
 }
 
 void MigrationSession::CancelTimer()
@@ -215,14 +247,16 @@ void MigrationSession::OnTimeout(State stateWhenSet)
 
 void MigrationSession::Cleanup()
 {
+    CancelTimer();
     SessionManager::GetInstance().RemoveSession(sessionId_);
 }
 
-void MigrationSession::OnMigrateRequestReceived(const std::string &domainName)
+MigrateSessionRc MigrationSession::OnMigrateRequestReceived()
 {
     // 1. 第一次收到 MigrateRequest，新建会话时调用
-    if (role_ != Role::Responder) {
-        return;
+    if (state_ != State::Init) {
+        VIRTRUST_LOG_ERROR("|OnMigrateRequestReceived|END|returnF|||Wrong state.");
+        return MigrateSessionRc::ERROR;
     }
     EnterState(State::Init);
 
@@ -236,17 +270,20 @@ void MigrationSession::OnMigrateRequestReceived(const std::string &domainName)
     if (!ok) {
         EnterState(State::Failed);
         Cleanup();
-        return;
+        return MigrateSessionRc::ERROR;
     }
 
     EnterState(State::WaitingKey);
     // 启动60s，等待对端发 ExchangeKey
+
+    return MigrateSessionRc::OK;
 }
 
-void MigrationSession::OnExchangeKeyRequestReceived(const std::string &peerPubKey)
+MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const std::string &peerPubKey)
 {
-    if (role_ != Role::Responder)
-        return;
+    if (role_ != Role::Responder) {
+        return MigrateSessionRc::ERROR;
+    }
 
     peerPubKey_ = peerPubKey;
     std::cout << "[Responder] Got peer public key" << std::endl;
@@ -259,20 +296,26 @@ void MigrationSession::OnExchangeKeyRequestReceived(const std::string &peerPubKe
 
     // 等待对端的 StartMigration
     EnterState(State::WaitingKey);
+
+    return MigrateSessionRc::OK;
 }
 
-void MigrationSession::OnStartMigrationRequestReceived(const std::string &domainName)
+MigrateSessionRc MigrationSession::OnStartMigrationRequestReceived(const std::string &domainName)
 {
-    if (role_ != Role::Responder)
-        return;
+    if (role_ != Role::Responder) {
+        return MigrateSessionRc::ERROR;
+    }
     // TODO: 根据 domainName 做准备（挂载/预分配等）
     EnterState(State::Transferring);
+
+    return MigrateSessionRc::OK;
 }
 
-void MigrationSession::OnTransferDataRequestReceived(const std::string &data, bool finished)
+MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const std::string &data, bool finished)
 {
-    if (role_ != Role::Responder)
-        return;
+    if (role_ != Role::Responder) {
+        return MigrateSessionRc::ERROR;
+    }
     // TODO: 校验并落盘 data（考虑分块/校验）
     if (finished) {
         // TODO: 定义并启动虚机
@@ -281,19 +324,22 @@ void MigrationSession::OnTransferDataRequestReceived(const std::string &data, bo
     } else {
         EnterState(State::Transferring);
     }
+    return MigrateSessionRc::OK;
 }
 
-void MigrationSession::OnFinishedRequestReceived(const std::string &vmData, bool finished)
+MigrateSessionRc MigrationSession::OnFinishedRequestReceived(const std::string &vmData, bool finished)
 {
-    if (role_ != Role::Responder)
-        return;
+    if (role_ != Role::Responder) {
+        return MigrateSessionRc::ERROR;
+    }
     // TODO: 收到结束通知后的收尾处理
     if (!finished) {
         EnterState(State::Failed);
         Cleanup();
-        return;
+        return MigrateSessionRc::ERROR;
     }
     EnterState(State::Finished);
     Cleanup();
+    return MigrateSessionRc::OK;
 }
 } // namespace virtrust

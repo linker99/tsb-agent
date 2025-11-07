@@ -101,7 +101,7 @@ BINARY_COMP_HELPER(LessEquals, <=)
 
 #define VIRTRUST_ENFORCE_THAT_IMPL(condition, expr, ...)                                      \
     do {                                                                                      \
-        const ::virtrust::enforce_detail::EnforceFailMessage &r = (condition);                \
+        const ::virtrust::enforce_detail::EnforceFailMessage r = (condition);                 \
         if (r.bad()) {                                                                        \
             throw ::virtrust::EnforceNotMet(__FILE__, __LINE__, expr,                         \
                                             r.get_message_and_free(MakeString(__VA_ARGS__))); \
@@ -119,10 +119,10 @@ BINARY_COMP_HELPER(LessEquals, <=)
     VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::NotEquals((x), (y)), #x "!=" #y, __VA_ARGS__)
 
 #define VIRTRUST_ENFORCE_LE(x, y, ...) \
-    VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::Less((x), (y)), #x "<" #y, __VA_ARGS__)
+    VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::LessEquals((x), (y)), #x "<=" #y, __VA_ARGS__)
 
 #define VIRTRUST_ENFORCE_LT(x, y, ...) \
-    VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::LessEquals((x), (y)), #x "<=" #y, __VA_ARGS__)
+    VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::Less((x), (y)), #x "<" #y, __VA_ARGS__)
 
 #define VIRTRUST_ENFORCE_GE(x, y, ...) \
     VIRTRUST_ENFORCE_THAT_IMPL(::virtrust::enforce_detail::GreaterEquals((x), (y)), #x ">=" #y, __VA_ARGS__)

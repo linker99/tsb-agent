@@ -12,7 +12,7 @@ TEST(LibvirtTest, works)
 {
     // Init
     auto &libvirt = Libvirt::GetInstance();
-    EXPECT_EQ(libvirt.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libvirt.CheckOk(), DllibRc::OK);
 
     // Explicity reload
     auto ret = libvirt.Reload();
@@ -27,14 +27,14 @@ TEST(LibvirtTest, SingletonPattern)
     EXPECT_EQ(&libvirt1, &libvirt2);
 }
 
-TEST(LibvirtTest, CheckOKFunction)
+TEST(LibvirtTest, CheckOkFunction)
 {
-    // Test the CheckOK function
+    // Test the CheckOk function
     auto &libvirt = Libvirt::GetInstance();
-    EXPECT_EQ(libvirt.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libvirt.CheckOk(), DllibRc::OK);
 
     // Test size function
-    EXPECT_GT(libvirt.size(), (size_t)0);
+    EXPECT_GT(libvirt.Size(), (size_t)0);
 }
 
 TEST(LibvirtTest, ReloadFunction)
@@ -43,14 +43,14 @@ TEST(LibvirtTest, ReloadFunction)
     auto &libvirt = Libvirt::GetInstance();
 
     // check inital state
-    EXPECT_EQ(libvirt.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libvirt.CheckOk(), DllibRc::OK);
 
     // Reload the library
     auto ret = libvirt.Reload();
     EXPECT_EQ(ret, DllibRc::OK);
 
     // Verify it's still working after reload
-    EXPECT_EQ(libvirt.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(libvirt.CheckOk(), DllibRc::OK);
 }
 
 TEST(LibvirtTest, FunctionPointerValidity)
@@ -63,10 +63,10 @@ TEST(LibvirtTest, FunctionPointerValidity)
     EXPECT_NE(libvirt.virDomainLookupByName.Get(), nullptr);
     EXPECT_NE(libvirt.virDomainFree.Get(), nullptr);
 
-    // Test that functions can be called (without actaully executing)
-    EXPECT_FALSE(libvirt.virConnectOpen.GetName());
-    EXPECT_FALSE(libvirt.virDomainLookupByName.GetName());
-    EXPECT_FALSE(libvirt.virDomainFree.GetName());
+    // Test that functions can be called (without actually executing)
+    EXPECT_FALSE(libvirt.virConnectOpen.GetName().empty());
+    EXPECT_FALSE(libvirt.virDomainLookupByName.GetName().empty());
+    EXPECT_FALSE(libvirt.virDomainFree.GetName().empty());
 }
 
 TEST(LibvirtTest, SetErrorFunction)

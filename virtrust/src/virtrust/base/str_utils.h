@@ -34,7 +34,7 @@ template <typename... Args> std::string MakeString(const Args &...args)
     return std::string(ss.str());
 }
 
-template <typename T> std::string MakeString(const std::vector<T> &v, const std::string &delim = "")
+template <typename T> std::string MakeString(const std::vector<T> &v, const std::string &delim = " ")
 {
     std::stringstream ss;
     for (auto it = v.begin(); it != v.end(); ++it) {
@@ -87,20 +87,19 @@ inline std::string StrTrim(const std::string &str, char ch)
     if (start == std::string::npos) {
         return ""; // 全是目标字符
     }
-    size_t end = str.find_last_of(ch);
+    size_t end = str.find_last_not_of(ch);
     return str.substr(start, end - start + 1);
 }
 
 // 去除首尾的空白符
 inline std::string StrTrimWhitespace(const std::string &str)
 {
-    const std::string whitespace = "\t\n\v\f\r";
+    const std::string whitespace = " \t\n\v\f\r";
     size_t start = str.find_first_not_of(whitespace);
     if (start == std::string::npos) {
-
         return "";
     }
-    size_t end = str.find_last_of(whitespace);
+    size_t end = str.find_last_not_of(whitespace);
     return str.substr(start, end - start + 1);
 }
 

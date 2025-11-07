@@ -12,15 +12,15 @@ TEST(OpensslTest, works)
 {
     // Init
     auto &openssl = Openssl::GetInstance();
-    EXPECT_EQ(openssl.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(openssl.CheckOk(), DllibRc::OK);
 
     // Explicity reload
     auto ret = openssl.Reload();
     EXPECT_EQ(ret, DllibRc::OK);
 
     // Call Function
-    auto *ptr = openssl.EVP_MD_CTX_new(""); // with wrong param
-    EXPECT_EQ(ptr, nullptr);
+    auto *ptr = openssl.EVP_MD_CTX_new();
+    EXPECT_NE(ptr, nullptr);
 
     // Quit
     openssl.EVP_MD_CTX_free(ptr);
@@ -34,14 +34,14 @@ TEST(OpensslTest, SingletonPattern)
     EXPECT_EQ(&openssl1, &openssl2);
 }
 
-TEST(OpensslTest, CheckOKFunction)
+TEST(OpensslTest, CheckOkFunction)
 {
-    // Test the CheckOK function
+    // Test the CheckOk function
     auto &openssl = Openssl::GetInstance();
-    EXPECT_EQ(openssl.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(openssl.CheckOk(), DllibRc::OK);
 
     // Test size function
-    EXPECT_GT(openssl.size(), (size_t)0);
+    EXPECT_GT(openssl.Size(), (size_t)0);
 }
 
 TEST(OpensslTest, ReloadFunction)
@@ -50,14 +50,14 @@ TEST(OpensslTest, ReloadFunction)
     auto &openssl = Openssl::GetInstance();
 
     // check inital state
-    EXPECT_EQ(openssl.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(openssl.CheckOk(), DllibRc::OK);
 
     // Reload the library
     auto ret = openssl.Reload();
     EXPECT_EQ(ret, DllibRc::OK);
 
     // Verify it's still working after reload
-    EXPECT_EQ(openssl.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(openssl.CheckOk(), DllibRc::OK);
 }
 
 TEST(OpensslTest, FunctionPointerValidity)
@@ -70,10 +70,10 @@ TEST(OpensslTest, FunctionPointerValidity)
     EXPECT_NE(openssl.EVP_MD_CTX_free.Get(), nullptr);
     EXPECT_NE(openssl.EVP_DigestInit.Get(), nullptr);
 
-    // Test that functions can be called (without actaully executing)
-    EXPECT_FALSE(openssl.EVP_MD_CTX_new.GetName());
-    EXPECT_FALSE(openssl.EVP_MD_CTX_free.GetName());
-    EXPECT_FALSE(openssl.EVP_DigestInit.GetName());
+    // Test that functions can be called (without actually executing)
+    EXPECT_FALSE(openssl.EVP_MD_CTX_new.GetName().empty());
+    EXPECT_FALSE(openssl.EVP_MD_CTX_free.GetName().empty());
+    EXPECT_FALSE(openssl.EVP_DigestInit.GetName().empty());
 }
 
 TEST(OpensslTest, DigestFunctionality)

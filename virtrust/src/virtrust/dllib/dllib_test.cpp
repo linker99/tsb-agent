@@ -15,7 +15,7 @@ TEST(DynamicLibraryTest, OpensslInitialization)
 {
     // Test taht Openssl can be initialied properly
     auto &openssl = Openssl::GetInstance();
-    EXPECT_EQ(openssl.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(openssl.CheckOk(), DllibRc::OK);
 
     // Test that the library was loaded
     EXPECT_GT(openssl.Size(), (size_t)0);
@@ -44,21 +44,21 @@ TEST(DynamicLibraryTest, OpensslReloadFunctionality)
     auto &openssl = Openssl::GetInstance();
 
     // Check initial state
-    EXPECT_EQ(openssl.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(openssl.CheckOk(), DllibRc::OK);
 
     // Reload the library
     auto ret = openssl.Reload();
     EXPECT_EQ(ret, DllibRc::OK);
 
     // Verify it's still working after reload
-    EXPECT_EQ(openssl.CheckOK(), DllibRc::OK);
+    EXPECT_EQ(openssl.CheckOk(), DllibRc::OK);
 }
 
 TEST(DynamicLibraryTest, LibvirtInitialization)
 {
     // Test that libvirt can be initialied properly
     auto &libvirt = Libvirt::GetInstance();
-    // Note: we don't assert CheckOK() as libvirt might not be available in test
+    // Note: we don't assert CheckOk() as libvirt might not be available in test
     // environment But we can verify it doesn't crash
     EXPECT_NE(&libvirt, nullptr);
 }
@@ -66,7 +66,7 @@ TEST(DynamicLibraryTest, LibvirtInitialization)
 TEST(DynamicLibraryTest, LibguestfsInitialization)
 {
     auto &libguestfs = Libguestfs::GetInstance();
-    // Note: we don't assert CheckOK() as libguestfs might not be available in
+    // Note: we don't assert CheckOk() as libguestfs might not be available in
     // test environment But we can verify it doesn't crash
     EXPECT_NE(&libguestfs, nullptr);
 }
@@ -75,7 +75,7 @@ TEST(DynamicLibraryTest, Libxml2Initialization)
 {
     // Test that libxml2 can be initialied properly
     auto &libxml2 = Libxml2::GetInstance();
-    // Note: we don't assert CheckOK() as libxml2 might not be available in test
+    // Note: we don't assert CheckOk() as libxml2 might not be available in test
     // environment But we can verify it doesn't crash
     EXPECT_NE(&libxml2, nullptr);
 }
