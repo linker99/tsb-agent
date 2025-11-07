@@ -8,11 +8,8 @@
 
 #include <array>
 #include <cstdint>
-#include <string>
-#include <utility>
-#include <vector>
 
-#include "mock/tsb_agent_itf.h"
+#include "tsb_agent/tsb_agent.h"
 
 namespace virtrust::mock {
 

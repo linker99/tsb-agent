@@ -4,7 +4,7 @@ ExternalProject_Add(
   libboundscheck-src
   GIT_REPOSITORY https://github.com/openeuler-mirror/libboundscheck
   GIT_TAG master
-  PREFIX ${CMAKE_DEPS_INSTALL_PREFIX}
+  PREFIX ${CMAKE_DEPS_PREFIX}
   CONFIGURE_COMMAND ""
   BUILD_COMMAND ${CMAKE_MAKE_PROGRAM}
   UPDATE_COMMAND ""

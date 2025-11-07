@@ -4,22 +4,14 @@
 
 #pragma once
 
-#ifndef USE_MOCK_TSB_AGENT
-#error "USE_MOCK_TSB_AGENT is not defined. Please define it if your want to use mock TSB agent."
-#else
-
-#include <securec.h>
-
-#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <utility>
+#include <vector>
 
-#include "mock/tsb_agent_itf.h"
-#include "mock/v_root.h"
-#include "spdlog/spdlog.h"
+#include "tsb_agent/mock/v_root.h"
+#include "tsb_agent/tsb_agent.h"
 
 namespace virtrust::mock {
 constexpr std::string_view STORAGE_FILENAME = "mock-tsb-agent.save";
@@ -93,5 +85,3 @@ private:
     std::filesystem::path storageFilePath_ = std::filesystem::current_path() / STORAGE_FILENAME;
 };
 } // namespace virtrust::mock
-
-#endif

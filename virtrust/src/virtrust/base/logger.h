@@ -31,8 +31,8 @@
     do {                                                                                                               \
         auto logger = ::virtrust::Logger::Instance();                                                                  \
         if (logger != nullptr) {                                                                                       \
-            logger->Log(level,                                                                                         \
-                        fmt::format("[VIRTRUST {}:{}]{}", VIRTRUST_LOG_FILENAME, __LINE__, fmt::format(__VA_ARGS__))); \
+            logger->Log(                                                                                               \
+                level, fmt::format("[VIRTRUST {}:{}] {}", VIRTRUST_LOG_FILENAME, __LINE__, fmt::format(__VA_ARGS__))); \
         }                                                                                                              \
     } while (0)
 

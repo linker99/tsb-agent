@@ -2,8 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-#include "mock/tsb_agent_impl.h"
-#include "mock/tsb_agent_itf.h"
+#include "tsb_agent/mock/tsb_agent_impl.h"
+#include "tsb_agent/tsb_agent.h"
 
 using namespace virtrust::mock;
 
@@ -91,27 +91,27 @@ int GetReport(char *pUuid, char *vUuid, struct trust_report_new *hostreport, str
     return 0;
 }
 
-int MigrationGetCert(char *pUuid, char *vUuid, char *cert, char *pubkey)
+int MigrationGetCert(char *vUuid, char *cert, char *pubkey)
 {
     return 0;
 }
 
-int MigrationCheckPeerPk(char *pUuid, char *vUuid, char *pk1, char *pk2)
+int MigrationCheckPeerPk(char *vUuid, char *pk1, char *pk2)
 {
     return 0;
 }
 
-int MigrationGetVRootCipher(char *pUuid, char *vUuid, char **cipher)
+int MigrationGetVRootCipher(char *vUuid, char **cipher)
 {
     return 0;
 }
 
-int MigrationImportVRootCipher(char *pUuid, char *vUuid, char *cipher)
+int MigrationImportVRootCipher(char *vUuid, char *cipher)
 {
     return 0;
 }
 
-int MigrationNotify(char *pUuid, char *vUuid, int status)
+int MigrationNotify(char *vUuid, int status)
 {
     return 0;
 }

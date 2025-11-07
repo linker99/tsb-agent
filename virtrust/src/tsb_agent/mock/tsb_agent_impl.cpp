@@ -2,7 +2,7 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
-#include "mock/tsb_agent_impl.h"
+#include "tsb_agent/mock/tsb_agent_impl.h"
 
 #include <algorithm>
 #include <fstream>

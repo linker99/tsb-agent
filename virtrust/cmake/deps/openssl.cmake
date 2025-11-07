@@ -2,14 +2,14 @@
 
 ExternalProject_Add(
   openssl
-  PREFIX ${CMAKE_DEPS_INSTALL_PREFIX}
+  PREFIX ${CMAKE_DEPS_PREFIX}
   URL https://github.com/openssl/openssl/archive/refs/tags/openssl-3.3.2.tar.gz
   URL_HASH
     SHA256=bedbb16955555f99b1a7b1ba90fc97879eb41025081be359ecd6a9fcbdf1c8d2
   CONFIGURE_COMMAND
     ./Configure no-legacy no-weak-ssl-ciphers no-tests no-shared no-ui-console
     no-docs no-apps --banner=Finished --release --libdir=${CMAKE_INSTALL_LIBDIR}
-    --prefix=${CMAKE_DEPS_INSTALL_PREFIX} -w
+    --prefix=${CMAKE_DEPS_PREFIX} -w
   BUILD_COMMAND make build_sw
   UPDATE_COMMAND ""
   INSTALL_COMMAND make install_sw

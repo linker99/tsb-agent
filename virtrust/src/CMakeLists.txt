@@ -9,5 +9,5 @@ add_subdirectory(virtrust-sh)
 # daemon
 add_subdirectory(libvirtrustd)
 
-# mock
-add_subdirectory(mock)
+# tsb_agent
+add_subdirectory(tsb_agent)
