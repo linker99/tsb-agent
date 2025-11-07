@@ -743,13 +743,45 @@ VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
 }
 
 VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName,
-                         const std::string &destUri)
+                         const std::string &destUri, unsigned int flags)
 {
-    auto destConn = std::make_unique<ConnCtx>();
-    if (!destConn->SetUri(destUri)) {
-        VIRTRUST_LOG_ERROR("destUri is not valid: {}", destUri);
+    VIRTRUST_LOG_DEBUG("|DomainMigrate||START||");
+    FileLock fileLock(LOCK_FILE);
+    if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
     }
+    flags |= VIR_MIGRATE_OFFLINE | VIR_MIGRATE_PERSIST_DEST; // 默认离线迁移 离线迁移必须指定VIR_MIGRATE_PERSIST_DEST
+    if (flags != (VIR_MIGRATE_OFFLINE | VIR_MIGRATE_PERSIST_DEST) &&
+        flags != (VIR_MIGRATE_OFFLINE | VIR_MIGRATE_PERSIST_DEST | MIGRATE_UNDEFINE_SOURCE)) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|invalid flags, only support 0 and {}",
+                           static_cast<unsigned int>(MIGRATE_UNDEFINE_SOURCE));
+        return VirtrustRc::ERROR;
+    }
+    if (destUri.empty() || destUri.find("qemu+tls") != 0) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|destUrt is only support starts with qemu+tls");
+        return VirtrustRc::ERROR;
+    }
+    // 校验虚拟机是否tsb和virsh都存在 并获取uuid
+    std::unordered_map<std::string, DomainInfo> domainInfos;
+    auto ret = DomainList(conn, LIST_DOMAINS_ACTIVE | LIST_DOMAINS_INACTIVE, domainInfos, false);
+    if (ret != VirtrustRc::OK) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|failed to get domainInfos");
+        return VirtrustRc::ERROR;
+    }
+    std::string uuid;
+    bool exists = std::any_of(domainInfos.begin(), domainInfos.end(), [&domainName, &uuid](const auto &pair) {
+        if (pair.second.domainName == domainName) {
+            uuid = pair.first;
+            return true;
+        }
+        return false;
+    });
+    if (!exists) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|domain: {} not exist or state is not consistent with virsh",
+                           domainName);
+        return VirtrustRc::ERROR;
+    }
+
     auto domain = std::make_unique<DomainCtx>();
 
     LinkConfig config;
@@ -757,9 +789,7 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
     UdsClient client(config);
 
     // TODO: Obtain the necessary parameters here.
-    auto uuid = "";
-    auto localUri = "";
-    unsigned int flags = 0;
+    auto localUri = conn->GetUri();
     MigrationConfig migration_config{
         .domainName = domainName,
         .uuid = uuid,
@@ -768,11 +798,13 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
         .flags = flags,
     };
 
-    auto ret = client.DomainMigrate(migration_config);
-    if (ret != 0) {
+    auto retClient = client.DomainMigrate(migration_config);
+    if (retClient != 0) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|DomainMigrate failed domainName: {}.", domainName);
         return VirtrustRc::ERROR;
     }
 
+    VIRTRUST_LOG_DEBUG("|DomainMigrate||END|returnS||domainName: {}", domainName);
     return VirtrustRc::OK;
 }
 

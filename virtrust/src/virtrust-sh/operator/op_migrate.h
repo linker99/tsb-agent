@@ -26,6 +26,7 @@ public:
 private:
     std::string domainName_ = "unknown";
     std::string destUri_;
+    unsigned int flags_ = 0;
 };
 
 } // namespace virtrust

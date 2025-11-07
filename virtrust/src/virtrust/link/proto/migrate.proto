@@ -42,6 +42,8 @@ message PrepareMigRequest {
      string domainName = 1;
      string uuid = 2;
      string destUri = 3;
+     string localUri = 4;
+     uint32 flags = 5;
 }
 
 message PrepareMigReply {

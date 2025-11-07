@@ -123,10 +123,12 @@ int main(int argc, char **argv)
     signal(SIGTERM, virtrust::SignalHandler);
     signal(SIGPIPE, virtrust::SignalHandler);
 
-    // Set custom logger function for virtrust
-    virtrust::Logger::Instance()->SetCustomLogFunction([](virtrust::LogLevel level, std::string_view msg) {
-        fmt::print("[{}] {}\n", virtrust::LogLevelToStr(level), msg);
-    });
+    auto ret = virtrust::Logger::Instance()->InitLog(static_cast<int>(virtrust::LogLevel::INFO),
+                                                     virtrust::VIRTRUSTD_LOGFILE_NAME);
+    if (ret != virtrust::VirtrustRc::OK) {
+        fmt::print("\nInitLog failed\n");
+        return 1;
+    }
 
     return virtrust::ProcessArgs(argc, argv);
 }

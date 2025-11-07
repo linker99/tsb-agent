@@ -22,6 +22,8 @@ public:
     ~ConnCtx();
     bool SetUri(std::string uri);
 
+    std::string GetUri() const;
+
     bool CheckOk()
     {
         return conn_ != nullptr;

@@ -36,7 +36,7 @@ public:
     };
 
     MigrationSession(Role role, const std::string &sessionId, const std::string &domainName,
-                     const std::string &destUri = "");
+                     const std::string &destUri = "", const std::string &localUri = "", const unsigned int flags = 0);
 
     // 主动方起步
     MigrateSessionRc Start();
@@ -94,7 +94,7 @@ private:
 
     MigrateSessionRc SendStartMigration();
 
-    MigrateSessionRc SendTransferOnce();
+    MigrateSessionRc SendTransferOnce(char *cipher);
 
     MigrateSessionRc SendFinishedNotify();
 
@@ -104,6 +104,8 @@ private:
     std::string sessionId_;
     std::string domainName_;
     std::string destUri_;
+    std::string localUri_;
+    unsigned int flags_;
 
     std::string myPubKey_;
     std::string peerPubKey_;
@@ -131,7 +133,8 @@ public:
 
     // 创建并托管一个会话，返回裸指针，所有权仍在manager内
     MigrationSession *CreateSession(MigrationSession::Role role, const std::string &sessionId,
-                                    const std::string &domainName, const std::string &destUri);
+                                    const std::string &domainName, const std::string &destUri,
+                                    const std::string &localUri, const unsigned int flags);
 
     // 查找会话（比如 gRPC handler 用这个）
     MigrationSession *GetSession(const std::string &sessionId);
