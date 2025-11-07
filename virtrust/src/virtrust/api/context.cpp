@@ -23,7 +23,7 @@ ConnCtx::~ConnCtx()
 
 bool ConnCtx::Connect()
 {
-    Libvirt::GetInstance().virConnectOpen(uri_.data());
+    conn_ = Libvirt::GetInstance().virConnectOpen(uri_.data());
     if (conn_ == nullptr) {
         VIRTRUST_LOG_ERROR("virConnectOpen of uri failed, a nullptr ConnCtx has been created.");
         return false;
