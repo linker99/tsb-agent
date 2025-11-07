@@ -4,14 +4,13 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <fstream>
-#include <memory>
 #include <sstream>
 #include <string>
-#include <unordered_map>
 
 // Include the TSB agent header
-#include "mock/tsb_agent_impl.h"
+#include "tsb_agent/mock/tsb_agent_impl.h"
 
 namespace virtrust::mock {
 

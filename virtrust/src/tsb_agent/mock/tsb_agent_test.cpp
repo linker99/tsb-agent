@@ -8,9 +8,8 @@
 #include <memory>
 
 // Include the TSB agent interface header
-#include "mock/tsb_agent_impl.h"
-#include "mock/tsb_agent_itf.h"
 #include "securec.h"
+#include "tsb_agent/mock/tsb_agent_impl.h"
 
 namespace virtrust::mock {
 
@@ -45,9 +44,6 @@ protected:
 // Test case: Test GetVRoots function
 TEST_F(TsbAgentItfTest, GetVRoots)
 {
-    // Clear any existing state to ensure clean test
-    TsbAgentImpl::GetInstance().ClearAllVRoots();
-
     int vtpcmNums = 0;
     struct Description *vtpcmInfo = nullptr;
 
@@ -163,30 +159,30 @@ TEST_F(TsbAgentItfTest, DISABLED_CheckMeasure)
 // Test case: Test MigrationGetCert function
 TEST_F(TsbAgentItfTest, DISABLED_MigrationGetCert)
 {
-    char pUuid[37] = "12345678-1234-5678-1234-567812345678";
-    char vUuid[37] = "12345678-1234-5678-1234-567812345678";
+    // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
+    // char vUuid[37] = "12345678-1234-5678-1234-567812345678";
 
-    char cert[1024] = {};
-    char pubkey[1024] = {};
+    // char cert[1024] = {};
+    // char pubkey[1024] = {};
 
-    // Call MigrationGetCert
-    int result = MigrationGetCert(pUuid, vUuid, cert, pubkey);
+    // // Call MigrationGetCert
+    // int result = MigrationGetCert(pUuid, vUuid, cert, pubkey);
 
-    // Verify the function returns OK
-    VerifyOK(result, "MigrationGetCert");
+    // // Verify the function returns OK
+    // VerifyOK(result, "MigrationGetCert");
 }
 
 // Test case: Test MigrationCheckPeerPk function
 TEST_F(TsbAgentItfTest, DISABLED_MigrationCheckPeerPk)
 {
-    char pUuid[37] = "12345678-1234-5678-1234-567812345678";
+    // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
     char vUuid[37] = "12345678-1234-5678-1234-567812345678";
 
     char pk1[1024] = {};
     char pk2[1024] = {};
 
     // Call MigrationCheckPeerPk
-    int result = MigrationCheckPeerPk(pUuid, vUuid, pk1, pk2);
+    int result = MigrationCheckPeerPk(/* pUuid, */ vUuid, pk1, pk2);
 
     // Verify the function returns OK
     VerifyOK(result, "MigrationCheckPeerPk");
@@ -195,13 +191,13 @@ TEST_F(TsbAgentItfTest, DISABLED_MigrationCheckPeerPk)
 // Test case: Test MigrationGetVRootCipher function
 TEST_F(TsbAgentItfTest, DISABLED_MigrationGetVRootCipher)
 {
-    char pUuid[37] = "12345678-1234-5678-1234-567812345678";
+    // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
     char vUuid[37] = "12345678-1234-5678-1234-567812345678";
 
     char *cipher = nullptr;
 
     // Call MigrationGetVRootCipher
-    int result = MigrationGetVRootCipher(pUuid, vUuid, &cipher);
+    int result = MigrationGetVRootCipher(/* pUuid, */ vUuid, &cipher);
 
     // Verify the function returns OK
     VerifyOK(result, "MigrationGetVRootCipher");
@@ -215,13 +211,13 @@ TEST_F(TsbAgentItfTest, DISABLED_MigrationGetVRootCipher)
 // Test case: Test MigrationImportVRootCipher function
 TEST_F(TsbAgentItfTest, DISABLED_MigrationImportVRootCipher)
 {
-    char pUuid[37] = "12345678-1234-5678-1234-567812345678";
+    // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
     char vUuid[37] = "12345678-1234-5678-1234-567812345678";
 
     char cipher[1024] = "test-cipher-data";
 
     // Call MigrationImportVRootCipher
-    int result = MigrationImportVRootCipher(pUuid, vUuid, cipher);
+    int result = MigrationImportVRootCipher(/* pUuid, */ vUuid, cipher);
 
     // Verify the function returns OK
     VerifyOK(result, "MigrationImportVRootCipher");
@@ -230,11 +226,11 @@ TEST_F(TsbAgentItfTest, DISABLED_MigrationImportVRootCipher)
 // Test case: Test MigrationNotify function
 TEST_F(TsbAgentItfTest, DISABLED_MigrationNotify)
 {
-    char pUuid[37] = "12345678-1234-5678-1234-567812345678";
+    // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
     char vUuid[37] = "12345678-1234-5678-1234-567812345678";
 
     // Call MigrationNotify
-    int result = MigrationNotify(pUuid, vUuid, 1);
+    int result = MigrationNotify(/* pUuid, */ vUuid, 1);
 
     // Verify the function returns OK
     VerifyOK(result, "MigrationNotify");
