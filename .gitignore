@@ -10,3 +10,10 @@ virtrust/build/*
 .vscode
 
 *.claude
+
+transcript.txt
+
+.cache
+
+*.pb.cc
+*.pb.h

@@ -10,6 +10,7 @@ add_subdirectory(dllib)
 add_subdirectory(crypto)
 add_subdirectory(link)
 add_subdirectory(utils)
+
 # Object lib
 
 add_dependencies(virtrust-obj build_proto)
