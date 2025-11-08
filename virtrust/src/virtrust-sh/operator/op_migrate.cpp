@@ -30,7 +30,7 @@ OpRc OpMigrate::Exec()
         VIRTRUST_LOG_ERROR("Failed to establish connection to: {}", config_.uri);
         return OpRc::ERROR;
     }
-    return ParseVirtrustRc(DomainMigrate(conn_, domainName_, destUri_));
+    return ParseVirtrustRc(DomainMigrate(conn_, domainName_, destUri_, flags_));
 }
 
 // Parse the args from command line
@@ -40,7 +40,8 @@ OpRc OpMigrate::ParseArgv(int argc, char **argv)
     int longindex = -1;
     optind = 1; // reset
 
-    std::vector<option> opt = {{"help", no_argument, nullptr, 'h'}, {nullptr, 0, nullptr, 0}};
+    std::vector<option> opt = {
+        {"help", no_argument, nullptr, 'h'}, {"undefinesource", no_argument, nullptr, 0}, {nullptr, 0, nullptr, 0}};
 
     // The leading + means no re-ordering, see man page of getopt_long
     while ((arg = getopt_long(argc, argv, "+h", opt.data(), &longindex)) != -1) {
@@ -50,6 +51,13 @@ OpRc OpMigrate::ParseArgv(int argc, char **argv)
                 PrintUsage();
                 optind = argc; // stop parsing
                 return OpRc::OK;
+            case 0:
+                if (flags_ & MIGRATE_UNDEFINE_SOURCE) {
+                    fmt::print("\nOption --undefinesource is already set.\n");
+                    return OpRc::ERROR;
+                }
+                flags_ |= MIGRATE_UNDEFINE_SOURCE;
+                break;
             default:
                 config_.enableExec = false;
                 PrintUsage();
@@ -93,6 +101,7 @@ void OpMigrate::PrintUsage()
                "\n"
                "  OPTIONS:\n"
                "    -h | --help                    this help\n"
+               "    --undefinesource               undefine VM on source\n"
                "\n");
 }
 

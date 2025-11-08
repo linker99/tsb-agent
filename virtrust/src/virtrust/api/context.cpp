@@ -40,6 +40,11 @@ bool ConnCtx::SetUri(std::string uri)
     return true;
 }
 
+std::string ConnCtx::GetUri() const
+{
+    return uri_;
+}
+
 DomainCtx::DomainCtx(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName)
 {
     if (conn->Get() != nullptr) {

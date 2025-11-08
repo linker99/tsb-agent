@@ -7,6 +7,7 @@
 #include <memory>
 #include <thread>
 
+#include "tsb_agent/tsb_agent.h"
 #include "virtrust/base/logger.h"
 #include "virtrust/link/defines.h"
 #include "virtrust/link/grpc_client.h"
@@ -30,8 +31,8 @@ grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context
     }
 
     // 否则创建session
-    MigrationSession *session =
-        mgr.CreateSession(MigrationSession::Role::Responder, uuid, request->domainname(), request->desturi());
+    MigrationSession *session = mgr.CreateSession(MigrationSession::Role::Responder, uuid, request->domainname(),
+                                                  request->desturi(), request->localuri(), request->flags());
     MigrateSessionRc rc = session->OnMigrateRequestReceived();
     if (rc != MigrateSessionRc::OK) {
         return grpc::Status(grpc::StatusCode::ABORTED, "This VM is already migrating");
@@ -59,6 +60,19 @@ grpc::Status MigrationServiceImpl::SendVRsourceData(grpc::ServerContext *context
                                                     const protos::VRsourceInfoRequest *request,
                                                     protos::VRsourceInfoReply *response)
 {
+    if (request == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|SendVRsourceData request is nullptr.");
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+    auto ret = MigrationImportVRootCipher(const_cast<char *>(request->data().c_str()),
+                                          const_cast<char *>(request->uuid().c_str()));
+    if (ret != 0) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|MigrationImportVrootCipher failed.");
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+    response->set_result(0);
     return grpc::Status::OK;
 }
 
@@ -79,8 +93,9 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
     RpcClient client(config);
 
     auto &mgr = SessionManager::GetInstance();
-    MigrationSession *session = mgr.CreateSession(MigrationSession::Role::Initiator, request->uuid(),
-                                                  request->domainname(), request->desturi());
+    MigrationSession *session =
+        mgr.CreateSession(MigrationSession::Role::Initiator, request->uuid(), request->domainname(), request->desturi(),
+                          request->localuri(), request->flags());
     if (!session) {
         response->set_result(1); // already exists or failed
         return grpc::Status::OK;

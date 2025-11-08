@@ -21,7 +21,8 @@ int32_t UdsClient::DomainMigrate(const MigrationConfig &config)
     request.set_domainname(config.domainName);
     request.set_uuid(config.uuid);
     request.set_desturi(config.destUri);
-
+    request.set_localuri(config.localUri);
+    request.set_flags(config.flags);
     // Container for the response from the server.
     protos::DomainMigraterReply reply;
 
@@ -38,6 +39,7 @@ int32_t UdsClient::DomainMigrate(const MigrationConfig &config)
     if (!status.ok()) {
         return -1;
     }
+    reply.set_result(0);
     return reply.result();
 }
 

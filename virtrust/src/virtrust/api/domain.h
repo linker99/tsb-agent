@@ -33,7 +33,7 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
                          bool isOnlyTsb = false);
 
 VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName,
-                         const std::string &destUri);
+                         const std::string &destUri, unsigned int flags);
 
 /**
  * 启动虚拟机

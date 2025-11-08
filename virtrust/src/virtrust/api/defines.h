@@ -45,4 +45,8 @@ struct DomainInfo {
     unsigned short nrVirtCpu;   //   the number of virtual CPUs for the domain
     unsigned long long cpuTime; //  the CPU time used in nanoseconds
 };
+
+enum DomainMigrateFlags {
+    MIGRATE_UNDEFINE_SOURCE = (1 << 4), // Undefine the domain on the source host once migration successfully finishes.
+};
 } // namespace virtrust
