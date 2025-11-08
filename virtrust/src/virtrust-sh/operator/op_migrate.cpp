@@ -74,7 +74,6 @@ OpRc OpMigrate::ParseArgv(int argc, char **argv)
 
     if (strlen(argv[optind]) != 0) {
         domainName_ = argv[optind];
-        return OpRc::OK;
     } else {
         VIRTRUST_LOG_ERROR("Invalid empty domain name");
         return OpRc::ERROR;
@@ -82,11 +81,11 @@ OpRc OpMigrate::ParseArgv(int argc, char **argv)
 
     if (strlen(argv[optind + 1]) != 0) {
         destUri_ = argv[optind + 1];
-        return OpRc::OK;
     } else {
         VIRTRUST_LOG_ERROR("Invalid empty domain name");
         return OpRc::ERROR;
     }
+    return OpRc::OK;
 }
 
 // Print the usage of this operator

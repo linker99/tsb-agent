@@ -117,12 +117,12 @@ OpRc OpList::Exec()
     size_t maxNameLen = 5;
     std::vector<DomainInfoForSort> sortedInfos = GetSortedDomainInfos(conn_, domainInfos, maxNameLen);
 
-    fmt::print("\n{:5} {:{}} {:<10}\n", "Id", "Name", maxNameLen + 2, "State");
+    fmt::print("{:5} {:{}} {:<10}\n", "Id", "Name", maxNameLen + 2, "State");
     std::string separator(maxNameLen + 19, '-');
 
     fmt::print("{}\n", separator);
     for (const auto &item : sortedInfos) {
-        fmt::print("\n{:5} {:{}} {:<10}\n",
+        fmt::print("{:5} {:{}} {:<10}\n",
                    item.id == std::numeric_limits<unsigned int>::max() ? "-" : std::to_string(item.id),
                    item.domainInfo.domainName, maxNameLen + 2, GetStateStr(item.domainInfo.state));
     }

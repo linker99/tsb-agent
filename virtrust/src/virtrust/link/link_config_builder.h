@@ -23,6 +23,7 @@ public:
     }
 
     VIRTRUST_LINK_BUILDER_ADD(const std::string &, caPath)
+    VIRTRUST_LINK_BUILDER_ADD(const std::string &, udsPath)
     VIRTRUST_LINK_BUILDER_ADD(const std::string &, certPath)
     VIRTRUST_LINK_BUILDER_ADD(const std::string &, skPath)
     VIRTRUST_LINK_BUILDER_ADD(const std::string &, ip)
