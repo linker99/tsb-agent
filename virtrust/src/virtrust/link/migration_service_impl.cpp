@@ -36,6 +36,7 @@ grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context
     MigrateSessionRc rc = session->OnMigrateRequestReceived();
     if (rc != MigrateSessionRc::OK) {
         response->set_result(1);
+        return grpc::Status::OK;
     }
     response->set_result(0);
     return grpc::Status::OK;
@@ -57,6 +58,7 @@ grpc::Status MigrationServiceImpl::ExchangePkAndReport(grpc::ServerContext *cont
     MigrateSessionRc rc = session->OnExchangeKeyRequestReceived(request, response);
     if (rc != MigrateSessionRc::OK) {
         response->set_result(1);
+        return grpc::Status::OK;
     }
 
     response->set_result(0);
@@ -95,13 +97,20 @@ grpc::Status MigrationServiceImpl::SendVRsourceData(grpc::ServerContext *context
         response->set_result(1);
         return grpc::Status::OK;
     }
-    auto ret = MigrationImportVRootCipher(const_cast<char *>(request->data().c_str()),
-                                          const_cast<char *>(request->uuid().c_str()));
-    if (ret != 0) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|MigrationImportVrootCipher failed.");
+    auto &uuid = request->uuid();
+    MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
+    if (session == nullptr) {
+        VIRTRUST_LOG_ERROR("|StartMigration|END|returnF|SendVRsourceData uuid: {}|Can't find session.");
         response->set_result(1);
         return grpc::Status::OK;
     }
+    // 服务端
+    MigrateSessionRc rc = session->OnTransferDataRequestReceived(request);
+    if (rc != MigrateSessionRc::OK) {
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+
     response->set_result(0);
     return grpc::Status::OK;
 }
@@ -111,6 +120,24 @@ grpc::Status MigrationServiceImpl::NotifyVRMigrateResult(grpc::ServerContext *co
                                                          const protos::MigrateResultRequest *request,
                                                          protos::MigrateResultReply *response)
 {
+    if (request == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|NotifyVRMigrateResult request is nullptr.");
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+    auto &uuid = request->uuid();
+    MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
+    if (session == nullptr) {
+        VIRTRUST_LOG_ERROR("|StartMigration|END|returnF|NotifyVRMigrateResult uuid: {}|Can't find session.");
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+    MigrateSessionRc rc = session->OnFinishedRequestReceived(request->result() == 0);
+    if (rc != MigrateSessionRc::OK) {
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+    response->set_result(0);
     return grpc::Status::OK;
 }
 

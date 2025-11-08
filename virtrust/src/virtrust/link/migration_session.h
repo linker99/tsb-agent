@@ -72,9 +72,9 @@ public:
 
     MigrateSessionRc OnStartMigrationRequestReceived();
 
-    MigrateSessionRc OnTransferDataRequestReceived(const std::string &vmData, bool finished);
+    MigrateSessionRc OnTransferDataRequestReceived(const protos::VRsourceInfoRequest *request);
 
-    MigrateSessionRc OnFinishedRequestReceived(const std::string &vmData, bool finished);
+    MigrateSessionRc OnFinishedRequestReceived(bool finished);
 
 private:
     // 这几个是收到对端应答时要调用的
@@ -103,7 +103,7 @@ private:
 
     MigrateSessionRc SendTransferOnce(char *cipher);
 
-    MigrateSessionRc SendFinishedNotify();
+    MigrateSessionRc SendFinishedNotify(uint32_t result);
 
     // 辅助函数
     MigrateSessionRc GetExchangePkAndReport(protos::EXchangePkAndReportRequest *req,

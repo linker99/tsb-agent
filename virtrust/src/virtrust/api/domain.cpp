@@ -287,7 +287,7 @@ VirtrustRc CheckCreateDomainName(const std::string &arg, std::string &domainName
     }
     // 处理--name=***或-n=***或-n*****
     bool isLongContainsName = arg.length() > 7 && arg.substr(0, 7) == "--name="; // 7是--name=的长度
-    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n";     // 这里大于3是处理-n并且紧跟字符的情况
+    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n"; // 这里大于3是处理-n并且紧跟字符的情况
     if (isLongContainsName || isShortContainsName) {
         if (isLongContainsName || (isLongContainsName && arg.find('=') != std::string::npos)) {
             domainName = arg.substr(arg.find('=') + 1);
@@ -529,7 +529,7 @@ auto ToMaps(int tsbVmNum, Description *tsbVmInfo, int virtVmNum, virDomainPtr *v
 {
     // create tsb map
     std::unordered_map<std::string, Description> tsbVmMap;
-    for (unsigned int i = 0; i < static_cast<unsigned int>(virtVmNum); i++) {
+    for (int i = 0; i < tsbVmNum; i++) {
         std::string tsbVmUuid = std::string((tsbVmInfo + i)->uuid);
         // skip, if flags are only LIST_DOMAIN_ACTIVE&, and domain is not running
         if (flags == DomainListFlags::LIST_DOMAINS_ACTIVE &&

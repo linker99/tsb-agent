@@ -168,6 +168,7 @@ MigrateSessionRc MigrationSession::SendStartMigration()
 MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
 {
     char *cipher = nullptr;
+    //收集密码资源
     auto ret = MigrationGetVRootCipher(const_cast<char *>(sessionId_.c_str()), &cipher);
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|MigrationGetVRootCipher failed.");
@@ -227,10 +228,9 @@ MigrateSessionRc MigrationSession::SendTransferOnce(char *cipher)
     free(cipher);
     protos::VRsourceInfoReply res;
     int32_t rc = rpcClient_->SendVRsourceData(5, req, &res);
-    // TODO: 如果有分块传输，按返回状态决定是否继续
     bool finished = (rc == 0);
     if (!finished) {
-        // 删除对端虚拟机
+        // 传输虚拟机资源失败删除对端虚拟机
         auto destDomain = std::make_unique<DomainCtx>(destConn, domainName_);
         if (destDomain->Get() == nullptr) {
             VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|failed to find destDomain: {}", domainName_);
@@ -247,28 +247,29 @@ MigrateSessionRc MigrationSession::SendTransferOnce(char *cipher)
 MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool finished)
 {
     if (!finished) { // 通知失败
+        OnFail();
+        return MigrateSessionRc::ERROR;
+    }
+    // 数据传输完成后，发送finishied通知
+    EnterState(State::Finished);
+    return SendFinishedNotify(0);
+}
+
+MigrateSessionRc MigrationSession::SendFinishedNotify(uint32_t result)
+{
+    if (rpcClient_ == nullptr) {
+        VIRTRUST_LOG_ERROR("|SendFinishedNotify|END|returnF|rpcClient_ is null.");
         EnterState(State::Failed);
         Cleanup();
         auto ret = MigrationNotify(const_cast<char *>(sessionId_.c_str()), 1); // 迁移失败
         if (ret != 0) {
-            VIRTRUST_LOG_INFO(
-                "|DomainMigrate|END|returnF|OnTransferResponseReceived MigrationNotify failure failed uuid: {}.",
-                sessionId_);
+            VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|SendFinishedNotify failed uuid: {}.", sessionId_);
         }
-        return MigrateSessionRc::ERROR;
-    }
-    // 数据传输完成后，发送finishied通知
-    return SendFinishedNotify();
-}
-
-MigrateSessionRc MigrationSession::SendFinishedNotify()
-{
-    if (rpcClient_ == nullptr) {
-        VIRTRUST_LOG_ERROR("|SendFinishedNotify|END|returnF|rpcClient_ is null.");
         return MigrateSessionRc::ERROR;
     }
 
     protos::MigrateResultRequest req;
+    req.set_result(result);
     req.set_uuid(sessionId_);
     protos::MigrateResultReply res;
     auto ret = rpcClient_->NotifyVRMigrateResult(5, req, &res);
@@ -426,6 +427,14 @@ void MigrationSession::Cleanup()
 
 void MigrationSession::OnFail()
 {
+    auto ret = MigrationNotify(const_cast<char *>(sessionId_.c_str()), 1); // 迁移失败
+    if (ret != 0) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|MigrationNotify failure failed uuid: {}.", sessionId_);
+    }
+    MigrateSessionRc sendRet = SendFinishedNotify(1);
+    if (sendRet != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|SendFinishedNotify failed uuid: {}.", sessionId_);
+    }
     EnterState(State::Failed);
     Cleanup();
 }
@@ -488,30 +497,32 @@ MigrateSessionRc MigrationSession::OnStartMigrationRequestReceived()
     return MigrateSessionRc::OK;
 }
 
-MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const std::string &data, bool finished)
+MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::VRsourceInfoRequest *request)
 {
     if (state_ != State::Transferring) {
         Cleanup();
         VIRTRUST_LOG_ERROR("|OnTransferDataRequestReceived|END|returnF||Waiting for transfering timeout.");
         return MigrateSessionRc::ERROR;
     }
-    // TODO: 校验并落盘 data（考虑分块/校验）
-    if (finished) {
-        // TODO: 定义并启动虚机
-        EnterState(State::Finished);
+    // 服务端校验客户端发来的虚拟机资源信息
+    auto ret = MigrationImportVRootCipher(const_cast<char *>(request->data().c_str()),
+                                          const_cast<char *>(request->uuid().c_str()));
+    if (ret != 0) {
+        EnterState(State::Failed);
         Cleanup();
-    } else {
-        EnterState(State::Transferring);
+        VIRTRUST_LOG_ERROR(
+            "|DomainMigrate|END|returnF|OnTransferDataRequestReceived MigrationImportVrootCipher failed.");
+        return MigrateSessionRc::ERROR;
     }
+    EnterState(State::Transferring);
     return MigrateSessionRc::OK;
 }
 
-MigrateSessionRc MigrationSession::OnFinishedRequestReceived(const std::string &vmData, bool finished)
+MigrateSessionRc MigrationSession::OnFinishedRequestReceived(bool finished)
 {
     if (role_ != Role::Responder) {
         return MigrateSessionRc::ERROR;
     }
-    // TODO: 收到结束通知后的收尾处理
     if (!finished) {
         EnterState(State::Failed);
         Cleanup();
