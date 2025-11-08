@@ -230,7 +230,6 @@ MigrateSessionRc MigrationSession::SendTransferOnce(char *cipher)
     free(cipher);
     protos::VRsourceInfoReply res;
     int32_t rc = rpcClient_->SendVRsourceData(5, req, &res);
-    // TODO: 如果有分块传输，按返回状态决定是否继续
     bool finished = (rc == 0);
     if (!finished) {
         // 传输虚拟机资源失败删除对端虚拟机
@@ -527,7 +526,6 @@ MigrateSessionRc MigrationSession::OnFinishedRequestReceived(bool finished)
     if (role_ != Role::Responder) {
         return MigrateSessionRc::ERROR;
     }
-    // TODO: 收到结束通知后的收尾处理
     if (!finished) {
         EnterState(State::Failed);
         Cleanup();
