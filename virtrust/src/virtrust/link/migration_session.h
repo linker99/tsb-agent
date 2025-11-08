@@ -10,6 +10,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "tsb_agent/tsb_agent.h"
 #include "virtrust/link/grpc_client.h"
 #include "virtrust/utils/async_timer.h"
 
@@ -30,6 +31,7 @@ public:
     enum class State {
         Init,
         WaitingKey,
+        CertVerify,
         Transferring,
         Finished,
         Failed
@@ -61,9 +63,10 @@ public:
     // 响应方使用
     MigrateSessionRc OnMigrateRequestReceived();
 
-    MigrateSessionRc OnExchangeKeyRequestReceived(const std::string &peerPubKey);
+    MigrateSessionRc OnExchangeKeyRequestReceived(const protos::EXchangePkAndReportRequest *request,
+        protos::EXchangePkAndReportReply *response);
 
-    MigrateSessionRc OnStartMigrationRequestReceived(const std::string &domainName);
+    MigrateSessionRc OnStartMigrationRequestReceived();
 
     MigrateSessionRc OnTransferDataRequestReceived(const std::string &vmData, bool finished);
 
@@ -71,11 +74,11 @@ public:
 
 private:
     // 这几个是收到对端应答时要调用的
-    MigrateSessionRc OnMigrateResponseReceived(bool agree);
+    MigrateSessionRc OnMigrateResponseReceived();
 
-    MigrateSessionRc OnExchangeKeyResponseReceived(const std::string &peerReport, const std::string &peerPubKey);
+    MigrateSessionRc OnExchangeKeyResponseReceived(protos::EXchangePkAndReportReply &res);
 
-    MigrateSessionRc OnStartMigrationResponseReceived(bool agree);
+    MigrateSessionRc OnStartMigrationResponseReceived();
 
     MigrateSessionRc OnTransferResponseReceived(bool finished);
 
@@ -97,6 +100,13 @@ private:
     MigrateSessionRc SendTransferOnce(char *cipher);
 
     MigrateSessionRc SendFinishedNotify();
+
+    // 辅助函数
+    MigrateSessionRc GetExchangePkAndReport(protos::EXchangePkAndReportRequest *req, protos::EXchangePkAndReportReply *res);
+
+    MigrateSessionRc VerifyCertificate(std::string uuid, std::string cert, std::string pubkey);
+
+    MigrateSessionRc VerifyHostAndVmReport(const protos::TrustReportNew &hostReport, const protos::TrustReportNew &vmReport);
 
 private:
     Role role_;
@@ -150,6 +160,16 @@ private:
     std::mutex mtx_;
 
     std::unordered_map<std::string, std::unique_ptr<MigrationSession>> sessions_;
+};
+
+
+struct EXchangePkAndReport {
+    std::string domainName;
+    std::string uuid;
+    std::string cert;
+    std::string pubKey;
+    std::string hostReport;
+    std::string vmReport;
 };
 
 } // namespace virtrust

@@ -18,16 +18,14 @@ grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context
                                                     const protos::PrepareMigRequest *request,
                                                     protos::PrepareMigReply *response)
 {
-    VIRTRUST_LOG_ERROR("|PrepareMigration|START||uuid:" + request->uuid() + "|domainName:" + request->domainname());
-
     auto &uuid = request->uuid();
     auto &mgr = SessionManager::GetInstance();
 
     // 已存在session，说明正在迁移
     if (mgr.GetSession(uuid) != nullptr) {
-        VIRTRUST_LOG_ERROR("|PrepareMigration|END|returnF|uuid:" + uuid + "|Session already exists");
-        response->set_result(1); // session already exists
-        return grpc::Status(grpc::StatusCode::FAILED_PRECONDITION, "This VM is already migrating");
+        VIRTRUST_LOG_ERROR("|PrepareMigration|END|returnF|uuid: {}|Session already exists, this VM is already migrating");
+        response->set_result(1);
+        return grpc::Status::OK;
     }
 
     // 否则创建session
@@ -35,23 +33,50 @@ grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context
                                                   request->desturi(), request->localuri(), request->flags());
     MigrateSessionRc rc = session->OnMigrateRequestReceived();
     if (rc != MigrateSessionRc::OK) {
-        return grpc::Status(grpc::StatusCode::ABORTED, "This VM is already migrating");
+        response->set_result(1);
     }
     return grpc::Status::OK;
 }
 
-// 2: 交换公钥
+// 2: 交换公钥和报告
 grpc::Status MigrationServiceImpl::ExchangePkAndReport(grpc::ServerContext *context,
                                                        const protos::EXchangePkAndReportRequest *request,
                                                        protos::EXchangePkAndReportReply *response)
 {
+    auto &uuid = request->uuid();
+    MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
+    if (session == nullptr) {
+        VIRTRUST_LOG_ERROR("|ExchangePkAndReport|END|returnF|uuid: {}|Can't find session.");
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+
+    MigrateSessionRc rc = session->OnExchangeKeyRequestReceived(request, response);
+    if (rc != MigrateSessionRc::OK) {
+        response->set_result(1);
+    }
+
     return grpc::Status::OK;
 }
 
-// 3: 开始迁移
+// 3: 开始迁移通知
 grpc::Status MigrationServiceImpl::StartMigration(grpc::ServerContext *context, const protos::StartMigRequest *request,
                                                   protos::StartMigReply *response)
 {
+    auto &uuid = request->uuid();
+    MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
+    if (session == nullptr) {
+        VIRTRUST_LOG_ERROR("|StartMigration|END|returnF|uuid: {}|Can't find session.");
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+
+    MigrateSessionRc rc = session->OnStartMigrationRequestReceived();
+    if (rc != MigrateSessionRc::OK) {
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+
     return grpc::Status::OK;
 }
 
@@ -89,6 +114,7 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
                                                  const protos::DomainMigraterRequest *request,
                                                  protos::DomainMigraterReply *response)
 {
+    // FIXME: Where this config from?
     LinkConfig config;
     RpcClient client(config);
 
@@ -103,8 +129,11 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
     // 初始化会话内的 RPC 客户端
     session->SetRpcClient(std::make_unique<RpcClient>(config));
     // 启动状态机（内部会依次调用 Prepare/Exchange/Start）
-    session->Start();
-    response->set_result(0);
+    auto ret = session->Start();
+
+    if (ret != MigrateSessionRc::OK) {
+        response->set_result(0);
+    }
     return grpc::Status::OK;
 }
 
