@@ -8,6 +8,7 @@
 #include <thread>
 
 #include "tsb_agent/tsb_agent.h"
+
 #include "virtrust/base/logger.h"
 #include "virtrust/link/defines.h"
 #include "virtrust/link/grpc_client.h"
@@ -23,7 +24,8 @@ grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context
 
     // 已存在session，说明正在迁移
     if (mgr.GetSession(uuid) != nullptr) {
-        VIRTRUST_LOG_ERROR("|PrepareMigration|END|returnF|uuid: {}|Session already exists, this VM is already migrating");
+        VIRTRUST_LOG_ERROR(
+            "|PrepareMigration|END|returnF|uuid: {}|Session already exists, this VM is already migrating");
         response->set_result(1);
         return grpc::Status::OK;
     }
@@ -35,6 +37,7 @@ grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context
     if (rc != MigrateSessionRc::OK) {
         response->set_result(1);
     }
+    response->set_result(0);
     return grpc::Status::OK;
 }
 
@@ -56,6 +59,7 @@ grpc::Status MigrationServiceImpl::ExchangePkAndReport(grpc::ServerContext *cont
         response->set_result(1);
     }
 
+    response->set_result(0);
     return grpc::Status::OK;
 }
 
@@ -77,6 +81,7 @@ grpc::Status MigrationServiceImpl::StartMigration(grpc::ServerContext *context, 
         return grpc::Status::OK;
     }
 
+    response->set_result(0);
     return grpc::Status::OK;
 }
 
@@ -130,10 +135,12 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
     session->SetRpcClient(std::make_unique<RpcClient>(config));
     // 启动状态机（内部会依次调用 Prepare/Exchange/Start）
     auto ret = session->Start();
-
     if (ret != MigrateSessionRc::OK) {
-        response->set_result(0);
+        response->set_result(1);
+        return grpc::Status::OK;
     }
+
+    response->set_result(0);
     return grpc::Status::OK;
 }
 

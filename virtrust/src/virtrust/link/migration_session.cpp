@@ -11,8 +11,8 @@
 #include "virtrust/api/context.h"
 #include "virtrust/base/logger.h"
 #include "virtrust/dllib/libvirt.h"
-#include "virtrust/link/proto/migrate.pb.h"
 #include "virtrust/link/proto/proto_tools.h"
+#include "virtrust/link/proto/migrate.pb.h"
 
 namespace virtrust {
 
@@ -62,6 +62,8 @@ MigrationSession::MigrationSession(Role role, const std::string &sessionId, cons
 MigrateSessionRc MigrationSession::Start()
 {
     if (role_ != Role::Initiator) {
+        VIRTRUST_LOG_ERROR("|Start|END|returnF|uuid: {}|Role is not the initiator of the migration.", sessionId_);
+        OnFail();
         return MigrateSessionRc::ERROR;
     }
     EnterState(State::Init);
@@ -71,8 +73,8 @@ MigrateSessionRc MigrationSession::Start()
 MigrateSessionRc MigrationSession::SendMigrateRequest()
 {
     if (!rpcClient_) {
-        EnterState(State::Failed);
-        Cleanup();
+        VIRTRUST_LOG_ERROR("|SendMigrateRequest|END|returnF|uuid: {}|rpc client is nullptr.", sessionId_);
+        OnFail();
         return MigrateSessionRc::ERROR;
     }
 
@@ -86,8 +88,8 @@ MigrateSessionRc MigrationSession::SendMigrateRequest()
     bool ok = (rc == 0 && reply.result() == 0);
 
     if (!ok) {
-        EnterState(State::Failed);
-        Cleanup();
+        VIRTRUST_LOG_ERROR("|SendMigrateRequest|END|returnF|uuid: {}|send migrate request failed.", sessionId_);
+        OnFail();
         return MigrateSessionRc::ERROR;
     }
     return OnMigrateResponseReceived();
@@ -104,14 +106,16 @@ MigrateSessionRc MigrationSession::SendExchangeKey()
     protos::EXchangePkAndReportRequest req;
     MigrateSessionRc rc = GetExchangePkAndReport(&req, nullptr);
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|SendExchangeKey|END|returnF|uuid: {}|Get local cert and report failed.");
+        VIRTRUST_LOG_ERROR("|SendExchangeKey|END|returnF|uuid: {}|Get local cert and report failed.", sessionId_);
+        OnFail();
         return MigrateSessionRc::ERROR;
     }
 
     protos::EXchangePkAndReportReply res;
     int32_t ret = rpcClient_->ExchangePkAndReport(5, req, &res);
     if (ret != 0 || res.result() != 0) {
-        VIRTRUST_LOG_ERROR("|SendExchangeKey|END|returnF|uuid: {}|Exchange cert and report failed.");
+        VIRTRUST_LOG_ERROR("|SendExchangeKey|END|returnF|uuid: {}|Exchange cert and report failed.", sessionId_);
+        OnFail();
         return MigrateSessionRc::ERROR;
     }
     return OnExchangeKeyResponseReceived(res);
@@ -122,14 +126,17 @@ MigrateSessionRc MigrationSession::OnExchangeKeyResponseReceived(protos::EXchang
     // 1. 校验对端证书
     MigrateSessionRc rc = VerifyCertificate(res.uuid(), res.cert(), res.publickey());
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|OnExchangeKeyResponseReceived|END|returnF|uuid: {}|Verify peer cert failed.");
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyResponseReceived|END|returnF|uuid: {}|Verify peer cert failed.", sessionId_);
+        OnFail();
         return MigrateSessionRc::ERROR;
     }
 
     // 2.校验对端报告
     rc = VerifyHostAndVmReport(res.hostreport(), res.vmreport());
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|OnExchangeKeyResponseReceived|END|returnF|uuid: {}|Verify peer report failed.");
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyResponseReceived|END|returnF|uuid: {}|Verify peer report failed.",
+                           sessionId_);
+        OnFail();
         return MigrateSessionRc::ERROR;
     }
 
@@ -147,11 +154,13 @@ MigrateSessionRc MigrationSession::SendStartMigration()
     protos::StartMigReply res;
     int32_t ret = rpcClient_->StartMigration(5, req, &res);
     if (ret != 0) {
-        VIRTRUST_LOG_ERROR("|SendStartMigration|END|returnF|uuid: {}|Send start migration signal failed.");
+        VIRTRUST_LOG_ERROR("|SendStartMigration|END|returnF|uuid: {}|Send start migration signal failed.", sessionId_);
+        OnFail();
         return MigrateSessionRc::ERROR;
     }
     if (res.result() != 0) {
-        VIRTRUST_LOG_ERROR("|SendStartMigration|END|returnF|uuid: {}|Start migration failed.");
+        VIRTRUST_LOG_ERROR("|SendStartMigration|END|returnF|uuid: {}|Start migration failed.", sessionId_);
+        OnFail();
         return MigrateSessionRc::ERROR;
     }
 
@@ -164,8 +173,7 @@ MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
     auto ret = MigrationGetVRootCipher(const_cast<char *>(sessionId_.c_str()), &cipher);
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|MigrationGetVRootCipher failed.");
-        EnterState(State::Failed);
-        Cleanup();
+        OnFail();
         return MigrateSessionRc::ERROR;
     }
     // 进入传输阶段
@@ -267,9 +275,7 @@ MigrateSessionRc MigrationSession::SendFinishedNotify()
     protos::MigrateResultReply res;
     auto ret = rpcClient_->NotifyVRMigrateResult(5, req, &res);
     if (ret != 0) {
-        VIRTRUST_LOG_INFO(
-                "|SendFinishedNotify|END|returnF|uuid: {}|Send notify failed.",
-                sessionId_);
+        VIRTRUST_LOG_INFO("|SendFinishedNotify|END|returnF|uuid: {}|Send notify failed.", sessionId_);
         EnterState(State::Failed);
         Cleanup();
         return MigrateSessionRc::ERROR;
@@ -298,7 +304,8 @@ MigrateSessionRc MigrationSession::OnFinishedResponseReceived(bool finished)
     return MigrateSessionRc::OK;
 }
 
-MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndReportRequest *req, protos::EXchangePkAndReportReply *res)
+MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndReportRequest *req,
+                                                          protos::EXchangePkAndReportReply *res)
 {
     constexpr uint32_t CERT_BUF_LEN = 4096;
     constexpr uint32_t PUBKEY_BUF_LEN = 1024;
@@ -352,7 +359,8 @@ MigrateSessionRc MigrationSession::VerifyCertificate(std::string uuid, std::stri
     return ret == 0 ? MigrateSessionRc::OK : MigrateSessionRc::ERROR;
 }
 
-MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustReportNew &hostReport, const protos::TrustReportNew &vmReport)
+MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustReportNew &hostReport,
+                                                         const protos::TrustReportNew &vmReport)
 {
     [[maybe_unused]] trust_report_new host = ReportFromProto(hostReport);
     // TODO: 调用TSB API进行报告校验
@@ -418,6 +426,12 @@ void MigrationSession::Cleanup()
     SessionManager::GetInstance().RemoveSession(sessionId_);
 }
 
+void MigrationSession::OnFail()
+{
+    EnterState(State::Failed);
+    Cleanup();
+}
+
 MigrateSessionRc MigrationSession::OnMigrateRequestReceived()
 {
     EnterState(State::WaitingKey);
@@ -425,10 +439,11 @@ MigrateSessionRc MigrationSession::OnMigrateRequestReceived()
 }
 
 MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const protos::EXchangePkAndReportRequest *request,
-    protos::EXchangePkAndReportReply *response)
+                                                                protos::EXchangePkAndReportReply *response)
 {
     if (state_ != State::WaitingKey) {
-        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF||Waiting for exchanging key timeout.");
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|uuid:{}|Waiting for exchanging key timeout.",
+                           sessionId_);
         Cleanup();
         return MigrateSessionRc::ERROR;
     }
@@ -436,21 +451,23 @@ MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const protos::EX
     // 1. 获取本端证书和报告
     MigrateSessionRc rc = GetExchangePkAndReport(nullptr, response);
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF||Get public key and report failed.");
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|uuid: {}|Get public key and report failed.",
+                           sessionId_);
+        Cleanup();
         return MigrateSessionRc::ERROR;
     }
 
     // 2. 校验对端证书
     rc = VerifyCertificate(request->uuid(), request->cert(), request->publickey());
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|uuid: {}|Verify peer cert failed.");
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|uuid: {}|Verify peer cert failed.", sessionId_);
         return MigrateSessionRc::ERROR;
     }
 
     // 3. 校验对端报告
     rc = VerifyHostAndVmReport(request->hostreport(), request->vmreport());
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|uuid: {}|Verify peer report failed.");
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|uuid: {}|Verify peer report failed.", sessionId_);
         return MigrateSessionRc::ERROR;
     }
 
@@ -463,7 +480,9 @@ MigrateSessionRc MigrationSession::OnStartMigrationRequestReceived()
 {
     if (state_ != State::CertVerify) {
         Cleanup();
-        VIRTRUST_LOG_ERROR("|OnStartMigrationRequestReceived|END|returnF||Waiting for starting migration signal timeout.");
+        VIRTRUST_LOG_ERROR(
+            "|OnStartMigrationRequestReceived|END|returnF|uuid: {}|Waiting for starting migration signal timeout.",
+            sessionId_);
         return MigrateSessionRc::ERROR;
     }
 
