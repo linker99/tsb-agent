@@ -47,6 +47,9 @@ public:
     // 定时器触发时调用
     void OnTimeout(State stateWhenSet);
 
+    // 失败时调用：状态设置为失败，并进行清理
+    void OnFail();
+
     // 让manager删掉自己
     void Cleanup();
 
