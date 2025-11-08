@@ -144,7 +144,7 @@ int main(int argc, char *argv[])
     // Init log file for virtrust
     auto ret = virtrust::Logger::Instance()->InitLog(static_cast<int>(virtrust::LogLevel::INFO), GetLogPath().data());
     if (ret != virtrust::VirtrustRc::OK) {
-        fmt::print("Init log failed!\n");
+        fmt::print("\nInit log failed!\n");
         return 1;
     }
 

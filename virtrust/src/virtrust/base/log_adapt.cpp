@@ -14,8 +14,8 @@ std::unique_ptr<LogAdapt> LogAdapt::gSpdLogger = nullptr;
 thread_local std::string LogAdapt::gLastErrorMessage;
 int LogAdapt::loglevel = static_cast<int>(LogLevel::INFO);
 
-constexpr auto ROTATION_FILE_SIZE_MIN = 1024 * 1024;
-constexpr auto ROTATION_FILE_SIZE_MAX = 5 * 1024 * 1024;
+constexpr auto ROTATION_FILE_SIZE_MIN = 1 * 1024 * 1024;
+constexpr auto ROTATION_FILE_SIZE_MAX = 500 * 1024 * 1024;
 constexpr auto ROTATION_FILE_COUNT_MAX = 64;
 namespace {
 bool CanonicalPath(std::string &path)
@@ -160,7 +160,7 @@ VirtrustRc LogAdapt::Initialize()
         }
     } catch (const spdlog::spdlog_ex &ex) {
         gLastErrorMessage = "Failed to create log";
-        gLastErrorMessage = ex.what();
+        gLastErrorMessage += ex.what();
         return VirtrustRc::ERROR;
     }
     return VirtrustRc::OK;
