@@ -5,17 +5,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#include <filesystem>
+#include <fstream>
 #include <optional>
 
 #include "libvirtrustd/defines.h"
 #include "rapidjson/document.h"
 #include "rapidjson/istreamwrapper.h"
-#include "rapidjson/stringbuffer.h"
-#include "rapidjson/writer.h"
 
 #include "virtrust/link/link_config_builder.h"
-#include "virtrust/utils/file_io.h"
 
 namespace virtrust {
 

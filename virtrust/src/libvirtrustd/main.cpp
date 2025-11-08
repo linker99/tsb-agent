@@ -6,14 +6,12 @@
 #include <unistd.h>
 
 #include <csignal>
-#include <iostream>
 #include <thread>
 
 #include "libvirtrustd/defines.h"
 #include "libvirtrustd/utils.h"
 #include "spdlog/fmt/bundled/core.h"
 
-#include "virtrust/api/defines.h"
 #include "virtrust/base/logger.h"
 #include "virtrust/link/grpc_server.h"
 

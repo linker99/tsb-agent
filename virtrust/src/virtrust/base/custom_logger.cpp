@@ -1,15 +1,16 @@
-// Copyright (C) 2025 by Huawei Technologies Co., Ltd. All rights reserved.
+/*
+ * Copyright (C) Huawei Technologies Co., Ltd. 2025-2025.All rights reserved.
+ */
 
 #include "virtrust/base/custom_logger.h"
 
-#include <iostream>
 #include <string>
 
+// NOTE DO NOT REMOVE this chrono header
 #include "spdlog/fmt/bundled/chrono.h"
 #include "spdlog/fmt/bundled/core.h"
 
 #include "virtrust/base/log_adapt.h"
-#include "virtrust/base/logger.h"
 #include "virtrust/utils/enum_check.h"
 
 namespace virtrust {
@@ -103,13 +104,13 @@ VirtrustRc Logger::InitLog(int logLevel, const char *path, int rotationFileSize,
                    LogAdapt::gLastErrorMessage);
         return rc;
     }
-    
+
     rc = LogAdapt::CreateInstance(logType, logLevel, path, rotationFileSize, rotationFileCount);
     if (rc != VirtrustRc::OK) {
         fmt::print(stderr, "LogAdapt create instance failed, return: {}", static_cast<uint32_t>(rc));
         return rc;
     }
-    
+
     displayLogLevel_ = static_cast<LogLevel>(logLevel);
     return VirtrustRc::OK;
 }

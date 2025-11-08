@@ -1,10 +1,10 @@
-// Copyright (C) 2025 by Huawei Technologies Co., Ltd. All rights reserved.
+/*
+ * Copyright (C) Huawei Technologies Co., Ltd. 2025-2025.All rights reserved.
+ */
 
 #pragma once
 
 #include <functional>
-#include <mutex>
-#include <sstream>
 #include <string>
 
 #include "virtrust/api/defines.h"

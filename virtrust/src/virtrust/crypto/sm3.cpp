@@ -1,6 +1,7 @@
 /*
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
+
 #include "virtrust/crypto/sm3.h"
 
 #include <securec.h>
