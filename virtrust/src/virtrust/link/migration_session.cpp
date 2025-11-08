@@ -8,12 +8,11 @@
 #include <memory>
 #include <mutex>
 
-#include "tsb_agent/tsb_agent.h"
 #include "virtrust/api/context.h"
 #include "virtrust/base/logger.h"
 #include "virtrust/dllib/libvirt.h"
-
 #include "virtrust/link/proto/migrate.pb.h"
+#include "virtrust/link/proto/proto_tools.h"
 
 namespace virtrust {
 
@@ -85,80 +84,82 @@ MigrateSessionRc MigrationSession::SendMigrateRequest()
 
     int32_t rc = rpcClient_->PrepareMigration(5, req, &reply);
     bool ok = (rc == 0 && reply.result() == 0);
-    return OnMigrateResponseReceived(ok);
-}
 
-MigrateSessionRc MigrationSession::OnMigrateResponseReceived(bool agree)
-{
-    if (!agree) {
+    if (!ok) {
         EnterState(State::Failed);
         Cleanup();
         return MigrateSessionRc::ERROR;
     }
+    return OnMigrateResponseReceived();
+}
+
+MigrateSessionRc MigrationSession::OnMigrateResponseReceived()
+{
     EnterState(State::WaitingKey);
     return SendExchangeKey();
 }
 
 MigrateSessionRc MigrationSession::SendExchangeKey()
 {
-    if (!rpcClient_) {
-        EnterState(State::Failed);
-        Cleanup();
-        return MigrateSessionRc::ERROR;
-    }
-    // TODO: 生成远端可验证的报告，并获取/生成本端公钥
-    myPubKey_ = "local_pub_key_bytes";
     protos::EXchangePkAndReportRequest req;
-    req.set_domainname(sessionId_);
-    req.set_uuid(sessionId_);
-    req.set_report("mock_report");
-    req.set_publickey(myPubKey_);
-    protos::EXchangePkAndReportReply res;
-    int32_t rc = rpcClient_->ExchangePkAndReport(5, req, &res);
-    if (rc != 0) {
+    MigrateSessionRc rc = GetExchangePkAndReport(&req, nullptr);
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|SendExchangeKey|END|returnF|uuid: {}|Get local cert and report failed.");
         return MigrateSessionRc::ERROR;
     }
-    return OnExchangeKeyResponseReceived("", "");
+
+    protos::EXchangePkAndReportReply res;
+    int32_t ret = rpcClient_->ExchangePkAndReport(5, req, &res);
+    if (ret != 0 || res.result() != 0) {
+        VIRTRUST_LOG_ERROR("|SendExchangeKey|END|returnF|uuid: {}|Exchange cert and report failed.");
+        return MigrateSessionRc::ERROR;
+    }
+    return OnExchangeKeyResponseReceived(res);
 }
 
-MigrateSessionRc MigrationSession::OnExchangeKeyResponseReceived(const std::string &peerReport,
-                                                                 const std::string &peerPubKey)
+MigrateSessionRc MigrationSession::OnExchangeKeyResponseReceived(protos::EXchangePkAndReportReply &res)
 {
-    if (peerPubKey.empty()) {
-        EnterState(State::Failed);
-        Cleanup();
+    // 1. 校验对端证书
+    MigrateSessionRc rc = VerifyCertificate(res.uuid(), res.cert(), res.publickey());
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyResponseReceived|END|returnF|uuid: {}|Verify peer cert failed.");
         return MigrateSessionRc::ERROR;
     }
-    peerPubKey_ = peerPubKey;
-    // 交换完成后发送开始迁移控制
-    EnterState(State::WaitingKey);
+
+    // 2.校验对端报告
+    rc = VerifyHostAndVmReport(res.hostreport(), res.vmreport());
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyResponseReceived|END|returnF|uuid: {}|Verify peer report failed.");
+        return MigrateSessionRc::ERROR;
+    }
+
+    // 等待对方校验证书和报告
+    EnterState(State::CertVerify);
     return SendStartMigration();
 }
 
 MigrateSessionRc MigrationSession::SendStartMigration()
 {
-    if (!rpcClient_) {
-        EnterState(State::Failed);
-        Cleanup();
+    protos::StartMigRequest req;
+    req.set_domainname(domainName_);
+    req.set_uuid(sessionId_);
+
+    protos::StartMigReply res;
+    int32_t ret = rpcClient_->StartMigration(5, req, &res);
+    if (ret != 0) {
+        VIRTRUST_LOG_ERROR("|SendStartMigration|END|returnF|uuid: {}|Send start migration signal failed.");
         return MigrateSessionRc::ERROR;
     }
-    protos::StartMigRequest req;
-    // TODO: 设置真实的 domainName
-    req.set_domainname(sessionId_);
-    // TODO: 设置真实的 uuid
-    req.set_uuid(sessionId_);
-    protos::StartMigReply res;
-    int32_t rc = rpcClient_->StartMigration(5, req, &res);
-    return OnStartMigrationResponseReceived(rc == 0);
+    if (res.result() != 0) {
+        VIRTRUST_LOG_ERROR("|SendStartMigration|END|returnF|uuid: {}|Start migration failed.");
+        return MigrateSessionRc::ERROR;
+    }
+
+    return OnStartMigrationResponseReceived();
 }
 
-MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived(bool agree)
+MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
 {
-    if (!agree) {
-        EnterState(State::Failed);
-        Cleanup();
-        return MigrateSessionRc::ERROR;
-    }
     char *cipher = nullptr;
     auto ret = MigrationGetVRootCipher(const_cast<char *>(sessionId_.c_str()), &cipher);
     if (ret != 0) {
@@ -175,11 +176,9 @@ MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived(bool agree)
 MigrateSessionRc MigrationSession::SendTransferOnce(char *cipher)
 {
     if (!rpcClient_ || cipher == nullptr) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|rpcClient_ or cipher io null.");
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|rpcClient_ or cipher is null.");
         return OnTransferResponseReceived(false);
     }
-    // TODO: 准备一次传输的数据块（敏感资源/迁移数据）
-
     // 调用libvirt接口迁移
     auto &libvirt = Libvirt::GetInstance();
     auto destConn = std::make_unique<ConnCtx>();
@@ -252,8 +251,31 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool finished)
         }
         return MigrateSessionRc::ERROR;
     }
-    // 数据传输完成后，进入完成阶段
-    return OnFinishedResponseReceived(true);
+    // 数据传输完成后，发送finishied通知
+    return SendFinishedNotify();
+}
+
+MigrateSessionRc MigrationSession::SendFinishedNotify()
+{
+    if (rpcClient_ == nullptr) {
+        VIRTRUST_LOG_ERROR("|SendFinishedNotify|END|returnF|rpcClient_ is null.");
+        return MigrateSessionRc::ERROR;
+    }
+
+    protos::MigrateResultRequest req;
+    req.set_uuid(sessionId_);
+    protos::MigrateResultReply res;
+    auto ret = rpcClient_->NotifyVRMigrateResult(5, req, &res);
+    if (ret != 0) {
+        VIRTRUST_LOG_INFO(
+                "|SendFinishedNotify|END|returnF|uuid: {}|Send notify failed.",
+                sessionId_);
+        EnterState(State::Failed);
+        Cleanup();
+        return MigrateSessionRc::ERROR;
+    }
+
+    return OnFinishedResponseReceived(res.result());
 }
 
 MigrateSessionRc MigrationSession::OnFinishedResponseReceived(bool finished)
@@ -273,6 +295,71 @@ MigrateSessionRc MigrationSession::OnFinishedResponseReceived(bool finished)
     }
     EnterState(State::Finished);
     Cleanup();
+    return MigrateSessionRc::OK;
+}
+
+MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndReportRequest *req, protos::EXchangePkAndReportReply *res)
+{
+    constexpr uint32_t CERT_BUF_LEN = 4096;
+    constexpr uint32_t PUBKEY_BUF_LEN = 1024;
+
+    char cert[CERT_BUF_LEN] = {0};
+    char pubKey[PUBKEY_BUF_LEN] = {0};
+
+    auto uuid = sessionId_;
+
+    int ret = MigrationGetCert(uuid.data(), cert, pubKey);
+    if (ret != 0) {
+        VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|uuid: {}|Get local cert failed.");
+        return MigrateSessionRc::ERROR;
+    }
+
+    trust_report_new hostReport;
+    trust_report_new vmReport;
+    ret = GetReport(nullptr, uuid.data(), &hostReport, &vmReport);
+    if (ret != 0) {
+        VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|uuid: {}|Get local report failed.");
+        return MigrateSessionRc::ERROR;
+    }
+
+    if (role_ == Role::Initiator) {
+        req->set_domainname(domainName_);
+        req->set_uuid(uuid);
+        req->set_cert(cert);
+        req->set_publickey(pubKey);
+        auto hostReportProto = req->mutable_hostreport();
+        ReportToProto(hostReport, hostReportProto);
+        auto vmReportProto = req->mutable_vmreport();
+        ReportToProto(vmReport, vmReportProto);
+    } else {
+        res->set_domainname(domainName_);
+        res->set_uuid(uuid);
+        res->set_cert(cert);
+        res->set_publickey(pubKey);
+        auto hostReportProto = res->mutable_hostreport();
+        ReportToProto(hostReport, hostReportProto);
+        auto vmReportProto = res->mutable_vmreport();
+        ReportToProto(vmReport, vmReportProto);
+    }
+    return MigrateSessionRc::OK;
+}
+
+MigrateSessionRc MigrationSession::VerifyCertificate(std::string uuid, std::string cert, std::string pubkey)
+{
+    // TODO: 调用TSB API 进行证书校验.
+    // int ret = MigrationCheckPeerPk(uuid.data(), cert.data(), pubkey.data());
+    int ret = 0;
+    return ret == 0 ? MigrateSessionRc::OK : MigrateSessionRc::ERROR;
+}
+
+MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustReportNew &hostReport, const protos::TrustReportNew &vmReport)
+{
+    [[maybe_unused]] trust_report_new host = ReportFromProto(hostReport);
+    // TODO: 调用TSB API进行报告校验
+
+    [[maybe_unused]] trust_report_new vm = ReportFromProto(vmReport);
+    // TODO: 调用TSB API进行报告校验
+
     return MigrateSessionRc::OK;
 }
 
@@ -333,67 +420,63 @@ void MigrationSession::Cleanup()
 
 MigrateSessionRc MigrationSession::OnMigrateRequestReceived()
 {
-    // 1. 第一次收到 MigrateRequest，新建会话时调用
-    if (state_ != State::Init) {
-        VIRTRUST_LOG_ERROR("|OnMigrateRequestReceived|END|returnF|||Wrong state.");
-        return MigrateSessionRc::ERROR;
-    }
-    EnterState(State::Init);
+    EnterState(State::WaitingKey);
+    return MigrateSessionRc::OK;
+}
 
-    // 2. 检查资源是否可用，生成报告
-    // TODO
-    bool ok = true;
-
-    // 3. 返回响应
-    //    通过 gRPC handler 写入 response->set_agree(ok);
-    //    这里只更新状态
-    if (!ok) {
-        EnterState(State::Failed);
+MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const protos::EXchangePkAndReportRequest *request,
+    protos::EXchangePkAndReportReply *response)
+{
+    if (state_ != State::WaitingKey) {
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF||Waiting for exchanging key timeout.");
         Cleanup();
         return MigrateSessionRc::ERROR;
     }
 
-    EnterState(State::WaitingKey);
-    // 启动60s，等待对端发 ExchangeKey
-
-    return MigrateSessionRc::OK;
-}
-
-MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const std::string &peerPubKey)
-{
-    if (role_ != Role::Responder) {
+    // 1. 获取本端证书和报告
+    MigrateSessionRc rc = GetExchangePkAndReport(nullptr, response);
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF||Get public key and report failed.");
         return MigrateSessionRc::ERROR;
     }
 
-    peerPubKey_ = peerPubKey;
-    std::cout << "[Responder] Got peer public key" << std::endl;
+    // 2. 校验对端证书
+    rc = VerifyCertificate(request->uuid(), request->cert(), request->publickey());
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|uuid: {}|Verify peer cert failed.");
+        return MigrateSessionRc::ERROR;
+    }
 
-    // TODO: 生成/加载响应方公钥，生成报告
-    myPubKey_ = "responder_pub_key_bytes";
+    // 3. 校验对端报告
+    rc = VerifyHostAndVmReport(request->hostreport(), request->vmreport());
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|uuid: {}|Verify peer report failed.");
+        return MigrateSessionRc::ERROR;
+    }
 
-    // 2. 返回给对端（gRPC handler 内部写 response->set_pub_key(myPubKey_)）
-    // TODO: 在 handler 中写入响应的 report/publicKey
-
-    // 等待对端的 StartMigration
-    EnterState(State::WaitingKey);
-
+    // 等待对端校验证书后的进一步信号：开始迁移信号
+    EnterState(State::CertVerify);
     return MigrateSessionRc::OK;
 }
 
-MigrateSessionRc MigrationSession::OnStartMigrationRequestReceived(const std::string &domainName)
+MigrateSessionRc MigrationSession::OnStartMigrationRequestReceived()
 {
-    if (role_ != Role::Responder) {
+    if (state_ != State::CertVerify) {
+        Cleanup();
+        VIRTRUST_LOG_ERROR("|OnStartMigrationRequestReceived|END|returnF||Waiting for starting migration signal timeout.");
         return MigrateSessionRc::ERROR;
     }
-    // TODO: 根据 domainName 做准备（挂载/预分配等）
+
+    // 等待对端发起数据传数
     EnterState(State::Transferring);
-
     return MigrateSessionRc::OK;
 }
 
 MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const std::string &data, bool finished)
 {
-    if (role_ != Role::Responder) {
+    if (state_ != State::Transferring) {
+        Cleanup();
+        VIRTRUST_LOG_ERROR("|OnTransferDataRequestReceived|END|returnF||Waiting for transfering timeout.");
         return MigrateSessionRc::ERROR;
     }
     // TODO: 校验并落盘 data（考虑分块/校验）
