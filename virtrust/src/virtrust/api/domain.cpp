@@ -529,7 +529,7 @@ auto ToMaps(int tsbVmNum, Description *tsbVmInfo, int virtVmNum, virDomainPtr *v
 {
     // create tsb map
     std::unordered_map<std::string, Description> tsbVmMap;
-    for (int i = 0; i < virtVmNum; i++) {
+    for (int i = 0; i < tsbVmNum; i++) {
         std::string tsbVmUuid = std::string((tsbVmInfo + i)->uuid);
         // skip, if flags are only LIST_DOMAIN_ACTIVE&, and domain is not running
         if (flags == DomainListFlags::LIST_DOMAINS_ACTIVE &&
