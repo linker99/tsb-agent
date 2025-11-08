@@ -39,7 +39,6 @@ int32_t UdsClient::DomainMigrate(const MigrationConfig &config)
     if (!status.ok()) {
         return -1;
     }
-    reply.set_result(0);
     return reply.result();
 }
 
