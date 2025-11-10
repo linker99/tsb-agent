@@ -2,10 +2,10 @@
  * Copyright (C) Huawei Technologies Co., Ltd. 2025-2025.All rights reserved.
  */
 
-#include <string>
-#include <vector>
 #include <iomanip>
 #include <sstream>
+#include <string>
+#include <vector>
 
 #include "gtest/gtest.h"
 
@@ -22,8 +22,7 @@ const std::vector<std::string> SM3_TEST_DATA = {"abc",
                                                 "debe9ff92275b8a138604889c18e5a4d6fdb70e5387e5765293dcba39c0c5732",
                                                 "dabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcdabcd"};
 
-    inline std::string
-    BytesToHexString(const std::vector<uint8_t> &bytes)
+inline std::string BytesToHexString(const std::vector<uint8_t> &bytes)
 {
     std::ostringstream oss;
     oss << std::hex << std::setfill('0'); // Set output to hex and pad with '0'

@@ -20,7 +20,10 @@ const int FILE_TYPE = 1;
 class LogAdapt {
 public:
     LogAdapt(int logType, std::string path, int rotationFileSize, int rotationFileCount)
-        : logType_(logType), filePath_(std::move(path)),rotationFileSize_(rotationFileSize), rotationFileCount_(rotationFileCount) {};
+        : logType_(logType),
+          filePath_(std::move(path)),
+          rotationFileSize_(rotationFileSize),
+          rotationFileCount_(rotationFileCount) {};
     ~LogAdapt() = default;
 
     VirtrustRc Initialize();

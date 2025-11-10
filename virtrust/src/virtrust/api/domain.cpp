@@ -157,15 +157,15 @@ bool ConvertTsbStruct(const VirshMeasureInfo &src, struct MeasureInfo *&target)
     }
     target->size = contentSize;
 
-    if (memcpy_s(target->content, contentSize, src.content_.c_str(), contentSize) !=  EOK) {
+    if (memcpy_s(target->content, contentSize, src.content_.c_str(), contentSize) != EOK) {
         VIRTRUST_LOG_ERROR("memcpy content to tsb struct failed:{},contentSize:{}", src.name_, contentSize);
         return false;
     }
-    if (memcpy_s(target->name, sizeof(target->name) - 1, src.name_.c_str(), src.name_.size()) !=  EOK) {
+    if (memcpy_s(target->name, sizeof(target->name) - 1, src.name_.c_str(), src.name_.size()) != EOK) {
         VIRTRUST_LOG_ERROR("memcpy name to tsb struct failed:{}", src.name_);
         return false;
     }
-    if (memcpy_s(target->version, sizeof(target->version) - 1, src.version_.c_str(), src.version_.size()) !=  EOK) {
+    if (memcpy_s(target->version, sizeof(target->version) - 1, src.version_.c_str(), src.version_.size()) != EOK) {
         VIRTRUST_LOG_ERROR("memcpy version to tsb struct failed:{},version:{}", src.name_, src.version_);
         return false;
     }
