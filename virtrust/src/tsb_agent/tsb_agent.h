@@ -154,8 +154,8 @@ int GetReport(char *pUuid, // 物理机的uuid
               struct trust_report_new *hostreport, struct trust_report_new *vmreport);
 
 int VerifyReport(char *pUuid, // 物理机的uuid
-              char *vUuid, // 虚拟机的uuid
-              struct trust_report_new *hostreport, struct trust_report_new *vmreport);
+                 char *vUuid, // 虚拟机的uuid
+                 struct trust_report_new *hostreport, struct trust_report_new *vmreport);
 
 int MigrationGetCert(
     // char *pUuid, // 物理机的uuid
