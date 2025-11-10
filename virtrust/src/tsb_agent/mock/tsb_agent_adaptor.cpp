@@ -85,33 +85,85 @@ int CheckMeasure(char *uuid, struct MeasureInfo *bios, struct MeasureInfo *shim,
     return ParseTsbAgentRc(tsbAgent.CheckMeasure(uuid, *bios, *shim, *grub, *grubCfg, *kernel, *initrd));
 }
 
-// 迁移接口
-int GetReport(char *pUuid, char *vUuid, struct trust_report_new *hostreport, struct trust_report_new *vmreport)
+/**
+ * 迁移接口
+ */
+
+int GetReport(char *pUuid,                         // 物理机的uuid
+              char *vUuid,                         // 虚拟机的uuid
+              struct trust_report_new *hostreport, // 输出：host report
+              struct trust_report_new *vmreport    // 输出：virtual machine report
+)
+{
+    auto &tsbAgent = TsbAgentImpl::GetInstance();
+    return ParseTsbAgentRc(tsbAgent.GetReport(pUuid, vUuid, hostreport, vmreport));
+}
+
+int VerifyReport(char *pUuid,                         // 物理机的uuid
+                 char *vUuid,                         // 虚拟机的uuid
+                 struct trust_report_new *hostreport, // 输出：host report
+                 struct trust_report_new *vmreport    // 输出：virtual machine report
+)
+{
+    auto &tsbAgent = TsbAgentImpl::GetInstance();
+    return ParseTsbAgentRc(tsbAgent.VerifyReport(pUuid, vUuid, hostreport, vmreport));
+}
+
+int MigrationGetCert(char *vUuid,   // 虚拟机的uuid
+                     char **cert,   // 输出：对 pubkey 签名的证书（BMC可验证）
+                     int *certLen,  // 输出：证书长度
+                     char **pubkey, // 输出：临时生成的随机密钥对的公钥
+                     int *pubkeyLen // 输出：公钥长度
+)
+{
+    auto &tsbAgent = TsbAgentImpl::GetInstance();
+    std::vector<uint8_t> out_cert;
+    std::vector<uint8_t> out_pubkey;
+    auto rc = tsbAgent.MigrationGetCert(vUuid, out_cert, out_pubkey);
+
+    if (cert == nullptr || pubkey == nullptr || rc != TsbAgentRc::OK || *cert != nullptr || *pubkey != nullptr) {
+        return ParseTsbAgentRc(TsbAgentRc::ERROR);
+    }
+
+    *certLen = out_cert.size();
+    *cert = static_cast<char *>(malloc(*certLen));
+    memcpy(cert, out_cert.data(), out_cert.size());
+
+    *pubkeyLen = out_pubkey.size();
+    *pubkey = static_cast<char *>(malloc(out_pubkey.size()));
+    memcpy(pubkey, out_pubkey.data(), out_pubkey.size());
+
+    return ParseTsbAgentRc(rc);
+}
+
+int MigrationCheckPeerPk(char *vUuid, // 虚拟机的uuid
+                         char *pk1,   // peer cert 公钥 (REVIEW: 改成 cert?)
+                         int pk1Len,  // peer cert 公钥证书长度 (REVIEW: 改成 cert?)
+                         char *pk2,   // peer 临时生成的随机密钥对的公钥, a.k.a. pubkey
+                         int pk2Len   // 证书长度
+)
 {
     return 0;
 }
 
-int MigrationGetCert(char *vUuid, char *cert, char *pubkey)
+int MigrationGetVRootCipher(char *vUuid,   // 虚拟机的uuid
+                            char **cipher, // 输出：加密后的密码资源
+                            int *cipherLen // 输出：密文长度
+)
 {
     return 0;
 }
 
-int MigrationCheckPeerPk(char *vUuid, char *pk1, char *pk2)
+int MigrationImportVRootCipher(char *vUuid,  // 虚拟机的uuid
+                               char *cipher, // 加密后的密码资源
+                               int cipherLen // 密文长度
+)
 {
     return 0;
 }
 
-int MigrationGetVRootCipher(char *vUuid, char **cipher)
-{
-    return 0;
-}
-
-int MigrationImportVRootCipher(char *vUuid, char *cipher)
-{
-    return 0;
-}
-
-int MigrationNotify(char *vUuid, int status)
+int MigrationNotify(char *vUuid, // 虚拟机的uuid
+                    int status)
 {
     return 0;
 }

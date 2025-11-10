@@ -12,13 +12,7 @@
 
 namespace virtrust {
 
-enum class LinuxDistro {
-    OPENEULER,
-    CENTOS,
-    UBUNTU,
-    DEBIAN,
-    FEDORA
-};
+enum class LinuxDistro { OPENEULER, CENTOS, UBUNTU, DEBIAN, FEDORA };
 
 class VerifyConfig {
 public:

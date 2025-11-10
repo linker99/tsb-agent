@@ -5,7 +5,9 @@
 #include "virtrust/link/migration_service_impl.h"
 
 #include <memory>
+#include <regex>
 #include <thread>
+#include <vector>
 
 #include "tsb_agent/tsb_agent.h"
 
@@ -15,6 +17,29 @@
 #include "virtrust/link/migration_session.h"
 
 namespace virtrust {
+const std::regex IP_REGEX(R"((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))");
+
+namespace {
+std::string ExtractSingleIP(const std::string &str)
+{
+    std::vector<std::string> ips;
+    std::sregex_iterator it(str.begin(), str.end(), IP_REGEX);
+    std::sregex_iterator end;
+    for (; it != end; ++it) {
+        ips.push_back((*it)[1]);
+    }
+
+    if (ips.empty()) {
+        VIRTRUST_LOG_ERROR("|ExtracSingleIP|END|returnF|No IP address found");
+        return "";
+    } else if (ips.size() > 1) {
+        VIRTRUST_LOG_ERROR("|ExtracSingleIP|END|returnF|IP address is not in one or more");
+        return "";
+    }
+    return ips[0];
+}
+} // namespace
+
 grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context,
                                                     const protos::PrepareMigRequest *request,
                                                     protos::PrepareMigReply *response)
@@ -36,7 +61,9 @@ grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context
     MigrateSessionRc rc = session->OnMigrateRequestReceived();
     if (rc != MigrateSessionRc::OK) {
         response->set_result(1);
+        return grpc::Status::OK;
     }
+    response->set_result(0);
     return grpc::Status::OK;
 }
 
@@ -56,8 +83,10 @@ grpc::Status MigrationServiceImpl::ExchangePkAndReport(grpc::ServerContext *cont
     MigrateSessionRc rc = session->OnExchangeKeyRequestReceived(request, response);
     if (rc != MigrateSessionRc::OK) {
         response->set_result(1);
+        return grpc::Status::OK;
     }
 
+    response->set_result(0);
     return grpc::Status::OK;
 }
 
@@ -79,6 +108,7 @@ grpc::Status MigrationServiceImpl::StartMigration(grpc::ServerContext *context, 
         return grpc::Status::OK;
     }
 
+    response->set_result(0);
     return grpc::Status::OK;
 }
 
@@ -92,13 +122,20 @@ grpc::Status MigrationServiceImpl::SendVRsourceData(grpc::ServerContext *context
         response->set_result(1);
         return grpc::Status::OK;
     }
-    auto ret = MigrationImportVRootCipher(const_cast<char *>(request->data().c_str()),
-                                          const_cast<char *>(request->uuid().c_str()));
-    if (ret != 0) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|MigrationImportVrootCipher failed.");
+    auto &uuid = request->uuid();
+    MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
+    if (session == nullptr) {
+        VIRTRUST_LOG_ERROR("|StartMigration|END|returnF|SendVRsourceData uuid: {}|Can't find session.");
         response->set_result(1);
         return grpc::Status::OK;
     }
+    // 服务端
+    MigrateSessionRc rc = session->OnTransferDataRequestReceived(request);
+    if (rc != MigrateSessionRc::OK) {
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+
     response->set_result(0);
     return grpc::Status::OK;
 }
@@ -108,6 +145,24 @@ grpc::Status MigrationServiceImpl::NotifyVRMigrateResult(grpc::ServerContext *co
                                                          const protos::MigrateResultRequest *request,
                                                          protos::MigrateResultReply *response)
 {
+    if (request == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|NotifyVRMigrateResult request is nullptr.");
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+    auto &uuid = request->uuid();
+    MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
+    if (session == nullptr) {
+        VIRTRUST_LOG_ERROR("|StartMigration|END|returnF|NotifyVRMigrateResult uuid: {}|Can't find session.");
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+    MigrateSessionRc rc = session->OnFinishedRequestReceived(request->result() == 0);
+    if (rc != MigrateSessionRc::OK) {
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
+    response->set_result(0);
     return grpc::Status::OK;
 }
 
@@ -116,8 +171,17 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
                                                  const protos::DomainMigraterRequest *request,
                                                  protos::DomainMigraterReply *response)
 {
-    // FIXME: Where this config from?
+    VIRTRUST_LOG_DEBUG("|MigrationServiceImpl DomainMigrate|START||");
+    std::string destIp = ExtractSingleIP(request->desturi());
+    if (destIp.empty()) {
+        VIRTRUST_LOG_ERROR("|MigrationServiceImpl DomainMigrate|END|returnF|invalid ip, destUri is: {}",
+                           request->desturi());
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
     LinkConfig config;
+    config.ip = destIp;
+    config.port = 5030;
     RpcClient client(config);
 
     auto &mgr = SessionManager::GetInstance();
@@ -132,10 +196,13 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
     session->SetRpcClient(std::make_unique<RpcClient>(config));
     // 启动状态机（内部会依次调用 Prepare/Exchange/Start）
     auto ret = session->Start();
-
     if (ret != MigrateSessionRc::OK) {
-        response->set_result(0);
+        response->set_result(1);
+        return grpc::Status::OK;
     }
+
+    response->set_result(0);
+    VIRTRUST_LOG_DEBUG("|MigrationServiceImpl DomainMigrate|END|returnS|");
     return grpc::Status::OK;
 }
 

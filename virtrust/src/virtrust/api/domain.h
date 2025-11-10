@@ -32,6 +32,14 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
 VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags,
                          bool isOnlyTsb = false);
 
+/**
+ * 迁移虚拟机
+ * @param conn 连接参数
+ * @param flags 默认0，不删除源端虚拟机，要删除源端虚拟机见DomainMigrateFlags中的选项
+ * @param domainName 虚拟机名称
+ * @param destUri 目的端地址 格式为<protocol>://<hostip>:<port>/<path> 如qemu+tls://7.7.7.7:8080/system
+ * @return VirtrustRc
+ */
 VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName,
                          const std::string &destUri, unsigned int flags);
 
@@ -50,7 +58,7 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
 /**
  * 删除虚拟机
  * @param conn 连接参数
- * @param flags 默认为0，其他值
+ * @param flags 默认为0（适用于不产生nvram文件时，其他值
  * 见DomainUndefineFlags,DOMAIN_UNDEFINE_NVRAM和DOMAIN_UNDEFINE_KEEP_NVRAM仅支持同一时间指定一种
  * @param domainName 虚拟机名称，isOnlyTsb为true时只更新tsb相关资源
  * 为虚拟机UUID，当isOnlyTsb为true时将忽略flags入参

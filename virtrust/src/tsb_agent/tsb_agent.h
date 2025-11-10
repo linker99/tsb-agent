@@ -148,36 +148,44 @@ int UpdateMeasure(char *uuid, struct MeasureInfo *bios, struct MeasureInfo *shim
 int CheckMeasure(char *uuid, struct MeasureInfo *bios, struct MeasureInfo *shim, struct MeasureInfo *grub,
                  struct MeasureInfo *grubCfg, struct MeasureInfo *kernel, struct MeasureInfo *initrd);
 
-// 迁移接口
-int GetReport(char *pUuid, // 物理机的uuid
-              char *vUuid, // 虚拟机的uuid
-              struct trust_report_new *hostreport, struct trust_report_new *vmreport);
+/**
+ * 迁移接口
+ */
+int GetReport(char *pUuid,                         // 物理机的uuid
+              char *vUuid,                         // 虚拟机的uuid
+              struct trust_report_new *hostreport, // 输出：host report
+              struct trust_report_new *vmreport    // 输出：virtual machine report
+);
 
-int VerifyReport(char *pUuid, // 物理机的uuid
-                 char *vUuid, // 虚拟机的uuid
-                 struct trust_report_new *hostreport, struct trust_report_new *vmreport);
+int VerifyReport(char *pUuid,                         // 物理机的uuid
+                 char *vUuid,                         // 虚拟机的uuid
+                 struct trust_report_new *hostreport, // host report
+                 struct trust_report_new *vmreport    // virtual machine report
+);
 
-int MigrationGetCert(
-    // char *pUuid, // 物理机的uuid
-    char *vUuid, // 虚拟机的uuid
-    char *cert, char *pubkey);
+int MigrationGetCert(char *vUuid,   // 虚拟机的uuid
+                     char **cert,   // 输出：对 pubkey 签名的证书（BMC可验证）
+                     int *certLen,  // 输出：证书长度
+                     char **pubkey, // 输出：临时生成的随机密钥对的公钥
+                     int *pubkeyLen // 输出：公钥长度
+);
 
-int MigrationCheckPeerPk(
-    // char *pUuid, // 物理机的uuid
-    char *vUuid, // 虚拟机的uuid
-    char *pk1, char *pk2);
+int MigrationCheckPeerPk(char *vUuid, // 虚拟机的uuid
+                         char *pk1,   // peer cert 公钥 (REVIEW: 改成 cert?)
+                         int pk1Len,  // peer cert 公钥证书长度 (REVIEW: 改成 cert?)
+                         char *pk2,   // peer 临时生成的随机密钥对的公钥, a.k.a. pubkey
+                         int pk2Len   // 证书长度
+);
 
-int MigrationGetVRootCipher(
-    // char *pUuid, // 物理机的uuid
-    char *vUuid, // 虚拟机的uuid
-    char **cipher);
+int MigrationGetVRootCipher(char *vUuid,   // 虚拟机的uuid
+                            char **cipher, // 输出：加密后的密码资源
+                            int *cipherLen // 输出：密文长度
+);
 
-int MigrationImportVRootCipher(
-    // char *pUuid, // 物理机的uuid
-    char *vUuid, // 虚拟机的uuid
-    char *cipher);
+int MigrationImportVRootCipher(char *vUuid,  // 虚拟机的uuid
+                               char *cipher, // 加密后的密码资源
+                               int cipherLen // 密文长度
+);
 
-int MigrationNotify(
-    // char *pUuid, // 物理机的uuid
-    char *vUuid, // 虚拟机的uuid
-    int status);
+int MigrationNotify(char *vUuid, // 虚拟机的uuid
+                    int status);
