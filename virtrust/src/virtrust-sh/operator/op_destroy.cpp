@@ -89,8 +89,7 @@ void OpDestroy::PrintUsage()
                "\n"
                "  OPTIONS:\n"
                "    -h | --help                    this help\n"
-               "    --onlyTsb                      only update tsb resource, "
-               "<domain> should be replaced with uuid if --onlyTsb enabled\n"
+               "    --onlyTsb                      only update tsb resource, <domain> need uuid\n"
                "\n");
 }
 

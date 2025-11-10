@@ -344,9 +344,9 @@ VirtrustRc UndefineDomainWithRetry(std::unique_ptr<DomainCtx> &domain, const std
                                    unsigned int flags, Libvirt &libvirt)
 {
 
-    for (int i = 1; i < 3; i++) {
+    for (int i = 1; i <= 3; i++) {
         VIRTRUST_LOG_INFO("try to undefine domain: {}, try times: {}", domainName, i);
-        if (libvirt.virDomainUndefineFlags(domain->Get(), flags) > 0) {
+        if (libvirt.virDomainUndefineFlags(domain->Get(), flags) >= 0) {
             VIRTRUST_LOG_INFO("undefine domain: {} success, try times: {}", domainName, i);
 
             return VirtrustRc::OK;
@@ -462,7 +462,7 @@ bool CompareTsbVirtState(int tsb, int virt)
 {
     switch (virt) {
         case VIR_DOMAIN_RUNNING:
-            return tsb == 2;
+            return tsb == 1;
         case VIR_DOMAIN_NOSTATE:
         case VIR_DOMAIN_BLOCKED:
         case VIR_DOMAIN_PAUSED:
@@ -820,11 +820,11 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
     if (isOnlyTsb) {
         std::string uuidStr = domainName;
         VIRTRUST_LOG_INFO("only update tsb resource");
-        if (domainName.size() != 36) {
+        if (domainName.size() != 36) { // UUIDchang长度为36
             VIRTRUST_LOG_DEBUG("|DomainStart|END|returnF||invalid domain UUID: {}", domainName);
             return VirtrustRc::ERROR;
         }
-        if (StopVRoot(uuidStr.data()) != 0) {
+        if (StartVRoot(uuidStr.data()) != 0) {
             VIRTRUST_LOG_DEBUG("|DomainStart|END|returnF||start vRoot failed,UUID: {}", domainName);
             return VirtrustRc::ERROR;
         }

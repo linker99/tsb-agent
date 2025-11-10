@@ -3,8 +3,5 @@
     "certPath": "server-cert.pem",
     "skPath": "server-sk.pem",
     "ip": "127.0.0.1",
-    "ipMask": "127.0.0.1/8",
-    "port": 10086,
-    "localPort": 10087,
     "udsPath": "/tmp/grpc.sock"
 }
