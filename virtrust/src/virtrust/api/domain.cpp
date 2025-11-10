@@ -352,7 +352,7 @@ VirtrustRc ValidateAndPrepareArgs(const std::vector<std::string> &args, std::vec
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||domain name must be given.");
         return VirtrustRc::ERROR;
     }
-    if (execArgs.empty()) {
+    if (connectArgs.empty()) {
         execArgs.reserve(args.size() + 5);
         execArgs.push_back(const_cast<char *>("--connect"));
         execArgs.push_back(strdup(conn->GetUri().c_str()));
