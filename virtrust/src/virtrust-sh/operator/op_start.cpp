@@ -42,9 +42,8 @@ OpRc OpStart::ParseArgv(int argc, char **argv)
     optind = 1; // reset
     const int onlyTsbVal = 0x100;
 
-    std::vector<option> opt = {{"help", no_argument, nullptr, 'h'},
-                               {"only-tsb", no_argument, nullptr, onlyTsbVal},
-                               {nullptr, 0, nullptr, 0}};
+    std::vector<option> opt = {
+        {"help", no_argument, nullptr, 'h'}, {"only-tsb", no_argument, nullptr, onlyTsbVal}, {nullptr, 0, nullptr, 0}};
 
     opterr = 0;
     // The leading + means no re-ordering, see man page of getopt_long

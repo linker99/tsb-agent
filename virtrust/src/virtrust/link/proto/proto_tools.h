@@ -1,7 +1,7 @@
 #pragma once
 
-#include <cstring>
 #include <algorithm>
+#include <cstring>
 
 #include "virtrust/link/proto/migrate.pb.h"
 
@@ -35,8 +35,10 @@ static void ReportToProto(const trust_report_new &report, protos::TrustReportNew
     policy->set_be_process_measure_match_mode(report.content.global_control_policy.be_process_measure_match_mode);
     policy->set_be_process_dmeasure_lib_mode(report.content.global_control_policy.be_process_dmeasure_lib_mode);
     policy->set_be_process_verify_lib_mode(report.content.global_control_policy.be_process_verify_lib_mode);
-    policy->set_be_process_dmeasure_sub_process_mode(report.content.global_control_policy.be_process_dmeasure_sub_process_mode);
-    policy->set_be_process_dmeasure_old_process_mode(report.content.global_control_policy.be_process_dmeasure_old_process_mode);
+    policy->set_be_process_dmeasure_sub_process_mode(
+        report.content.global_control_policy.be_process_dmeasure_sub_process_mode);
+    policy->set_be_process_dmeasure_old_process_mode(
+        report.content.global_control_policy.be_process_dmeasure_old_process_mode);
     policy->set_be_process_dmeasure_interval(report.content.global_control_policy.be_process_dmeasure_interval);
 
     // 转换其他字段
@@ -109,8 +111,10 @@ static trust_report_new ReportFromProto(const protos::TrustReportNew &protoRepor
     report.content.global_control_policy.be_process_measure_match_mode = policy.be_process_measure_match_mode();
     report.content.global_control_policy.be_process_dmeasure_lib_mode = policy.be_process_dmeasure_lib_mode();
     report.content.global_control_policy.be_process_verify_lib_mode = policy.be_process_verify_lib_mode();
-    report.content.global_control_policy.be_process_dmeasure_sub_process_mode = policy.be_process_dmeasure_sub_process_mode();
-    report.content.global_control_policy.be_process_dmeasure_old_process_mode = policy.be_process_dmeasure_old_process_mode();
+    report.content.global_control_policy.be_process_dmeasure_sub_process_mode =
+        policy.be_process_dmeasure_sub_process_mode();
+    report.content.global_control_policy.be_process_dmeasure_old_process_mode =
+        policy.be_process_dmeasure_old_process_mode();
     report.content.global_control_policy.be_process_dmeasure_interval = policy.be_process_dmeasure_interval();
 
     // 转换其他字段
@@ -165,4 +169,4 @@ static trust_report_new ReportFromProto(const protos::TrustReportNew &protoRepor
 
     return report;
 }
-}
+} // namespace virtrust

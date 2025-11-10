@@ -33,7 +33,8 @@ OpRc OpUndefine::Exec()
     return ParseVirtrustRc(DomainUndefine(conn_, domainName_, flags_, isOnlyTsb_));
 }
 
-OpRc OpUndefine::CheckOptions(int longindex) {
+OpRc OpUndefine::CheckOptions(int longindex)
+{
     if (longindex == 0) {
         if (flags_ == DOMAIN_UNDEFINE_KEEP_NVRAM) { // --nvram
             fmt::print("Options --nvram and --keep-nvram are mutually exclusive.\n");
@@ -60,13 +61,12 @@ OpRc OpUndefine::ParseArgv(int argc, char **argv)
 {
     int arg = -1;
     int longindex = -1;
-    optind = 1;                   // reset
-    std::vector<option> opt = {
-        {"nvram", no_argument, nullptr, 0},
-        {"keep-nvram", no_argument, nullptr, 0},
-        {"only-tsb", no_argument, nullptr, 0},
-        {"help", no_argument, nullptr, 'h'},
-        {nullptr, 0, nullptr, 0}};
+    optind = 1; // reset
+    std::vector<option> opt = {{"nvram", no_argument, nullptr, 0},
+                               {"keep-nvram", no_argument, nullptr, 0},
+                               {"only-tsb", no_argument, nullptr, 0},
+                               {"help", no_argument, nullptr, 'h'},
+                               {nullptr, 0, nullptr, 0}};
 
     opterr = 0;
     // The leading + means no re-ordering, see man page of getopt_long
