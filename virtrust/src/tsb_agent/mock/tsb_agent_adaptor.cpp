@@ -108,6 +108,13 @@ int MigrationCheckPeerPk(char *vUuid, char *pk1, char *pk2)
 
 int MigrationGetVRootCipher(char *vUuid, char **cipher)
 {
+    static const char a[] = "fakeCipher";
+    size_t len = strlen(a) + 1;
+    *cipher = (char *)malloc(len * sizeof(char));
+    if (*cipher == NULL) {
+        return -1;
+    }
+    strcpy(*cipher, a);
     return 0;
 }
 

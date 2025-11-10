@@ -462,7 +462,7 @@ bool CompareTsbVirtState(int tsb, int virt)
 {
     switch (virt) {
         case VIR_DOMAIN_RUNNING:
-            return tsb == 2;
+            return tsb == 1;
         case VIR_DOMAIN_NOSTATE:
         case VIR_DOMAIN_BLOCKED:
         case VIR_DOMAIN_PAUSED:
@@ -757,8 +757,8 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
                            static_cast<unsigned int>(MIGRATE_UNDEFINE_SOURCE));
         return VirtrustRc::ERROR;
     }
-    if (destUri.empty() || destUri.find("qemu+tls") != 0) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|destUrt is only support starts with qemu+tls");
+    if (destUri.empty() || destUri.find("qemu+tls://") != 0) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|destUrt is only support starts with qemu+tls://");
         return VirtrustRc::ERROR;
     }
     // 校验虚拟机是否tsb和virsh都存在 并获取uuid
@@ -770,14 +770,14 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
     }
     std::string uuid;
     bool exists = std::any_of(domainInfos.begin(), domainInfos.end(), [&domainName, &uuid](const auto &pair) {
-        if (pair.second.domainName == domainName) {
+        if (pair.second.domainName == domainName && pair.second.state == VIR_DOMAIN_SHUTOFF) {
             uuid = pair.first;
             return true;
         }
         return false;
     });
     if (!exists) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|domain: {} not exist or state is not consistent with virsh",
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|domain: {} not exist or state is not shut off",
                            domainName);
         return VirtrustRc::ERROR;
     }

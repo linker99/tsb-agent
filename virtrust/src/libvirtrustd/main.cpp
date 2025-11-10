@@ -45,6 +45,7 @@ void PrintUsage(std::string_view progname)
                "    --config           path to config file\n"
                "\n"
                "  OPTIONS:\n"
+               "    -d | --debug       run in debug mode\n"
                "    --help             print this help\n"
                "    --version          show version\n"
                "\n",
@@ -57,6 +58,7 @@ int ProcessArgs(int argc, char **argv)
     int longindex = -1;
     std::vector<option> opt = {
         {"config", required_argument, nullptr, 'c'},
+        {"debug", no_argument, nullptr, 'd'},
         {"help", no_argument, nullptr, 'h'},
         {"version", no_argument, nullptr, 'v'},
         {nullptr, 0, nullptr, 0},
@@ -66,10 +68,13 @@ int ProcessArgs(int argc, char **argv)
     // The leading + means no re-ordering, see man page of getopt_long
     // The ":" after "c" means it has long arguments from cli, and is parsed to
     // optarg
-    while ((arg = getopt_long(argc, argv, "+c:hv", opt.data(), &longindex)) != -1) {
+    while ((arg = getopt_long(argc, argv, "+c:dhv", opt.data(), &longindex)) != -1) {
         switch (arg) {
             case 'c':
                 configPath = std::string(optarg);
+                break;
+            case 'd':
+                virtrust::Logger::Instance()->SetDisplayLogLevel(virtrust::LogLevel::DEBUG);
                 break;
             case 'v':
                 PrintVersion(argv[0]);

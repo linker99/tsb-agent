@@ -6,6 +6,8 @@
 
 #include <memory>
 #include <thread>
+#include <regex>
+#include <vector>
 
 #include "tsb_agent/tsb_agent.h"
 
@@ -15,6 +17,29 @@
 #include "virtrust/link/migration_session.h"
 
 namespace virtrust {
+const std::regex IP_REGEX(R"((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))");
+
+namespace {
+std::string ExtractSingleIP(const std::string &str)
+{
+    std::vector<std::string> ips;
+    std::sregex_iterator it(str.begin(), str.end(), IP_REGEX);
+    std::sregex_iterator end;
+    for (; it != end; ++it) {
+        ips.push_back((*it)[1]);
+    }
+
+    if (ips.empty()) {
+        VIRTRUST_LOG_ERROR("|ExtracSingleIP|END|returnF|No IP address found");
+        return "";
+    } else if (ips.size() > 1) {
+        VIRTRUST_LOG_ERROR("|ExtracSingleIP|END|returnF|IP address is not in one or more");
+        return "";
+    }
+    return ips[0];
+}
+} // namespace
+
 grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context,
                                                     const protos::PrepareMigRequest *request,
                                                     protos::PrepareMigReply *response)
@@ -146,8 +171,17 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
                                                  const protos::DomainMigraterRequest *request,
                                                  protos::DomainMigraterReply *response)
 {
-    // TODO: Parse destUri here.
+    VIRTRUST_LOG_DEBUG("|MigrationServiceImpl DomainMigrate|START||");
+    std::string destIp = ExtractSingleIP(request->desturi());
+    if (destIp.empty()) {
+        VIRTRUST_LOG_ERROR("|MigrationServiceImpl DomainMigrate|END|returnF|invalid ip, destUri is: {}",
+                           request->desturi());
+        response->set_result(1);
+        return grpc::Status::OK;
+    }
     LinkConfig config;
+    config.ip = destIp;
+    config.port = 5030;
     RpcClient client(config);
 
     auto &mgr = SessionManager::GetInstance();
@@ -168,6 +202,7 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
     }
 
     response->set_result(0);
+    VIRTRUST_LOG_DEBUG("|MigrationServiceImpl DomainMigrate|END|returnS|");
     return grpc::Status::OK;
 }
 
