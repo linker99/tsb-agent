@@ -92,8 +92,8 @@ grpc::Status MigrationServiceImpl::SendVRsourceData(grpc::ServerContext *context
         response->set_result(1);
         return grpc::Status::OK;
     }
-    auto ret = MigrationImportVRootCipher(const_cast<char *>(request->data().c_str()),
-                                          const_cast<char *>(request->uuid().c_str()));
+    auto ret = MigrationImportVRootCipher(const_cast<char *>(request->uuid().c_str()),
+                                          const_cast<char *>(request->data().c_str()), request->data().size());
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|MigrationImportVrootCipher failed.");
         response->set_result(1);
