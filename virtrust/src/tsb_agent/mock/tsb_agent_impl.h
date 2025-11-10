@@ -16,10 +16,7 @@
 namespace virtrust::mock {
 constexpr std::string_view STORAGE_FILENAME = "mock-tsb-agent.save";
 
-enum class TsbAgentRc {
-    OK,
-    ERROR
-};
+enum class TsbAgentRc { OK, ERROR };
 
 class TsbAgentImpl {
 public:
