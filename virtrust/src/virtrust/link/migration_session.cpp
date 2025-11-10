@@ -10,8 +10,9 @@
 
 #include "virtrust/base/logger.h"
 #include "virtrust/dllib/libvirt.h"
-#include "virtrust/link/proto/migrate.pb.h"
 #include "virtrust/link/proto/proto_tools.h"
+
+#include "virtrust/link/proto/migrate.pb.h"
 
 namespace virtrust {
 
