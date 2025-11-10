@@ -235,9 +235,9 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool transferRet)
     }
 
     // 通知TSB迁移成功
-    auto ret = MigrationNotify(const_cast<char *>(sessionId_.c_str()), 0);
-    if (ret != 0) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|MigrationNotify failure failed uuid: {}.", sessionId_);
+    auto rc = NotifyVRMigration(true);
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF|domain name: {}|MigrationNotify failure failed.", domainName_);
         UndoMigration();
         return MigrateSessionRc::ERROR;
     }
