@@ -777,8 +777,7 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
         return false;
     });
     if (!exists) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|domain: {} not exist or state is not shut off",
-                           domainName);
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|domain: {} not exist or state is not shut off", domainName);
         return VirtrustRc::ERROR;
     }
 

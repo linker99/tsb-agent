@@ -236,7 +236,8 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool transferRet)
     // 通知TSB迁移成功
     auto rc = NotifyVRMigration(true);
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF|domain name: {}|MigrationNotify failure failed.", domainName_);
+        VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF|domain name: {}|MigrationNotify failure failed.",
+                           domainName_);
         UndoMigration();
         return MigrateSessionRc::ERROR;
     }
@@ -584,8 +585,7 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
     }
     // 服务端校验客户端发来的虚拟机资源信息
     auto ret = MigrationImportVRootCipher(const_cast<char *>(request->uuid().c_str()),
-                                          const_cast<char *>(request->data().c_str()),
-                                          request->data().size());
+                                          const_cast<char *>(request->data().c_str()), request->data().size());
     if (ret != 0) {
         EnterState(State::Failed);
         Cleanup();

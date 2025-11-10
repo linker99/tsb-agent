@@ -23,7 +23,7 @@ public:
         : logType_(logType),
           filePath_(std::move(path)),
           rotationFileSize_(rotationFileSize),
-          rotationFileCount_(rotationFileCount) {};
+          rotationFileCount_(rotationFileCount){};
     ~LogAdapt() = default;
 
     VirtrustRc Initialize();

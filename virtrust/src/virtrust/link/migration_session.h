@@ -30,14 +30,7 @@ public:
         Responder  // 服务端状态
     };
 
-    enum class State {
-        Init,
-        WaitingKey,
-        CertVerify,
-        Transferring,
-        Finished,
-        Failed
-    };
+    enum class State { Init, WaitingKey, CertVerify, Transferring, Finished, Failed };
 
     MigrationSession(Role role, const std::string &sessionId, const std::string &domainName,
                      const std::string &destUri = "", const std::string &localUri = "", const unsigned int flags = 0);
