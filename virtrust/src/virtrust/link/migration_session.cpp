@@ -409,7 +409,7 @@ void MigrationSession::UndoMigration()
         return;
     }
 
-    // 1.删除对端虚拟机
+    // 1.基于uri删除libvirt虚拟机
     UndefineVirtDomainBaseUri(destUri_);
 
     // 2.通知TSB迁移失败
@@ -419,7 +419,7 @@ void MigrationSession::UndoMigration()
     OnFail();
 }
 
-// 删除对端虚拟机
+// 基于uri删除libvirt虚拟机
 MigrateSessionRc MigrationSession::UndefineVirtDomainBaseUri(const std::string &uri)
 {
     std::unique_ptr<ConnCtx> destConn;
