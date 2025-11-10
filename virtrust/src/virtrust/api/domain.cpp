@@ -593,12 +593,12 @@ VirtrustRc CheckMaxDomainCount()
     Description *tsbVmInfo = nullptr;
     int result = GetVRoots(&tsbVmNum, &tsbVmInfo);
     if (result != 0) {
-        VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||Failed to get tsb domains");
+        VIRTRUST_LOG_ERROR("|CheckMaxDomainCount|END|returnF||Failed to get tsb domains");
         return VirtrustRc::ERROR;
     }
     if (tsbVmNum == MAX_DOMAIN_COUNT) {
         FreeDescription(&tsbVmInfo);
-        VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||support max domain count is: {}", MAX_DOMAIN_COUNT);
+        VIRTRUST_LOG_ERROR("|CheckMaxDomainCount|END|returnF||support max domain count is: {}", MAX_DOMAIN_COUNT);
         return VirtrustRc::ERROR;
     }
     FreeDescription(&tsbVmInfo);
