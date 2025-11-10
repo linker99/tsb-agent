@@ -11,7 +11,7 @@
 #include <unordered_map>
 
 #include "tsb_agent/tsb_agent.h"
-
+#include "virtrust/api/context.h"
 #include "virtrust/link/grpc_client.h"
 #include "virtrust/utils/async_timer.h"
 
@@ -103,7 +103,7 @@ private:
 
     MigrateSessionRc SendTransferOnce(char *cipher);
 
-    MigrateSessionRc SendFinishedNotify(uint32_t result);
+    MigrateSessionRc SendFinishedNotify(bool success);
 
     // 辅助函数
     MigrateSessionRc GetExchangePkAndReport(protos::EXchangePkAndReportRequest *req,
@@ -114,6 +114,16 @@ private:
     MigrateSessionRc VerifyHostAndVmReport(const protos::TrustReportNew &hostReport,
                                            const protos::TrustReportNew &vmReport);
 
+    MigrateSessionRc MigrateByLibvirt();
+
+    MigrateSessionRc GetVirConnContext(const std::string& uri, std::unique_ptr<ConnCtx>& outConn);
+
+    void UndoMigration();
+
+    MigrateSessionRc UndefineForPeer();
+
+    MigrateSessionRc NotifyVRMigration(bool success);
+
 private:
     Role role_;
     State state_;
@@ -122,6 +132,7 @@ private:
     std::string destUri_;
     std::string localUri_;
     unsigned int flags_;
+    bool delFalgs_;
 
     std::string myPubKey_;
     std::string peerPubKey_;

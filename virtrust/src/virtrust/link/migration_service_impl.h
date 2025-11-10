@@ -17,6 +17,7 @@
 namespace virtrust {
 class MigrationServiceImpl final : public protos::MigrationService::Service {
 public:
+    // 1: 准备迁移
     grpc::Status PrepareMigration(grpc::ServerContext *context, const protos::PrepareMigRequest *request,
                                   protos::PrepareMigReply *response) override;
 

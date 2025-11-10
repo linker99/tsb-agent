@@ -91,6 +91,11 @@ int GetReport(char *pUuid, char *vUuid, struct trust_report_new *hostreport, str
     return 0;
 }
 
+int VerifyReport(char *pUuid, char *vUuid, struct trust_report_new *hostreport, struct trust_report_new *vmreport)
+{
+    return 0;
+}
+
 int MigrationGetCert(char *vUuid, char *cert, char *pubkey)
 {
     return 0;
