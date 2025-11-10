@@ -146,7 +146,7 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
                                                  const protos::DomainMigraterRequest *request,
                                                  protos::DomainMigraterReply *response)
 {
-    // FIXME: Where this config from?
+    // TODO: Parse destUri here.
     LinkConfig config;
     RpcClient client(config);
 

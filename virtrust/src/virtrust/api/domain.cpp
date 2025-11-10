@@ -788,7 +788,6 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
     config.udsPath = UDS_PATH;
     UdsClient client(config);
 
-    // TODO: Obtain the necessary parameters here.
     auto localUri = conn->GetUri();
     MigrationConfig migration_config{
         .domainName = domainName,
