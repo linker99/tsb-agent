@@ -259,32 +259,54 @@ TsbAgentRc TsbAgentImpl::CheckMeasure(const std::string &uuid, MeasureInfo bios,
     return TsbAgentRc::OK;
 }
 
-TsbAgentRc TsbAgentImpl::GetReport(const std::string &uuid)
+// Almost always return true with empty report
+TsbAgentRc TsbAgentImpl::GetReport(const std::string &pUuid, const std::string &vUuid,
+                                   struct trust_report_new *hostreport, struct trust_report_new *vmreport)
 {
     vRootMap_ = LoadVRootsFromFile(storageFilePath_.c_str());
-    if (vRootMap_.find(uuid) == vRootMap_.end()) {
-        SPDLOG_ERROR("[MOCK-TSB-AGENT] uuid:{} not found", uuid);
-        return TsbAgentRc::ERROR; // uuid does not exist
+    if (vRootMap_.find(vUuid) == vRootMap_.end()) {
+        SPDLOG_ERROR("[MOCK-TSB-AGENT] vUuid:{} not found", vUuid);
+        return TsbAgentRc::ERROR;
     }
 
-    return TsbAgentRc::OK; // always true
-}
-
-TsbAgentRc TsbAgentImpl::Migration1GetRandPk(const std::string &uuid)
-{
-    vRootMap_ = LoadVRootsFromFile(storageFilePath_.c_str());
-    if (vRootMap_.find(uuid) == vRootMap_.end()) {
-        SPDLOG_ERROR("[MOCK-TSB-AGENT] uuid:{} not found", uuid);
-        return TsbAgentRc::ERROR; // uuid does not exist
+    if (hostreport == nullptr) {
+        hostreport = (trust_report_new *)malloc(sizeof(trust_report_new));
+        SPDLOG_WARN("[MOCK-TSB-AGENT] malloc host report of {} internally", pUuid);
     }
 
-    return TsbAgentRc::OK; // always true
-}
+    if (vmreport == nullptr) {
+        vmreport = (trust_report_new *)malloc(sizeof(trust_report_new));
+        SPDLOG_WARN("[MOCK-TSB-AGENT] malloc vm report of {} internally", vUuid);
+    }
 
-void TsbAgentImpl::ClearAllVRoots()
-{
-    vRootMap_.clear();
     SaveVRootsToFile(storageFilePath_, vRootMap_);
+    return TsbAgentRc::OK;
+}
+
+// Almost always return true if report is not nullptr
+TsbAgentRc TsbAgentImpl::VerifyReport(const std::string &pUuid, const std::string &vUuid,
+                                      struct trust_report_new *hostreport, struct trust_report_new *vmreport)
+{
+    vRootMap_ = LoadVRootsFromFile(storageFilePath_.c_str());
+    if (vRootMap_.find(vUuid) == vRootMap_.end()) {
+        SPDLOG_ERROR("[MOCK-TSB-AGENT] vUuid:{} not found", vUuid);
+        return TsbAgentRc::ERROR;
+    }
+
+    if (hostreport == nullptr || vmreport == nullptr) {
+        SPDLOG_ERROR("[MOCK-TSB-AGENT] host report or vm report is nullptr!");
+        return TsbAgentRc::ERROR;
+    }
+
+    SaveVRootsToFile(storageFilePath_, vRootMap_);
+    return TsbAgentRc::OK;
+}
+
+// Almost always return true with empty report
+TsbAgentRc TsbAgentImpl::MigrationGetCert(const std::string &vUuid, std::vector<uint8_t> &cert,
+                                          std::vector<uint8_t> &pubkey)
+{
+    return TsbAgentRc::OK;
 }
 
 } // namespace virtrust::mock

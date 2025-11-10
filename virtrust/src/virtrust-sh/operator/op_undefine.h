@@ -24,9 +24,10 @@ public:
     void PrintUsage() override;
 
 private:
+    OpRc CheckOptions(int longindex);
     std::string domainName_ = "unknown";
     unsigned int flags_ = 0;
-    bool onlyTsb_ = false;
+    bool isOnlyTsb_ = false;
 };
 
 } // namespace virtrust

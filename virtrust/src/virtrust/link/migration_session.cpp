@@ -69,8 +69,6 @@ MigrationSession::MigrationSession(Role role, const std::string &sessionId, cons
 MigrateSessionRc MigrationSession::Start()
 {
     if (role_ != Role::Initiator) {
-        VIRTRUST_LOG_ERROR("|Start|END|returnF|uuid: {}|Role is not the initiator of the migration.", sessionId_);
-        OnFail();
         return MigrateSessionRc::ERROR;
     }
     EnterState(State::Init);
@@ -178,8 +176,9 @@ MigrateSessionRc MigrationSession::SendStartMigration()
 MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
 {
     char *cipher = nullptr;
+    int cipherLen = 0;
     // 收集密码资源
-    auto ret = MigrationGetVRootCipher(const_cast<char *>(sessionId_.c_str()), &cipher);
+    auto ret = MigrationGetVRootCipher(const_cast<char *>(sessionId_.c_str()), &cipher, &cipherLen);
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|OnStartMigrationResponseReceived|END|returnF|uuid:{}|MigrationGetVRootCipher failed.",
                            sessionId_);
@@ -201,7 +200,7 @@ MigrateSessionRc MigrationSession::SendTransferOnce(char *cipher)
 
     // 1.调用libvirt命令进行迁移
     MigrateSessionRc rc = MigrateByLibvirt();
-    if (rc != MigrateSessionRc::ERROR) {
+    if (rc != MigrateSessionRc::OK) {
         VIRTRUST_LOG_ERROR("|SendTransferOnce|END|returnF||migrate by libvirt failed.");
         OnFail();
         return rc;
@@ -237,7 +236,8 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool transferRet)
     // 通知TSB迁移成功
     auto rc = NotifyVRMigration(true);
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF|domain name: {}|MigrationNotify failure failed.", domainName_);
+        VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF|domain name: {}|MigrationNotify failure failed.",
+                           domainName_);
         UndoMigration();
         return MigrateSessionRc::ERROR;
     }
@@ -275,19 +275,22 @@ MigrateSessionRc MigrationSession::OnFinishedResponseReceived(bool finished)
 MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndReportRequest *req,
                                                           protos::EXchangePkAndReportReply *res)
 {
-    constexpr uint32_t CERT_BUF_LEN = 4096;
-    constexpr uint32_t PUBKEY_BUF_LEN = 1024;
-
-    char cert[CERT_BUF_LEN] = {0};
-    char pubKey[PUBKEY_BUF_LEN] = {0};
-
     auto uuid = sessionId_;
+    char *cert = nullptr;
+    int certLen = 0;
+    char *pubKey = nullptr;
+    int pubKeyLen = 0;
 
-    int ret = MigrationGetCert(uuid.data(), cert, pubKey);
+    int ret = MigrationGetCert(uuid.data(), &cert, &certLen, &pubKey, &pubKeyLen);
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|uuid: {}|Get local cert failed.");
         return MigrateSessionRc::ERROR;
     }
+
+    std::string certStr(cert, certLen);
+    std::string pubKeyStr(pubKey, pubKeyLen);
+    free(cert);
+    free(pubKey);
 
     trust_report_new hostReport;
     trust_report_new vmReport;
@@ -300,8 +303,8 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
     if (role_ == Role::Initiator) {
         req->set_domainname(domainName_);
         req->set_uuid(uuid);
-        req->set_cert(cert);
-        req->set_publickey(pubKey);
+        req->set_cert(certStr);
+        req->set_publickey(pubKeyStr);
         auto hostReportProto = req->mutable_hostreport();
         ReportToProto(hostReport, hostReportProto);
         auto vmReportProto = req->mutable_vmreport();
@@ -309,8 +312,8 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
     } else {
         res->set_domainname(domainName_);
         res->set_uuid(uuid);
-        res->set_cert(cert);
-        res->set_publickey(pubKey);
+        res->set_cert(certStr);
+        res->set_publickey(pubKeyStr);
         auto hostReportProto = res->mutable_hostreport();
         ReportToProto(hostReport, hostReportProto);
         auto vmReportProto = res->mutable_vmreport();
@@ -321,7 +324,7 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
 
 MigrateSessionRc MigrationSession::VerifyCertificate(std::string uuid, std::string cert, std::string pubkey)
 {
-    int ret = MigrationCheckPeerPk(uuid.data(), cert.data(), pubkey.data());
+    int ret = MigrationCheckPeerPk(uuid.data(), cert.data(), cert.size(), pubkey.data(), pubkey.size());
     return ret == 0 ? MigrateSessionRc::OK : MigrateSessionRc::ERROR;
 }
 
@@ -390,6 +393,7 @@ MigrateSessionRc MigrationSession::GetVirConnContext(const std::string &uri, std
     return MigrateSessionRc::OK;
 }
 
+// 撤销迁移操作
 void MigrationSession::UndoMigration()
 {
     // 防止server端误调
@@ -503,7 +507,7 @@ void MigrationSession::OnFail()
 {
     // 向服务端发送迁移失败通知
     if (role_ == Role::Initiator) {
-        MigrateSessionRc sendRet = SendFinishedNotify(1);
+        MigrateSessionRc sendRet = SendFinishedNotify(false);
         if (sendRet != MigrateSessionRc::OK) {
             VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|SendFinishedNotify failed uuid: {}.", sessionId_);
         }
@@ -563,8 +567,7 @@ MigrateSessionRc MigrationSession::OnStartMigrationRequestReceived()
     if (state_ != State::CertVerify) {
         Cleanup();
         VIRTRUST_LOG_ERROR(
-            "|OnStartMigrationRequestReceived|END|returnF|uuid: {}|Waiting for starting migration signal timeout.",
-            sessionId_);
+            "|OnStartMigrationRequestReceived|END|returnF||Waiting for starting migration signal timeout.");
         return MigrateSessionRc::ERROR;
     }
 
@@ -581,8 +584,8 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
         return MigrateSessionRc::ERROR;
     }
     // 服务端校验客户端发来的虚拟机资源信息
-    auto ret = MigrationImportVRootCipher(const_cast<char *>(request->data().c_str()),
-                                          const_cast<char *>(request->uuid().c_str()));
+    auto ret = MigrationImportVRootCipher(const_cast<char *>(request->uuid().c_str()),
+                                          const_cast<char *>(request->data().c_str()), request->data().size());
     if (ret != 0) {
         EnterState(State::Failed);
         Cleanup();

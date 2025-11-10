@@ -42,9 +42,8 @@ OpRc OpStart::ParseArgv(int argc, char **argv)
     optind = 1; // reset
     const int onlyTsbVal = 0x100;
 
-    std::vector<option> opt = {{"help", no_argument, nullptr, 'h'},
-                               {"only-tsb", required_argument, nullptr, onlyTsbVal},
-                               {nullptr, 0, nullptr, 0}};
+    std::vector<option> opt = {
+        {"help", no_argument, nullptr, 'h'}, {"only-tsb", no_argument, nullptr, onlyTsbVal}, {nullptr, 0, nullptr, 0}};
 
     opterr = 0;
     // The leading + means no re-ordering, see man page of getopt_long
@@ -85,15 +84,14 @@ void OpStart::PrintUsage()
 {
     fmt::print("\n"
                "  NAME:\n"
-               "    destroy - destroy (stop) a domain\n"
+               "    start - start a (previously defined) inactive domain\n"
                "\n"
                "  SYNOPSIS:\n"
-               "    destroy [options] <domain>\n"
+               "    start [options] <domain>\n"
                "\n"
                "  OPTIONS:\n"
                "    -h | --help                    this help\n"
-               "    --onlyTsb                      only update tsb resource, "
-               "<domain> should be replaced with uuid if --onlyTsb enabled\n"
+               "    --only-tsb                     only update tsb resource, <domain> need uuid\n"
                "\n");
 }
 } // namespace virtrust

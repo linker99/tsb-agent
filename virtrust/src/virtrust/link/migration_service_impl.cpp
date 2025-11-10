@@ -5,8 +5,8 @@
 #include "virtrust/link/migration_service_impl.h"
 
 #include <memory>
-#include <thread>
 #include <regex>
+#include <thread>
 #include <vector>
 
 #include "tsb_agent/tsb_agent.h"
