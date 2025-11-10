@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include "tsb_agent/tsb_agent.h"
+
 #include "virtrust/api/context.h"
 #include "virtrust/link/grpc_client.h"
 #include "virtrust/utils/async_timer.h"
@@ -116,7 +117,7 @@ private:
 
     MigrateSessionRc MigrateByLibvirt();
 
-    MigrateSessionRc GetVirConnContext(const std::string& uri, std::unique_ptr<ConnCtx>& outConn);
+    MigrateSessionRc GetVirConnContext(const std::string &uri, std::unique_ptr<ConnCtx> &outConn);
 
     void UndoMigration();
 

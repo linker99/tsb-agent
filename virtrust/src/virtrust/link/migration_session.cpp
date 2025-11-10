@@ -8,10 +8,10 @@
 #include <memory>
 #include <mutex>
 
-
 #include "virtrust/base/logger.h"
 #include "virtrust/dllib/libvirt.h"
 #include "virtrust/link/proto/proto_tools.h"
+
 #include "virtrust/link/proto/migrate.pb.h"
 
 namespace virtrust {
@@ -21,7 +21,7 @@ unsigned int GetFlagCleard(const unsigned int &flags, const unsigned int &clear)
 {
     return flags & ~clear;
 }
-}
+} // namespace
 
 MigrationSession *SessionManager::CreateSession(MigrationSession::Role role, const std::string &sessionId,
                                                 const std::string &domainName, const std::string &destUri,
@@ -176,10 +176,11 @@ MigrateSessionRc MigrationSession::SendStartMigration()
 MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
 {
     char *cipher = nullptr;
-    //收集密码资源
+    // 收集密码资源
     auto ret = MigrationGetVRootCipher(const_cast<char *>(sessionId_.c_str()), &cipher);
     if (ret != 0) {
-        VIRTRUST_LOG_ERROR("|OnStartMigrationResponseReceived|END|returnF|uuid:{}|MigrationGetVRootCipher failed.", sessionId_);
+        VIRTRUST_LOG_ERROR("|OnStartMigrationResponseReceived|END|returnF|uuid:{}|MigrationGetVRootCipher failed.",
+                           sessionId_);
         OnFail();
         return MigrateSessionRc::ERROR;
     }
@@ -232,9 +233,9 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool transferRet)
     }
 
     // 通知TSB迁移成功
-    auto ret = MigrationNotify(const_cast<char *>(sessionId_.c_str()), 0);
-    if (ret != 0) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|MigrationNotify failure failed uuid: {}.", sessionId_);
+    auto rc = NotifyVRMigration(true);
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF|domain name: {}|MigrationNotify failure failed.", domainName_);
         UndoMigration();
         return MigrateSessionRc::ERROR;
     }
@@ -357,7 +358,8 @@ MigrateSessionRc MigrationSession::MigrateByLibvirt()
         VIRTRUST_LOG_ERROR("|SendTransferOnce|END|returnF||failed to find domain: {}", domainName_);
         return MigrateSessionRc::ERROR;
     }
-    auto *domainPtr = libvirt.virDomainMigrate3(domain->Get(), destConn->Get(), nullptr, 0, GetFlagCleard(flags_, MIGRATE_UNDEFINE_SOURCE));
+    auto *domainPtr = libvirt.virDomainMigrate3(domain->Get(), destConn->Get(), nullptr, 0,
+                                                GetFlagCleard(flags_, MIGRATE_UNDEFINE_SOURCE));
     if (domainPtr == nullptr) {
         VIRTRUST_LOG_ERROR("|SendTransferOnce|END|returnF||failed to migrate domain: {}", domainName_);
         return MigrateSessionRc::ERROR;
@@ -367,7 +369,7 @@ MigrateSessionRc MigrationSession::MigrateByLibvirt()
     return MigrateSessionRc::OK;
 }
 
-MigrateSessionRc MigrationSession::GetVirConnContext(const std::string& uri, std::unique_ptr<ConnCtx>& outConn)
+MigrateSessionRc MigrationSession::GetVirConnContext(const std::string &uri, std::unique_ptr<ConnCtx> &outConn)
 {
     auto conn = std::make_unique<ConnCtx>();
     if (!conn->SetUri(uri)) {
@@ -433,12 +435,12 @@ MigrateSessionRc MigrationSession::NotifyVRMigration(bool success)
     auto status = success ? 0 : -1;
     auto ret = MigrationNotify(const_cast<char *>(sessionId_.c_str()), status);
     if (ret != 0) {
-        VIRTRUST_LOG_INFO("|NotifyVRMigration|END|returnF|domainName:{}, migration statu: {}|Notify TSB failed.", domainName_, success);
+        VIRTRUST_LOG_INFO("|NotifyVRMigration|END|returnF|domainName:{}, migration statu: {}|Notify TSB failed.",
+                          domainName_, success);
         return MigrateSessionRc::ERROR;
     }
     return MigrateSessionRc::OK;
 }
-
 
 void MigrationSession::EnterState(State s)
 {
