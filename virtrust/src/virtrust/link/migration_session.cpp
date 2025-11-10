@@ -258,7 +258,7 @@ MigrateSessionRc MigrationSession::SendFinishedNotify(bool success)
     protos::MigrateResultReply res;
     auto ret = rpcClient_->NotifyVRMigrateResult(5, req, &res);
     if (ret != 0) {
-        VIRTRUST_LOG_INFO("|SendFinishedNotify|END|returnF|domain name: {}|Send notify failed.", domainName_);
+        VIRTRUST_LOG_ERROR("|SendFinishedNotify|END|returnF|domain name: {}|Send notify failed.", domainName_);
         return MigrateSessionRc::ERROR;
     }
     return OnFinishedResponseReceived(res.result() == 0);
