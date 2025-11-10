@@ -11,6 +11,7 @@
 #include <unordered_map>
 
 #include "tsb_agent/tsb_agent.h"
+
 #include "virtrust/link/grpc_client.h"
 #include "virtrust/utils/async_timer.h"
 
@@ -64,7 +65,7 @@ public:
     MigrateSessionRc OnMigrateRequestReceived();
 
     MigrateSessionRc OnExchangeKeyRequestReceived(const protos::EXchangePkAndReportRequest *request,
-        protos::EXchangePkAndReportReply *response);
+                                                  protos::EXchangePkAndReportReply *response);
 
     MigrateSessionRc OnStartMigrationRequestReceived();
 
@@ -102,11 +103,13 @@ private:
     MigrateSessionRc SendFinishedNotify();
 
     // 辅助函数
-    MigrateSessionRc GetExchangePkAndReport(protos::EXchangePkAndReportRequest *req, protos::EXchangePkAndReportReply *res);
+    MigrateSessionRc GetExchangePkAndReport(protos::EXchangePkAndReportRequest *req,
+                                            protos::EXchangePkAndReportReply *res);
 
     MigrateSessionRc VerifyCertificate(std::string uuid, std::string cert, std::string pubkey);
 
-    MigrateSessionRc VerifyHostAndVmReport(const protos::TrustReportNew &hostReport, const protos::TrustReportNew &vmReport);
+    MigrateSessionRc VerifyHostAndVmReport(const protos::TrustReportNew &hostReport,
+                                           const protos::TrustReportNew &vmReport);
 
 private:
     Role role_;
@@ -161,7 +164,6 @@ private:
 
     std::unordered_map<std::string, std::unique_ptr<MigrationSession>> sessions_;
 };
-
 
 struct EXchangePkAndReport {
     std::string domainName;
