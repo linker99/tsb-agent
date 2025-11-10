@@ -114,7 +114,7 @@ private:
 
     void UndoMigration();
 
-    MigrateSessionRc UndefineForPeer();
+    MigrateSessionRc UndefineVirtDomainBaseUri(const std::string &uri);
 
     MigrateSessionRc NotifyVRMigration(bool success);
 

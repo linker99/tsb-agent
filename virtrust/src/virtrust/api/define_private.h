@@ -4,6 +4,7 @@
 
 #include <string>
 #include <string_view>
+#include "virtrust/api/defines.h"
 
 namespace virtrust {
 constexpr std::string_view VIRTRUST_VERSION = "1.0.0";
@@ -45,4 +46,7 @@ public:
     VirshMeasureInfo kernel;
     VirshMeasureInfo initrd;
 };
+
+VirtrustRc CheckMaxDomainCount();
+
 } // namespace virtrust
