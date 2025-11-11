@@ -27,6 +27,8 @@ target_include_directories(
 
 # HACK make sure proto builds before obj
 add_dependencies(virtrust-obj virtrust_proto)
+add_dependencies(virtrust-obj Deps::spdlog)
+add_dependencies(virtrust-obj Deps::secure_c)
 
 # Object protobuf lib
 
