@@ -173,66 +173,66 @@ TEST_F(TsbAgentItfTest, DISABLED_MigrationGetCert)
 }
 
 // Test case: Test MigrationCheckPeerPk function
-TEST_F(TsbAgentItfTest, DISABLED_MigrationCheckPeerPk)
-{
-    // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
-    char vUuid[37] = "12345678-1234-5678-1234-567812345678";
+// TEST_F(TsbAgentItfTest, DISABLED_MigrationCheckPeerPk)
+// {
+//     // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
+//     char vUuid[37] = "12345678-1234-5678-1234-567812345678";
 
-    char pk1[1024] = {};
-    char pk2[1024] = {};
+//     char pk1[1024] = {};
+//     char pk2[1024] = {};
 
-    // Call MigrationCheckPeerPk
-    int result = MigrationCheckPeerPk(/* pUuid, */ vUuid, pk1, pk2);
+//     // Call MigrationCheckPeerPk
+//     int result = MigrationCheckPeerPk(/* pUuid, */ vUuid, pk1, pk2);
 
-    // Verify the function returns OK
-    VerifyOK(result, "MigrationCheckPeerPk");
-}
+//     // Verify the function returns OK
+//     VerifyOK(result, "MigrationCheckPeerPk");
+// }
 
 // Test case: Test MigrationGetVRootCipher function
-TEST_F(TsbAgentItfTest, DISABLED_MigrationGetVRootCipher)
-{
-    // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
-    char vUuid[37] = "12345678-1234-5678-1234-567812345678";
+// TEST_F(TsbAgentItfTest, DISABLED_MigrationGetVRootCipher)
+// {
+//     // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
+//     char vUuid[37] = "12345678-1234-5678-1234-567812345678";
 
-    char *cipher = nullptr;
+//     char *cipher = nullptr;
 
-    // Call MigrationGetVRootCipher
-    int result = MigrationGetVRootCipher(/* pUuid, */ vUuid, &cipher);
+//     // Call MigrationGetVRootCipher
+//     int result = MigrationGetVRootCipher(/* pUuid, */ vUuid, &cipher);
 
-    // Verify the function returns OK
-    VerifyOK(result, "MigrationGetVRootCipher");
+//     // Verify the function returns OK
+//     VerifyOK(result, "MigrationGetVRootCipher");
 
-    // Clean up
-    if (cipher != nullptr) {
-        free(cipher);
-    }
-}
+//     // Clean up
+//     if (cipher != nullptr) {
+//         free(cipher);
+//     }
+// }
 
-// Test case: Test MigrationImportVRootCipher function
-TEST_F(TsbAgentItfTest, DISABLED_MigrationImportVRootCipher)
-{
-    // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
-    char vUuid[37] = "12345678-1234-5678-1234-567812345678";
+// // Test case: Test MigrationImportVRootCipher function
+// TEST_F(TsbAgentItfTest, DISABLED_MigrationImportVRootCipher)
+// {
+//     // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
+//     char vUuid[37] = "12345678-1234-5678-1234-567812345678";
 
-    char cipher[1024] = "test-cipher-data";
+//     char cipher[1024] = "test-cipher-data";
 
-    // Call MigrationImportVRootCipher
-    int result = MigrationImportVRootCipher(/* pUuid, */ vUuid, cipher);
+//     // Call MigrationImportVRootCipher
+//     int result = MigrationImportVRootCipher(/* pUuid, */ vUuid, cipher);
 
-    // Verify the function returns OK
-    VerifyOK(result, "MigrationImportVRootCipher");
-}
+//     // Verify the function returns OK
+//     VerifyOK(result, "MigrationImportVRootCipher");
+// }
 
-// Test case: Test MigrationNotify function
-TEST_F(TsbAgentItfTest, DISABLED_MigrationNotify)
-{
-    // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
-    char vUuid[37] = "12345678-1234-5678-1234-567812345678";
+// // Test case: Test MigrationNotify function
+// TEST_F(TsbAgentItfTest, DISABLED_MigrationNotify)
+// {
+//     // char pUuid[37] = "12345678-1234-5678-1234-567812345678";
+//     char vUuid[37] = "12345678-1234-5678-1234-567812345678";
 
-    // Call MigrationNotify
-    int result = MigrationNotify(/* pUuid, */ vUuid, 1);
+//     // Call MigrationNotify
+//     int result = MigrationNotify(/* pUuid, */ vUuid, 1);
 
-    // Verify the function returns OK
-    VerifyOK(result, "MigrationNotify");
-}
+//     // Verify the function returns OK
+//     VerifyOK(result, "MigrationNotify");
+// }
 } // namespace virtrust::mock

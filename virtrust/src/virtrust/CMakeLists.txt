@@ -3,16 +3,7 @@
 add_library(virtrust-obj OBJECT)
 
 find_package(Protobuf REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
-if(TARGET gRPC::grpc_cpp_plugin)
-  get_target_property(GRPC_CPP_PLUGIN_LOCATION gRPC::grpc_cpp_plugin LOCATION)
-  # Now GRPC_CPP_PLUGIN_LOCATION contains the path to grpc_cpp_plugin
-else()
-  message(
-    FATAL_ERROR
-      "gRPC::grpc_cpp_plugin target not found. Ensure gRPC is properly configured."
-  )
-endif()
+find_program(GRPC_CPP_PLUGIN grpc_cpp_plugin REQUIRED)
 
 set(VIRTRUST_SOURCE_FILES "")
 set(VIRTRUST_PROTO_SOURCE_FILES "")
@@ -36,6 +27,8 @@ target_include_directories(
 
 # HACK make sure proto builds before obj
 add_dependencies(virtrust-obj virtrust_proto)
+add_dependencies(virtrust-obj Deps::spdlog)
+add_dependencies(virtrust-obj Deps::secure_c)
 
 # Object protobuf lib
 
@@ -53,14 +46,15 @@ protobuf_generate(
   .grpc.pb.h
   .grpc.pb.cc
   PLUGIN
-  "protoc-gen-grpc=${GRPC_CPP_PLUGIN_LOCATION}")
+  "protoc-gen-grpc=${GRPC_CPP_PLUGIN}")
 
 target_link_libraries(virtrust_proto PRIVATE libprotobuf)
 target_include_directories(virtrust_proto PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 # Shared lib
 
-add_library(virtrust-shared SHARED $<TARGET_OBJECTS:virtrust-obj>)
+add_library(virtrust-shared SHARED $<TARGET_OBJECTS:virtrust-obj>
+                                   $<TARGET_OBJECTS:virtrust_proto>)
 
 target_include_directories(
   virtrust-shared
