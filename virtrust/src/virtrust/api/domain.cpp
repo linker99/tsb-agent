@@ -287,7 +287,7 @@ VirtrustRc CheckCreateDomainName(const std::string &arg, std::string &domainName
     }
     // 处理--name=***或-n=***或-n*****
     bool isLongContainsName = arg.length() > 7 && arg.substr(0, 7) == "--name="; // 7是--name=的长度
-    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n"; // 这里大于3是处理-n并且紧跟字符的情况
+    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n";     // 这里大于3是处理-n并且紧跟字符的情况
     if (isLongContainsName || isShortContainsName) {
         if (isLongContainsName || (isLongContainsName && arg.find('=') != std::string::npos)) {
             domainName = arg.substr(arg.find('=') + 1);
@@ -584,6 +584,10 @@ VirtrustRc CheckMaxDomainCount()
 VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<std::string> &args)
 {
     VIRTRUST_LOG_DEBUG("|DomainCreate||START||");
+    if (conn == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF|| ConnCtx is nullptr.");
+        return VirtrustRc::ERROR;
+    }
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
@@ -642,6 +646,10 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
                          bool isOnlyTsb)
 {
     VIRTRUST_LOG_DEBUG("|DomainDestroy||START||");
+    if (conn == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainDestroy|END|returnF|| ConnCtx is nullptr.");
+        return VirtrustRc::ERROR;
+    }
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
@@ -686,8 +694,12 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
 VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
                       std::unordered_map<std::string, DomainInfo> &domainInfos, bool printErrToCli)
 {
-    // 使用按位与操作来检查value是否包含无效的标志
     VIRTRUST_LOG_DEBUG("|DomainList||START||");
+    if (conn == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainList|END|returnF|| ConnCtx is nullptr.");
+        return VirtrustRc::ERROR;
+    }
+    // 使用按位与操作来检查value是否包含无效的标志
     if (flags == 0 || (flags & LIST_DOMAINS_MASK) != flags) {
         VIRTRUST_LOG_ERROR("|DomainList|END|returnF||invalid flags, support value "
                            "see DomainListFlags.");
@@ -746,6 +758,10 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
                          const std::string &destUri, unsigned int flags)
 {
     VIRTRUST_LOG_DEBUG("|DomainMigrate||START||");
+    if (conn == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|| ConnCtx is nullptr.");
+        return VirtrustRc::ERROR;
+    }
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
@@ -810,6 +826,10 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
                        bool isOnlyTsb)
 {
     VIRTRUST_LOG_DEBUG("|DomainStart||START||domainName: {}", domainName);
+    if (conn == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainStart|END|returnF|| ConnCtx is nullptr.");
+        return VirtrustRc::ERROR;
+    }
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
@@ -857,6 +877,10 @@ VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::strin
                           bool isOnlyTsb)
 {
     VIRTRUST_LOG_DEBUG("|DomainUndefine||START||domainName: {}", domainName);
+    if (conn == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainUndefine|END|returnF|| ConnCtx is nullptr.");
+        return VirtrustRc::ERROR;
+    }
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;

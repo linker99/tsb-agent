@@ -35,7 +35,7 @@ add_dependencies(virtrust-obj Deps::secure_c)
 add_library(virtrust_proto OBJECT)
 target_sources(virtrust_proto PRIVATE ${VIRTRUST_PROTO_SOURCE_FILES})
 
-protobuf_generate(LANGUAGE cpp TARGET virtrust_proto)
+protobuf_generate(TARGET virtrust_proto LANGUAGE cpp)
 
 protobuf_generate(
   TARGET

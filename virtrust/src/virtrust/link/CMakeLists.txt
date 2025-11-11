@@ -11,6 +11,13 @@ set(VIRTRUST_SOURCE_FILES
 set(VIRTRUST_PROTO_SOURCE_FILES ${VIRTRUST_PROTO_SOURCE_FILES}
                                 ${CMAKE_CURRENT_LIST_DIR}/proto/migrate.proto)
 
+# Add tests for link directory
+add_virtrust_test_if(proto_tools_test ${BUILD_TEST})
+add_virtrust_test_if(grpc_client_test ${BUILD_TEST})
+add_virtrust_test_if(grpc_server_test ${BUILD_TEST})
+add_virtrust_test_if(migration_session_test ${BUILD_TEST})
+add_virtrust_test_if(migration_service_impl_test ${BUILD_TEST})
+
 set(VIRTRUST_SOURCE_FILES
     ${VIRTRUST_SOURCE_FILES}
     PARENT_SCOPE)
