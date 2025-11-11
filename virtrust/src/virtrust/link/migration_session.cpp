@@ -179,26 +179,24 @@ MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
     char *cipher = nullptr;
     int cipherLen = 0;
     // 收集密码资源
-    auto ret = MigrationGetVRootCipher(const_cast<char *>(sessionId_.c_str()), &cipher, &cipherLen);
-    if (ret != 0) {
+    auto ret = MigrationGetVrootCipher(const_cast<char *>(sessionId_.c_str()), &cipher, &cipherLen);
+    if (ret != 0 || cipher == nullptr) {
         VIRTRUST_LOG_ERROR("|OnStartMigrationResponseReceived|END|returnF|domain name: {}|MigrationGetVRootCipher failed.",
                            domainName_);
         OnFail();
         return MigrateSessionRc::ERROR;
     }
+
+    std::string cipherStr(cipher, cipherLen);
+    free(cipher);
+
     // 进入传输阶段
     EnterState(State::Transferring);
-    return SendTransferOnce(cipher);
+    return SendTransferOnce(cipherStr);
 }
 
-MigrateSessionRc MigrationSession::SendTransferOnce(char *cipher)
+MigrateSessionRc MigrationSession::SendTransferOnce(const std::string &cipher)
 {
-    if (cipher == nullptr) {
-        VIRTRUST_LOG_ERROR("|SendTransferOnce|END|returnF||cipher is null.");
-        OnFail();
-        return OnTransferResponseReceived(false);
-    }
-
     // 1.调用libvirt命令进行迁移
     MigrateSessionRc rc = MigrateByLibvirt();
     if (rc != MigrateSessionRc::OK) {
@@ -210,9 +208,7 @@ MigrateSessionRc MigrationSession::SendTransferOnce(char *cipher)
     // 2.传输数据
     protos::VRsourceInfoRequest req;
     req.set_uuid(sessionId_);
-    std::string cipherString(cipher);
-    req.set_data(cipherString);
-    free(cipher);
+    req.set_data(cipher);
     protos::VRsourceInfoReply res;
     int32_t ret = rpcClient_->SendVRsourceData(5, req, &res);
     // 传输数据失败
@@ -332,7 +328,7 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
 
 MigrateSessionRc MigrationSession::VerifyCertificate(std::string uuid, std::string cert, std::string pubkey)
 {
-    int ret = MigrationCheckPeerPk(uuid.data(), cert.data(), cert.size(), pubkey.data(), pubkey.size());
+    int ret = MigrationCheckPeerPk(uuid.data(), cert.data(), pubkey.data());
     return ret == 0 ? MigrateSessionRc::OK : MigrateSessionRc::ERROR;
 }
 
@@ -342,8 +338,8 @@ MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustRepo
     trust_report_new hostReport = ReportFromProto(hostProtoReport);
     trust_report_new vmReport = ReportFromProto(vmProtoReport);
 
-    // 调用TSB API进行报告校验
-    auto ret = VerifyReport(nullptr, sessionId_.data(), &hostReport, &vmReport);
+    // 调用TSB API进行报告校验, 目前不对UUID进行校验
+    auto ret = VerifyTrustReport(sessionId_.data(), sessionId_.data(), &hostReport, &vmReport);
     return ret == 0 ? MigrateSessionRc::OK : MigrateSessionRc::ERROR;
 }
 
@@ -449,7 +445,7 @@ MigrateSessionRc MigrationSession::UndefineVirtDomainBaseUri(const std::string &
 MigrateSessionRc MigrationSession::NotifyVRMigration(bool success)
 {
     auto status = success ? 0 : -1;
-    auto ret = MigrationNotify(const_cast<char *>(sessionId_.c_str()), status);
+    auto ret = MigrationNotity(const_cast<char *>(sessionId_.c_str()), status);
     if (ret != 0) {
         VIRTRUST_LOG_INFO("|NotifyVRMigration|END|returnF|domainName:{}, migration statu: {}|Notify TSB failed.",
                           domainName_, success);
@@ -601,8 +597,8 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
         return MigrateSessionRc::ERROR;
     }
     // 服务端校验客户端发来的虚拟机资源信息
-    auto ret = MigrationImportVRootCipher(const_cast<char *>(request->uuid().c_str()),
-                                          const_cast<char *>(request->data().c_str()), request->data().size());
+    auto ret = MigrationImportVrootCipher(const_cast<char *>(request->uuid().c_str()),
+                                          const_cast<char *>(request->data().c_str()));
     if (ret != 0) {
         EnterState(State::Failed);
         Cleanup();
