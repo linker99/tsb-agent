@@ -45,8 +45,9 @@ MigrationSession *SessionManager::GetSession(const std::string &sessionId)
 {
     std::lock_guard<std::mutex> lock(mtx_);
     auto it = sessions_.find(sessionId);
-    if (it == sessions_.end())
+    if (it == sessions_.end()) {
         return nullptr;
+    }
     return it->second.get();
 }
 
@@ -298,7 +299,7 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
 
     trust_report_new hostReport;
     trust_report_new vmReport;
-    ret = GetReport(nullptr, uuid.data(), &hostReport, &vmReport);
+    ret = GetReport(uuid.data(), uuid.data(), &hostReport, &vmReport);
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|domain name: {}|Get local report failed.", domainName_);
         return MigrateSessionRc::ERROR;
