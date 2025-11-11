@@ -22,7 +22,10 @@ public:
     ~ConnCtx();
     bool SetUri(std::string uri);
 
-    std::string GetUri() const;
+    std::string GetUri() const
+    {
+        return uri_;
+    }
 
     bool CheckOk()
     {
