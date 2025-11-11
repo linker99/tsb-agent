@@ -8,6 +8,7 @@
 #include <memory>
 #include <mutex>
 
+#include "virtrust/api/define_private.h"
 #include "virtrust/base/logger.h"
 #include "virtrust/dllib/libvirt.h"
 #include "virtrust/link/proto/proto_tools.h"
@@ -244,11 +245,18 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool transferRet)
 
     // 所有动作执行完后，判断是否删除本地虚机
     if (flags_ & MIGRATE_UNDEFINE_SOURCE) {
-        // TODO 执行删除本地虚机操作
+        (void)UndefineVirtDomainBaseUri(localUri_);
+        int tsbRet = RemoveVRoot(const_cast<char *>(sessionId_.c_str()));
+        if (tsbRet != 0) {
+            VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF||tsb resource remove "
+                               "failed, maybe not exist tsb resource uuid: "
+                               "{},domainName: {},use virsh to undefine domain.",
+                               sessionId_, domainName_);
+        }
     }
 
     // 向对端发送最终通知，忽略通知结果
-    SendFinishedNotify(true);
+    (void)SendFinishedNotify(true);
     EnterState(State::Finished);
     return MigrateSessionRc::OK;
 }
@@ -401,8 +409,8 @@ void MigrationSession::UndoMigration()
         return;
     }
 
-    // 1.删除对端虚拟机
-    UndefineForPeer();
+    // 1.基于uri删除libvirt虚拟机
+    UndefineVirtDomainBaseUri(destUri_);
 
     // 2.通知TSB迁移失败
     NotifyVRMigration(false);
@@ -411,25 +419,27 @@ void MigrationSession::UndoMigration()
     OnFail();
 }
 
-// 删除对端虚拟机
-MigrateSessionRc MigrationSession::UndefineForPeer()
+// 基于uri删除libvirt虚拟机
+MigrateSessionRc MigrationSession::UndefineVirtDomainBaseUri(const std::string &uri)
 {
     std::unique_ptr<ConnCtx> destConn;
-    auto rc = GetVirConnContext(destUri_, destConn);
+    auto rc = GetVirConnContext(uri, destConn);
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|UndefineForPeer|END|returnF||failed to get virt connect: {}", destUri_);
+        VIRTRUST_LOG_ERROR("|UndefineVirtDomainBaseUri|END|returnF||failed to get virt connect: {}", uri);
         return rc;
     }
 
     auto destDomain = std::make_unique<DomainCtx>(destConn, domainName_);
     if (destDomain->Get() == nullptr) {
-        VIRTRUST_LOG_ERROR("|UndefineForPeer|END|returnF|failed to find destDomain: {}", domainName_);
+        VIRTRUST_LOG_ERROR("|UndefineVirtDomainBaseUri|END|returnF|failed to find destDomain: {},uri : {}", domainName_,
+                           uri);
         return MigrateSessionRc::ERROR;
     }
 
     auto &libvirt = Libvirt::GetInstance();
     if (libvirt.virDomainUndefineFlags(destDomain->Get(), DOMAIN_UNDEFINE_NVRAM) != 0) {
-        VIRTRUST_LOG_INFO("|UndefineForPeer|END|returnF|undefine dest domain: {} failed.", domainName_);
+        VIRTRUST_LOG_INFO("|UndefineVirtDomainBaseUri|END|returnF|undefine dest domain: {} failed, uri: {}",
+                          domainName_, uri);
         return MigrateSessionRc::ERROR;
     }
     return MigrateSessionRc::OK;
@@ -520,6 +530,11 @@ void MigrationSession::OnFail()
 
 MigrateSessionRc MigrationSession::OnMigrateRequestReceived()
 {
+    if (CheckMaxDomainCount() != VirtrustRc::OK) {
+        EnterState(State::Failed);
+        Cleanup();
+        return MigrateSessionRc::ERROR;
+    }
     EnterState(State::WaitingKey);
     return MigrateSessionRc::OK;
 }

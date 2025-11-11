@@ -151,6 +151,13 @@ int MigrationGetVRootCipher(char *vUuid,   // 虚拟机的uuid
                             int *cipherLen // 输出：密文长度
 )
 {
+    static const char a[] = "fakeCipher";
+    size_t len = strlen(a) + 1;
+    *cipher = (char *)malloc(len * sizeof(char));
+    if (*cipher == NULL) {
+        return -1;
+    }
+    strcpy(*cipher, a);
     return 0;
 }
 
