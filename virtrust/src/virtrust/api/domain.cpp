@@ -612,7 +612,10 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
     }
-
+    if (conn == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||conn is nullptr");
+        return VirtrustRc::ERROR;
+    }
     if (CheckMaxDomainCount() != VirtrustRc::OK) {
         return VirtrustRc::ERROR;
     }
@@ -670,6 +673,11 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
     }
+    if (conn == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainDestroy|END|returnF||conn is nullptr");
+        return VirtrustRc::ERROR;
+    }
+
     if (isOnlyTsb) {
         if (domainName.size() != 36) { // UUID长度为36
             VIRTRUST_LOG_ERROR("|DomainDestroy|END|returnF||invalid domain UUID: "
@@ -715,6 +723,10 @@ VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
     if (flags == 0 || (flags & LIST_DOMAINS_MASK) != flags) {
         VIRTRUST_LOG_ERROR("|DomainList|END|returnF||invalid flags, support value "
                            "see DomainListFlags.");
+        return VirtrustRc::ERROR;
+    }
+    if (conn == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainList|END|returnF||conn is nullptr");
         return VirtrustRc::ERROR;
     }
     domainInfos.clear();
@@ -822,7 +834,8 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
 
     auto retClient = client.DomainMigrate(migration_config);
     if (retClient != 0) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|DomainMigrate failed domainName: {}.", domainName);
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|DomainMigrate failed domainName: {}, retClient:{}", domainName,
+                           retClient);
         return VirtrustRc::ERROR;
     }
 
@@ -836,6 +849,10 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
     VIRTRUST_LOG_DEBUG("|DomainStart||START||domainName: {}", domainName);
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
+        return VirtrustRc::ERROR;
+    }
+    if (conn == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainStart|END|returnF||conn is nullptr");
         return VirtrustRc::ERROR;
     }
     // 如果带--only-tsb仅更新tsb资源
@@ -883,6 +900,10 @@ VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::strin
     VIRTRUST_LOG_DEBUG("|DomainUndefine||START||domainName: {}", domainName);
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
+        return VirtrustRc::ERROR;
+    }
+    if (conn == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainUndefine|END|returnF||conn is nullptr");
         return VirtrustRc::ERROR;
     }
     if (isOnlyTsb) {

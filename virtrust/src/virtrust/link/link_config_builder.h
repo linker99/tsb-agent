@@ -27,7 +27,6 @@ public:
     VIRTRUST_LINK_BUILDER_ADD(const std::string &, certPath)
     VIRTRUST_LINK_BUILDER_ADD(const std::string &, skPath)
     VIRTRUST_LINK_BUILDER_ADD(const std::string &, ip)
-    VIRTRUST_LINK_BUILDER_ADD(const std::string &, ipMask)
     VIRTRUST_LINK_BUILDER_ADD(uint16_t, port)
 
 #undef VIRTRUST_LINK_BUILDER_ADD
