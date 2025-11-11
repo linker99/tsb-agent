@@ -53,7 +53,8 @@ target_include_directories(virtrust_proto PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
 # Shared lib
 
-add_library(virtrust-shared SHARED $<TARGET_OBJECTS:virtrust-obj>)
+add_library(virtrust-shared SHARED $<TARGET_OBJECTS:virtrust-obj>
+                                   $<TARGET_OBJECTS:virtrust_proto>)
 
 target_include_directories(
   virtrust-shared
