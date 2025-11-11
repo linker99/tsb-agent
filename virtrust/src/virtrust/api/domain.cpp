@@ -753,7 +753,7 @@ VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
             default:
                 VIRTRUST_LOG_ERROR("Unsupported LigLevel: {}", static_cast<int>(it.second.first));
         }
-        if (printErrToCli && !rc && it.second.first != LogLevel::ERROR) {
+        if (printErrToCli && !rc && it.second.first == LogLevel::ERROR) {
             fmt::print(stderr, "\n{}\n", msg);
         }
         domainInfos.erase(it.first);
