@@ -67,10 +67,13 @@ virtrust 是一个为 openEuler 24.03 LTS SP3 平台设计的可信安全启动�
 sudo dnf install gcc g++ cmake make
 
 # 开发库
-sudo dnf install grpc-devel protobuf-devel libboundscheck-devel
+sudo dnf install grpc grpc-devel grpc-plugins protobuf-devel protobuf-compiler
+sudo dnf install libboundscheck-devel
+
+# 运行时依赖
+sudo dnf install libxml2-devel libguestfs-devel openssl-devel libvirt-devel
 
 # 其他依赖（项目会自动下载）
-# - OpenSSL（加密）
 # - spdlog（日志）
 # - gtest（测试框架）
 # - rapidjson（JSON解析）
