@@ -62,7 +62,7 @@ TEST_F(MigrationServiceImplTest, PrepareMigrationNewSession)
     
     // Should succeed
     EXPECT_TRUE(status.ok());
-    EXPECT_EQ(response.result(), 0);
+    EXPECT_EQ(response.result(), 0u);
     
     // Session should be created
     MigrationSession* session = SessionManager::GetInstance().GetSession(testUuid_);
@@ -85,7 +85,7 @@ TEST_F(MigrationServiceImplTest, PrepareMigrationDuplicateSession)
     // Call PrepareMigration first time
     grpc::Status status1 = service_->PrepareMigration(nullptr, &request1, &response1);
     EXPECT_TRUE(status1.ok());
-    EXPECT_EQ(response1.result(), 0);
+    EXPECT_EQ(response1.result(), 0u);
     
     // Create second request with same UUID
     protos::PrepareMigRequest request2;
@@ -100,7 +100,7 @@ TEST_F(MigrationServiceImplTest, PrepareMigrationDuplicateSession)
     // Call PrepareMigration second time (should fail due to duplicate)
     grpc::Status status2 = service_->PrepareMigration(nullptr, &request2, &response2);
     EXPECT_TRUE(status2.ok());
-    EXPECT_EQ(response2.result(), 1);
+    EXPECT_EQ(response2.result(), 1u);
 }
 
 TEST_F(MigrationServiceImplTest, PrepareMigrationWithEmptyUuid)
@@ -154,7 +154,7 @@ TEST_F(MigrationServiceImplTest, ExchangePkAndReportWithValidSession)
     
     grpc::Status prepareStatus = service_->PrepareMigration(nullptr, &prepareRequest, &prepareResponse);
     EXPECT_TRUE(prepareStatus.ok());
-    EXPECT_EQ(prepareResponse.result(), 0);
+    EXPECT_EQ(prepareResponse.result(), 0u);
     
     // Now test ExchangePkAndReport
     protos::EXchangePkAndReportRequest request;
@@ -163,9 +163,9 @@ TEST_F(MigrationServiceImplTest, ExchangePkAndReportWithValidSession)
     request.set_uuid(testUuid_);
     request.set_domainname(testDomainName_);
     request.set_cert("test-certificate-pem");
-    request.set_pubkey("test-public-key");
-    request.set_hostreport("test-host-report-data");
-    request.set_vmreport("test-vm-report-data");
+    request.set_publickey("test-public-key");
+    // Note: hostReport and vmReport are TrustReportNew messages, not strings
+    // For test purposes, we'll leave them unset
     
     grpc::Status status = service_->ExchangePkAndReport(nullptr, &request, &response);
     
@@ -181,15 +181,15 @@ TEST_F(MigrationServiceImplTest, ExchangePkAndReportWithoutSession)
     request.set_uuid("non-existent-uuid");
     request.set_domainname(testDomainName_);
     request.set_cert("test-certificate-pem");
-    request.set_pubkey("test-public-key");
-    request.set_hostreport("test-host-report-data");
-    request.set_vmreport("test-vm-report-data");
+    request.set_publickey("test-public-key");
+    // Note: hostReport and vmReport are TrustReportNew messages, not strings
+    // For test purposes, we'll leave them unset
     
     grpc::Status status = service_->ExchangePkAndReport(nullptr, &request, &response);
     
     // Should return error since session doesn't exist
     EXPECT_TRUE(status.ok());
-    EXPECT_EQ(response.result(), 1);
+    EXPECT_EQ(response.result(), 1u);
 }
 
 TEST_F(MigrationServiceImplTest, StartMigrationWithValidSession)
@@ -206,7 +206,7 @@ TEST_F(MigrationServiceImplTest, StartMigrationWithValidSession)
     
     grpc::Status prepareStatus = service_->PrepareMigration(nullptr, &prepareRequest, &prepareResponse);
     EXPECT_TRUE(prepareStatus.ok());
-    EXPECT_EQ(prepareResponse.result(), 0);
+    EXPECT_EQ(prepareResponse.result(), 0u);
     
     // Now test StartMigration
     protos::StartMigRequest request;
@@ -233,7 +233,7 @@ TEST_F(MigrationServiceImplTest, StartMigrationWithoutSession)
     
     // Should return error since session doesn't exist
     EXPECT_TRUE(status.ok());
-    EXPECT_EQ(response.result(), 1);
+    EXPECT_EQ(response.result(), 1u);
 }
 
 TEST_F(MigrationServiceImplTest, SendVRsourceDataWithValidSession)
@@ -250,15 +250,14 @@ TEST_F(MigrationServiceImplTest, SendVRsourceDataWithValidSession)
     
     grpc::Status prepareStatus = service_->PrepareMigration(nullptr, &prepareRequest, &prepareResponse);
     EXPECT_TRUE(prepareStatus.ok());
-    EXPECT_EQ(prepareResponse.result(), 0);
+    EXPECT_EQ(prepareResponse.result(), 0u);
     
     // Now test SendVRsourceData
     protos::VRsourceInfoRequest request;
     protos::VRsourceInfoReply response;
     
     request.set_uuid(testUuid_);
-    request.set_domainname(testDomainName_);
-    request.set_vrdata("test-virtual-resource-data");
+    request.set_data("test-virtual-resource-data");
     
     grpc::Status status = service_->SendVRsourceData(nullptr, &request, &response);
     
@@ -272,14 +271,13 @@ TEST_F(MigrationServiceImplTest, SendVRsourceDataWithoutSession)
     protos::VRsourceInfoReply response;
     
     request.set_uuid("non-existent-uuid");
-    request.set_domainname(testDomainName_);
-    request.set_vrdata("test-virtual-resource-data");
+    request.set_data("test-virtual-resource-data");
     
     grpc::Status status = service_->SendVRsourceData(nullptr, &request, &response);
     
     // Should return error since session doesn't exist
     EXPECT_TRUE(status.ok());
-    EXPECT_EQ(response.result(), 1);
+    EXPECT_EQ(response.result(), 1u);
 }
 
 TEST_F(MigrationServiceImplTest, NotifyVRMigrateResultWithValidSession)
@@ -296,7 +294,7 @@ TEST_F(MigrationServiceImplTest, NotifyVRMigrateResultWithValidSession)
     
     grpc::Status prepareStatus = service_->PrepareMigration(nullptr, &prepareRequest, &prepareResponse);
     EXPECT_TRUE(prepareStatus.ok());
-    EXPECT_EQ(prepareResponse.result(), 0);
+    EXPECT_EQ(prepareResponse.result(), 0u);
     
     // Now test NotifyVRMigrateResult
     protos::MigrateResultRequest request;
@@ -304,8 +302,7 @@ TEST_F(MigrationServiceImplTest, NotifyVRMigrateResultWithValidSession)
     
     request.set_uuid(testUuid_);
     request.set_domainname(testDomainName_);
-    request.set_success(true);
-    request.set_message("Migration completed successfully");
+    request.set_result(1); // 1 for success
     
     grpc::Status status = service_->NotifyVRMigrateResult(nullptr, &request, &response);
     
@@ -320,14 +317,13 @@ TEST_F(MigrationServiceImplTest, NotifyVRMigrateResultWithoutSession)
     
     request.set_uuid("non-existent-uuid");
     request.set_domainname(testDomainName_);
-    request.set_success(false);
-    request.set_message("Migration failed");
+    request.set_result(0); // 0 for failure
     
     grpc::Status status = service_->NotifyVRMigrateResult(nullptr, &request, &response);
     
     // Should return error since session doesn't exist
     EXPECT_TRUE(status.ok());
-    EXPECT_EQ(response.result(), 1);
+    EXPECT_EQ(response.result(), 1u);
 }
 
 TEST_F(MigrationServiceImplTest, DomainMigrateBasic)
@@ -376,7 +372,7 @@ TEST_F(MigrationServiceImplTest, MultipleSessions)
         
         grpc::Status status = service_->PrepareMigration(nullptr, &request, &response);
         EXPECT_TRUE(status.ok());
-        EXPECT_EQ(response.result(), 0);
+        EXPECT_EQ(response.result(), 0u);
         
         // Verify session exists
         MigrationSession* session = SessionManager::GetInstance().GetSession(uuid);
@@ -407,7 +403,7 @@ TEST_F(MigrationServiceImplTest, SessionLifecycle)
     
     grpc::Status prepareStatus = service_->PrepareMigration(nullptr, &prepareRequest, &prepareResponse);
     EXPECT_TRUE(prepareStatus.ok());
-    EXPECT_EQ(prepareResponse.result(), 0);
+    EXPECT_EQ(prepareResponse.result(), 0u);
     
     // 2. ExchangePkAndReport
     protos::EXchangePkAndReportRequest exchangeRequest;
@@ -416,9 +412,9 @@ TEST_F(MigrationServiceImplTest, SessionLifecycle)
     exchangeRequest.set_uuid(sessionId);
     exchangeRequest.set_domainname(testDomainName_);
     exchangeRequest.set_cert("test-cert");
-    exchangeRequest.set_pubkey("test-key");
-    exchangeRequest.set_hostreport("test-host-report");
-    exchangeRequest.set_vmreport("test-vm-report");
+    exchangeRequest.set_publickey("test-key");
+    // Note: hostReport and vmReport are TrustReportNew messages, not strings
+    // For test purposes, we'll leave them unset
     
     grpc::Status exchangeStatus = service_->ExchangePkAndReport(nullptr, &exchangeRequest, &exchangeResponse);
     EXPECT_TRUE(exchangeStatus.ok());
@@ -439,8 +435,7 @@ TEST_F(MigrationServiceImplTest, SessionLifecycle)
     
     notifyRequest.set_uuid(sessionId);
     notifyRequest.set_domainname(testDomainName_);
-    notifyRequest.set_success(true);
-    notifyRequest.set_message("Test completed");
+    notifyRequest.set_result(1); // 1 for success
     
     grpc::Status notifyStatus = service_->NotifyVRMigrateResult(nullptr, &notifyRequest, &notifyResponse);
     EXPECT_TRUE(notifyStatus.ok());

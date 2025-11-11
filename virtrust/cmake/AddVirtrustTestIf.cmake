@@ -6,8 +6,11 @@ macro(add_virtrust_test_if NAME)
     target_link_libraries(${NAME} PRIVATE virtrust-shared Deps::gtest)
     add_test(NAME ${NAME} COMMAND ${NAME})
     target_include_directories(
-      ${NAME} PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
-                      ${CMAKE_DEPS_INCLUDEDIR})
+      ${NAME}
+      PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>
+              ${CMAKE_BINARY_DIR}/src/virtrust # for protobuf
+              ${CMAKE_BINARY_DIR}/src # for protobuf
+              ${CMAKE_DEPS_INCLUDEDIR})
     set_tests_properties(
       ${NAME}
       PROPERTIES

@@ -5,6 +5,7 @@
 #include <string>
 #include <thread>
 #include <chrono>
+#include <fstream>
 
 #include "gtest/gtest.h"
 
@@ -135,6 +136,7 @@ TEST_F(GrpcServerTest, StartWithInvalidPort)
     
     // Starting with invalid port should handle gracefully
     LinkRc startResult = server.Start();
+    (void)startResult; // Suppress unused variable warning
     
     // Give it a moment to attempt starting
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -156,6 +158,7 @@ TEST_F(GrpcServerTest, StartWithPrivilegedPort)
     
     // Starting with privileged port might fail due to permissions
     LinkRc startResult = server.Start();
+    (void)startResult; // Suppress unused variable warning
     
     // Give it a moment to attempt starting
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -175,6 +178,7 @@ TEST_F(GrpcServerTest, StartWithInvalidUdsPath)
     
     // Starting with invalid UDS path should handle gracefully
     LinkRc startResult = server.Start();
+    (void)startResult; // Suppress unused variable warning
     
     // Give it a moment to attempt starting
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -195,6 +199,7 @@ TEST_F(GrpcServerTest, StartWithLongUdsPath)
     
     // Starting with very long UDS path should handle gracefully
     LinkRc startResult = server.Start();
+    (void)startResult; // Suppress unused variable warning
     
     // Give it a moment to attempt starting
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -212,6 +217,7 @@ TEST_F(GrpcServerTest, ServerLifecycleWithRapidStartStop)
     // Test rapid start/stop cycles
     for (int i = 0; i < 5; i++) {
         LinkRc startResult = server.Start();
+        (void)startResult; // Suppress unused variable warning
         
         // Very short start time
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
@@ -237,6 +243,7 @@ TEST_F(GrpcServerTest, ServerHandlesExistingUdsFile)
     
     // Server should handle existing file at UDS path gracefully
     LinkRc startResult = server.Start();
+    (void)startResult; // Suppress unused variable warning
     
     // Give it a moment to start
     std::this_thread::sleep_for(std::chrono::milliseconds(200));

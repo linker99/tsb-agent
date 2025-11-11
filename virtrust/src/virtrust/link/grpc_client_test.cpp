@@ -127,9 +127,9 @@ TEST_F(GrpcClientTest, RpcClientExchangePkAndReport)
     request.set_domainname("test-domain");
     request.set_uuid("test-uuid");
     request.set_cert("test-certificate");
-    request.set_pubkey("test-public-key");
-    request.set_hostreport("test-host-report");
-    request.set_vmreport("test-vm-report");
+    request.set_publickey("test-public-key");
+    // Note: hostReport and vmReport are TrustReportNew messages, not strings
+    // For test purposes, we'll leave them unset
     
     // This will fail because there's no server running, but we can test the request construction
     // and error handling
@@ -166,9 +166,8 @@ TEST_F(GrpcClientTest, RpcClientSendVRsourceData)
     protos::VRsourceInfoReply response;
     
     // Set up a basic request
-    request.set_domainname("test-domain");
     request.set_uuid("test-uuid");
-    request.set_vrdata("test-vr-data");
+    request.set_data("test-vr-data");
     
     // This will fail because there's no server running, but we can test the request construction
     // and error handling
@@ -188,8 +187,7 @@ TEST_F(GrpcClientTest, RpcClientNotifyVRMigrateResult)
     // Set up a basic request
     request.set_domainname("test-domain");
     request.set_uuid("test-uuid");
-    request.set_success(true);
-    request.set_message("Migration completed successfully");
+    request.set_result(1); // 1 for success
     
     // This will fail because there's no server running, but we can test the request construction
     // and error handling

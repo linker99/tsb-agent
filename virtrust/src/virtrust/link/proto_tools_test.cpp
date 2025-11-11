@@ -6,9 +6,10 @@
 #include <string>
 
 #include "gtest/gtest.h"
-
 #include "tsb_agent/tsb_agent.h"
+
 #include "virtrust/link/proto/proto_tools.h"
+
 #include "virtrust/link/proto/migrate.pb.h"
 
 namespace virtrust {
@@ -19,7 +20,7 @@ protected:
     {
         // Initialize a test trust report
         memset(&testReport_, 0, sizeof(testReport_));
-        
+
         // Set basic fields
         testReport_.content.be_host_report_time = 1234567890L;
         testReport_.content.be_host_startup_time = 1234567880L;
@@ -66,15 +67,15 @@ protected:
         testReport_.content.global_control_policy.be_process_dmeasure_interval = 60;
 
         // Set byte arrays with test data
-        const char* hostId = "test_host_id_12345";
-        const char* tpcmId = "test_tpcm_id_67890";
-        const char* logHash = "test_log_hash_abcdef1234567890";
-        const char* biosPcr = "test_bios_pcr_1234567890abcdef";
-        const char* bootLoaderPcr = "test_boot_loader_pcr_1234567890abcdef";
-        const char* kernelPcr = "test_kernel_pcr_1234567890abcdef";
-        const char* tsbPcr = "test_tsb_pcr_1234567890abcdef";
-        const char* bootPcr = "test_boot_pcr_1234567890abcdef";
-        const char* appendData = "test_append_data_for_trust_report_12345";
+        const char *hostId = "test_host_id_12345";
+        const char *tpcmId = "test_tpcm_id_67890";
+        const char *logHash = "test_log_hash_abcdef1234567890";
+        const char *biosPcr = "test_bios_pcr_1234567890abcdef";
+        const char *bootLoaderPcr = "test_boot_loader_pcr_1234567890abcdef";
+        const char *kernelPcr = "test_kernel_pcr_1234567890abcdef";
+        const char *tsbPcr = "test_tsb_pcr_1234567890abcdef";
+        const char *bootPcr = "test_boot_pcr_1234567890abcdef";
+        const char *appendData = "test_append_data_for_trust_report_12345";
 
         size_t hostIdLen = std::min(strlen(hostId), static_cast<size_t>(MAX_HOST_ID_SIZE));
         size_t tpcmIdLen = std::min(strlen(tpcmId), static_cast<size_t>(MAX_TPCM_ID_SIZE));
@@ -125,7 +126,7 @@ TEST_F(ProtoToolsTest, ReportToProtoGlobalControlPolicy)
     protos::TrustReportNew protoReport;
     ReportToProto(testReport_, &protoReport);
 
-    const auto& policy = protoReport.content().global_control_policy();
+    const auto &policy = protoReport.content().global_control_policy();
     EXPECT_EQ(policy.be_size(), testReport_.content.global_control_policy.be_size);
     EXPECT_EQ(policy.be_boot_measure_on(), testReport_.content.global_control_policy.be_boot_measure_on);
     EXPECT_EQ(policy.be_program_measure_on(), testReport_.content.global_control_policy.be_program_measure_on);
@@ -138,15 +139,24 @@ TEST_F(ProtoToolsTest, ReportToProtoGlobalControlPolicy)
     EXPECT_EQ(policy.be_program_measure_mode(), testReport_.content.global_control_policy.be_program_measure_mode);
     EXPECT_EQ(policy.be_program_use_cache(), testReport_.content.global_control_policy.be_program_use_cache);
     EXPECT_EQ(policy.be_dmeasure_use_cache(), testReport_.content.global_control_policy.be_dmeasure_use_cache);
-    EXPECT_EQ(policy.be_dmeasure_max_busy_delay(), testReport_.content.global_control_policy.be_dmeasure_max_busy_delay);
-    EXPECT_EQ(policy.be_process_dmeasure_ref_mode(), testReport_.content.global_control_policy.be_process_dmeasure_ref_mode);
-    EXPECT_EQ(policy.be_process_dmeasure_match_mode(), testReport_.content.global_control_policy.be_process_dmeasure_match_mode);
-    EXPECT_EQ(policy.be_process_measure_match_mode(), testReport_.content.global_control_policy.be_process_measure_match_mode);
-    EXPECT_EQ(policy.be_process_dmeasure_lib_mode(), testReport_.content.global_control_policy.be_process_dmeasure_lib_mode);
-    EXPECT_EQ(policy.be_process_verify_lib_mode(), testReport_.content.global_control_policy.be_process_verify_lib_mode);
-    EXPECT_EQ(policy.be_process_dmeasure_sub_process_mode(), testReport_.content.global_control_policy.be_process_dmeasure_sub_process_mode);
-    EXPECT_EQ(policy.be_process_dmeasure_old_process_mode(), testReport_.content.global_control_policy.be_process_dmeasure_old_process_mode);
-    EXPECT_EQ(policy.be_process_dmeasure_interval(), testReport_.content.global_control_policy.be_process_dmeasure_interval);
+    EXPECT_EQ(policy.be_dmeasure_max_busy_delay(),
+              testReport_.content.global_control_policy.be_dmeasure_max_busy_delay);
+    EXPECT_EQ(policy.be_process_dmeasure_ref_mode(),
+              testReport_.content.global_control_policy.be_process_dmeasure_ref_mode);
+    EXPECT_EQ(policy.be_process_dmeasure_match_mode(),
+              testReport_.content.global_control_policy.be_process_dmeasure_match_mode);
+    EXPECT_EQ(policy.be_process_measure_match_mode(),
+              testReport_.content.global_control_policy.be_process_measure_match_mode);
+    EXPECT_EQ(policy.be_process_dmeasure_lib_mode(),
+              testReport_.content.global_control_policy.be_process_dmeasure_lib_mode);
+    EXPECT_EQ(policy.be_process_verify_lib_mode(),
+              testReport_.content.global_control_policy.be_process_verify_lib_mode);
+    EXPECT_EQ(policy.be_process_dmeasure_sub_process_mode(),
+              testReport_.content.global_control_policy.be_process_dmeasure_sub_process_mode);
+    EXPECT_EQ(policy.be_process_dmeasure_old_process_mode(),
+              testReport_.content.global_control_policy.be_process_dmeasure_old_process_mode);
+    EXPECT_EQ(policy.be_process_dmeasure_interval(),
+              testReport_.content.global_control_policy.be_process_dmeasure_interval);
 }
 
 TEST_F(ProtoToolsTest, ReportToProtoByteArrays)
@@ -155,15 +165,34 @@ TEST_F(ProtoToolsTest, ReportToProtoByteArrays)
     ReportToProto(testReport_, &protoReport);
 
     // Verify byte arrays
-    EXPECT_EQ(protoReport.content().host_id(), std::string(testReport_.content.host_id, strnlen(testReport_.content.host_id, MAX_HOST_ID_SIZE)));
-    EXPECT_EQ(protoReport.content().tpcm_id(), std::string(testReport_.content.tpcm_id, strnlen(testReport_.content.tpcm_id, MAX_TPCM_ID_SIZE)));
-    EXPECT_EQ(protoReport.content().log_hash(), std::string(testReport_.content.log_hash, strnlen(testReport_.content.log_hash, DEFAULT_HASH_SIZE)));
-    EXPECT_EQ(protoReport.content().bios_pcr(), std::string(testReport_.content.bios_pcr, strnlen(testReport_.content.bios_pcr, DEFAULT_PCR_SIZE)));
-    EXPECT_EQ(protoReport.content().boot_loader_pcr(), std::string(testReport_.content.boot_loader_pcr, strnlen(testReport_.content.boot_loader_pcr, DEFAULT_PCR_SIZE)));
-    EXPECT_EQ(protoReport.content().kernel_pcr(), std::string(testReport_.content.kernel_pcr, strnlen(testReport_.content.kernel_pcr, DEFAULT_PCR_SIZE)));
-    EXPECT_EQ(protoReport.content().tsb_pcr(), std::string(testReport_.content.tsb_pcr, strnlen(testReport_.content.tsb_pcr, DEFAULT_PCR_SIZE)));
-    EXPECT_EQ(protoReport.content().boot_pcr(), std::string(testReport_.content.boot_pcr, strnlen(testReport_.content.boot_pcr, DEFAULT_PCR_SIZE)));
-    EXPECT_EQ(protoReport.append_data(), std::string(testReport_.append_data, strnlen(testReport_.append_data, MAX_TRUST_REPORT_APPENDDATA)));
+    EXPECT_EQ(protoReport.content().host_id(),
+              std::string(reinterpret_cast<const char *>(testReport_.content.host_id),
+                          strnlen(reinterpret_cast<const char *>(testReport_.content.host_id), MAX_HOST_ID_SIZE)));
+    EXPECT_EQ(protoReport.content().tpcm_id(),
+              std::string(reinterpret_cast<const char *>(testReport_.content.tpcm_id),
+                          strnlen(reinterpret_cast<const char *>(testReport_.content.tpcm_id), MAX_TPCM_ID_SIZE)));
+    EXPECT_EQ(protoReport.content().log_hash(),
+              std::string(reinterpret_cast<const char *>(testReport_.content.log_hash),
+                          strnlen(reinterpret_cast<const char *>(testReport_.content.log_hash), DEFAULT_HASH_SIZE)));
+    EXPECT_EQ(protoReport.content().bios_pcr(),
+              std::string(reinterpret_cast<const char *>(testReport_.content.bios_pcr),
+                          strnlen(reinterpret_cast<const char *>(testReport_.content.bios_pcr), DEFAULT_PCR_SIZE)));
+    EXPECT_EQ(
+        protoReport.content().boot_loader_pcr(),
+        std::string(reinterpret_cast<const char *>(testReport_.content.boot_loader_pcr),
+                    strnlen(reinterpret_cast<const char *>(testReport_.content.boot_loader_pcr), DEFAULT_PCR_SIZE)));
+    EXPECT_EQ(protoReport.content().kernel_pcr(),
+              std::string(reinterpret_cast<const char *>(testReport_.content.kernel_pcr),
+                          strnlen(reinterpret_cast<const char *>(testReport_.content.kernel_pcr), DEFAULT_PCR_SIZE)));
+    EXPECT_EQ(protoReport.content().tsb_pcr(),
+              std::string(reinterpret_cast<const char *>(testReport_.content.tsb_pcr),
+                          strnlen(reinterpret_cast<const char *>(testReport_.content.tsb_pcr), DEFAULT_PCR_SIZE)));
+    EXPECT_EQ(protoReport.content().boot_pcr(),
+              std::string(reinterpret_cast<const char *>(testReport_.content.boot_pcr),
+                          strnlen(reinterpret_cast<const char *>(testReport_.content.boot_pcr), DEFAULT_PCR_SIZE)));
+    EXPECT_EQ(protoReport.append_data(), std::string(reinterpret_cast<const char *>(testReport_.append_data),
+                                                     strnlen(reinterpret_cast<const char *>(testReport_.append_data),
+                                                             MAX_TRUST_REPORT_APPENDDATA)));
 }
 
 TEST_F(ProtoToolsTest, ReportFromProtoBasicFields)
@@ -195,7 +224,7 @@ TEST_F(ProtoToolsTest, ReportFromProtoGlobalControlPolicy)
 
     trust_report_new convertedReport = ReportFromProto(protoReport);
 
-    const auto& policy = protoReport.content().global_control_policy();
+    const auto &policy = protoReport.content().global_control_policy();
     EXPECT_EQ(convertedReport.content.global_control_policy.be_size, policy.be_size());
     EXPECT_EQ(convertedReport.content.global_control_policy.be_boot_measure_on, policy.be_boot_measure_on());
     EXPECT_EQ(convertedReport.content.global_control_policy.be_program_measure_on, policy.be_program_measure_on());
@@ -208,15 +237,24 @@ TEST_F(ProtoToolsTest, ReportFromProtoGlobalControlPolicy)
     EXPECT_EQ(convertedReport.content.global_control_policy.be_program_measure_mode, policy.be_program_measure_mode());
     EXPECT_EQ(convertedReport.content.global_control_policy.be_program_use_cache, policy.be_program_use_cache());
     EXPECT_EQ(convertedReport.content.global_control_policy.be_dmeasure_use_cache, policy.be_dmeasure_use_cache());
-    EXPECT_EQ(convertedReport.content.global_control_policy.be_dmeasure_max_busy_delay, policy.be_dmeasure_max_busy_delay());
-    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_ref_mode, policy.be_process_dmeasure_ref_mode());
-    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_match_mode, policy.be_process_dmeasure_match_mode());
-    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_measure_match_mode, policy.be_process_measure_match_mode());
-    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_lib_mode, policy.be_process_dmeasure_lib_mode());
-    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_verify_lib_mode, policy.be_process_verify_lib_mode());
-    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_sub_process_mode, policy.be_process_dmeasure_sub_process_mode());
-    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_old_process_mode, policy.be_process_dmeasure_old_process_mode());
-    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_interval, policy.be_process_dmeasure_interval());
+    EXPECT_EQ(convertedReport.content.global_control_policy.be_dmeasure_max_busy_delay,
+              policy.be_dmeasure_max_busy_delay());
+    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_ref_mode,
+              policy.be_process_dmeasure_ref_mode());
+    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_match_mode,
+              policy.be_process_dmeasure_match_mode());
+    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_measure_match_mode,
+              policy.be_process_measure_match_mode());
+    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_lib_mode,
+              policy.be_process_dmeasure_lib_mode());
+    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_verify_lib_mode,
+              policy.be_process_verify_lib_mode());
+    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_sub_process_mode,
+              policy.be_process_dmeasure_sub_process_mode());
+    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_old_process_mode,
+              policy.be_process_dmeasure_old_process_mode());
+    EXPECT_EQ(convertedReport.content.global_control_policy.be_process_dmeasure_interval,
+              policy.be_process_dmeasure_interval());
 }
 
 TEST_F(ProtoToolsTest, ReportFromProtoByteArrays)
@@ -231,7 +269,8 @@ TEST_F(ProtoToolsTest, ReportFromProtoByteArrays)
     EXPECT_EQ(memcmp(convertedReport.content.tpcm_id, testReport_.content.tpcm_id, MAX_TPCM_ID_SIZE), 0);
     EXPECT_EQ(memcmp(convertedReport.content.log_hash, testReport_.content.log_hash, DEFAULT_HASH_SIZE), 0);
     EXPECT_EQ(memcmp(convertedReport.content.bios_pcr, testReport_.content.bios_pcr, DEFAULT_PCR_SIZE), 0);
-    EXPECT_EQ(memcmp(convertedReport.content.boot_loader_pcr, testReport_.content.boot_loader_pcr, DEFAULT_PCR_SIZE), 0);
+    EXPECT_EQ(memcmp(convertedReport.content.boot_loader_pcr, testReport_.content.boot_loader_pcr, DEFAULT_PCR_SIZE),
+              0);
     EXPECT_EQ(memcmp(convertedReport.content.kernel_pcr, testReport_.content.kernel_pcr, DEFAULT_PCR_SIZE), 0);
     EXPECT_EQ(memcmp(convertedReport.content.tsb_pcr, testReport_.content.tsb_pcr, DEFAULT_PCR_SIZE), 0);
     EXPECT_EQ(memcmp(convertedReport.content.boot_pcr, testReport_.content.boot_pcr, DEFAULT_PCR_SIZE), 0);
@@ -276,16 +315,16 @@ TEST_F(ProtoToolsTest, EmptyReportConversion)
     trust_report_new convertedReport = ReportFromProto(protoReport);
 
     // Verify all fields are zero
-    EXPECT_EQ(convertedReport.content.be_host_report_time, 0);
-    EXPECT_EQ(convertedReport.content.be_host_startup_time, 0);
-    EXPECT_EQ(convertedReport.content.be_eval, 0);
-    EXPECT_EQ(convertedReport.content.be_host_ip, 0);
-    EXPECT_EQ(convertedReport.content.be_boot_measure_result, 0);
-    EXPECT_EQ(convertedReport.content.be_boot_times, 0);
-    EXPECT_EQ(convertedReport.content.be_tpcm_time, 0);
-    EXPECT_EQ(convertedReport.content.be_tpcm_report_time, 0);
-    EXPECT_EQ(convertedReport.content.be_log_number, 0);
-    EXPECT_EQ(convertedReport.content.be_nonce, 0);
+    EXPECT_EQ(convertedReport.content.be_host_report_time, 0u);
+    EXPECT_EQ(convertedReport.content.be_host_startup_time, 0u);
+    EXPECT_EQ(convertedReport.content.be_eval, 0u);
+    EXPECT_EQ(convertedReport.content.be_host_ip, 0u);
+    EXPECT_EQ(convertedReport.content.be_boot_measure_result, 0u);
+    EXPECT_EQ(convertedReport.content.be_boot_times, 0u);
+    EXPECT_EQ(convertedReport.content.be_tpcm_time, 0u);
+    EXPECT_EQ(convertedReport.content.be_tpcm_report_time, 0u);
+    EXPECT_EQ(convertedReport.content.be_log_number, 0u);
+    EXPECT_EQ(convertedReport.content.be_nonce, 0u);
 
     // Verify byte arrays are empty
     for (int i = 0; i < MAX_HOST_ID_SIZE; i++) {

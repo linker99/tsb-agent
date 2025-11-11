@@ -315,7 +315,7 @@ TEST_F(AsyncTimerTest, CallbackComplexOperations)
     // Wait for callback to complete
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     
-    EXPECT_EQ(results.size(), 10);
+    EXPECT_EQ(results.size(), 10u);
     EXPECT_EQ(results[0], 0);
     EXPECT_EQ(results[9], 81);
 }

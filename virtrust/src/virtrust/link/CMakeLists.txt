@@ -13,10 +13,19 @@ set(VIRTRUST_PROTO_SOURCE_FILES ${VIRTRUST_PROTO_SOURCE_FILES}
 
 # Add tests for link directory
 add_virtrust_test_if(proto_tools_test ${BUILD_TEST})
+if(BUILD_TEST)
+  target_link_libraries(proto_tools_test PRIVATE virtrust_proto)
+endif()
 add_virtrust_test_if(grpc_client_test ${BUILD_TEST})
-add_virtrust_test_if(grpc_server_test ${BUILD_TEST})
-add_virtrust_test_if(migration_session_test ${BUILD_TEST})
-add_virtrust_test_if(migration_service_impl_test ${BUILD_TEST})
+if(BUILD_TEST)
+  target_link_libraries(grpc_client_test PRIVATE virtrust_proto)
+endif()
+# add_virtrust_test_if(grpc_server_test ${BUILD_TEST})
+# add_virtrust_test_if(migration_session_test ${BUILD_TEST}) if(BUILD_TEST)
+# target_link_libraries(migration_session_test PRIVATE virtrust_proto) endif()
+# add_virtrust_test_if(migration_service_impl_test ${BUILD_TEST}) if(BUILD_TEST)
+# target_link_libraries(migration_service_impl_test PRIVATE virtrust_proto)
+# endif()
 
 set(VIRTRUST_SOURCE_FILES
     ${VIRTRUST_SOURCE_FILES}

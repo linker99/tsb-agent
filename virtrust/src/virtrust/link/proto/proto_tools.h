@@ -12,8 +12,13 @@ static void ReportToProto(const trust_report_new &report, protos::TrustReportNew
     auto *content = protoReport->mutable_content();
     content->set_be_host_report_time(report.content.be_host_report_time);
     content->set_be_host_startup_time(report.content.be_host_startup_time);
-    content->set_host_id(report.content.host_id, MAX_HOST_ID_SIZE);
-    content->set_tpcm_id(report.content.tpcm_id, MAX_TPCM_ID_SIZE);
+
+    // Convert byte arrays to strings, only copying actual data length (ignoring null padding)
+    size_t host_id_len = strnlen(reinterpret_cast<const char *>(report.content.host_id), MAX_HOST_ID_SIZE);
+    content->set_host_id(reinterpret_cast<const char *>(report.content.host_id), host_id_len);
+
+    size_t tpcm_id_len = strnlen(reinterpret_cast<const char *>(report.content.tpcm_id), MAX_TPCM_ID_SIZE);
+    content->set_tpcm_id(reinterpret_cast<const char *>(report.content.tpcm_id), tpcm_id_len);
 
     // 转换 global_control_policy
     auto *policy = content->mutable_global_control_policy();
@@ -59,16 +64,31 @@ static void ReportToProto(const trust_report_new &report, protos::TrustReportNew
     content->set_be_tpcm_time(report.content.be_tpcm_time);
     content->set_be_tpcm_report_time(report.content.be_tpcm_report_time);
     content->set_be_log_number(report.content.be_log_number);
-    content->set_log_hash(report.content.log_hash, DEFAULT_HASH_SIZE);
-    content->set_bios_pcr(report.content.bios_pcr, DEFAULT_PCR_SIZE);
-    content->set_boot_loader_pcr(report.content.boot_loader_pcr, DEFAULT_PCR_SIZE);
-    content->set_kernel_pcr(report.content.kernel_pcr, DEFAULT_PCR_SIZE);
-    content->set_tsb_pcr(report.content.tsb_pcr, DEFAULT_PCR_SIZE);
-    content->set_boot_pcr(report.content.boot_pcr, DEFAULT_PCR_SIZE);
+
+    // Convert PCR and hash byte arrays, only copying actual data length
+    size_t log_hash_len = strnlen(reinterpret_cast<const char *>(report.content.log_hash), DEFAULT_HASH_SIZE);
+    content->set_log_hash(reinterpret_cast<const char *>(report.content.log_hash), log_hash_len);
+
+    size_t bios_pcr_len = strnlen(reinterpret_cast<const char *>(report.content.bios_pcr), DEFAULT_PCR_SIZE);
+    content->set_bios_pcr(reinterpret_cast<const char *>(report.content.bios_pcr), bios_pcr_len);
+
+    size_t boot_loader_pcr_len = strnlen(reinterpret_cast<const char*>(report.content.boot_loader_pcr), DEFAULT_PCR_SIZE);
+    content->set_boot_loader_pcr(reinterpret_cast<const char*>(report.content.boot_loader_pcr), boot_loader_pcr_len);
+
+    size_t kernel_pcr_len = strnlen(reinterpret_cast<const char*>(report.content.kernel_pcr), DEFAULT_PCR_SIZE);
+    content->set_kernel_pcr(reinterpret_cast<const char*>(report.content.kernel_pcr), kernel_pcr_len);
+
+    size_t tsb_pcr_len = strnlen(reinterpret_cast<const char*>(report.content.tsb_pcr), DEFAULT_PCR_SIZE);
+    content->set_tsb_pcr(reinterpret_cast<const char*>(report.content.tsb_pcr), tsb_pcr_len);
+
+    size_t boot_pcr_len = strnlen(reinterpret_cast<const char*>(report.content.boot_pcr), DEFAULT_PCR_SIZE);
+    content->set_boot_pcr(reinterpret_cast<const char*>(report.content.boot_pcr), boot_pcr_len);
+
     content->set_be_nonce(report.content.be_nonce);
 
     // 转换 append_data
-    protoReport->set_append_data(report.append_data, MAX_TRUST_REPORT_APPENDDATA);
+    size_t append_data_len = strnlen(reinterpret_cast<const char*>(report.append_data), MAX_TRUST_REPORT_APPENDDATA);
+    protoReport->set_append_data(reinterpret_cast<const char*>(report.append_data), append_data_len);
 }
 
 static trust_report_new ReportFromProto(const protos::TrustReportNew &protoReport)
