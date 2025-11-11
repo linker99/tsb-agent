@@ -169,9 +169,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
     add_custom_target(
       coverage
       COMMAND
-        ${LCOV_PATH} --capture --directory . --exclue "build/*" --exclude
+        ${LCOV_PATH} --capture --directory . --exclude "build/*" --exclude
         "external/*" --exclude "/usr/*" --output-file coverage.info
-        --ignore-errors mismatch,inconsistent
+        --ignore-errors mismatch,inconsistent,unused
       COMMAND ${GENHTML_PATH} coverage.info --output-directory
               ${CMAKE_BINARY_DIR}/coverage_report --ignore-errors inconsistent
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
