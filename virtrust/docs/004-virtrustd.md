@@ -289,10 +289,17 @@ sudo chmod 600 server-key.pem
 sudo mv ca-cert.pem server-cert.pem server-key.pem /etc/virtrust/certs/
 ```
 
+4. **libvirt证书**：
+```bash
+参考 https://libvirt.org/kbase/tlscerts.html
+```
+
 ### 防火墙配置
 
 ```bash
 # 开放 gRPC 服务端口
 sudo firewall-cmd --permanent --add-port=5031/tcp
+# 开放 libvirt tls方式端口
+sudo firewall-cmd --permanent --add-port=16514/tcp
 sudo firewall-cmd --reload
 ```

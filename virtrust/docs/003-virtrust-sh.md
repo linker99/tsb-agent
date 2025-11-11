@@ -133,12 +133,13 @@ virtrust-sh undefine test-vm
 
 **基本语法**：
 ```bash
-virtrust-sh migrate <domain_name> <dest_uri> [flags]
+virtrust-sh migrate [option] <domain_name> <dest_uri> 
 ```
 
 **参数说明**：
 - `domain_name`：要迁移的虚拟机名称
 - `dest_uri`：目标主机 URI，格式为 `<protocol>://<host>:<port>/<path>`
+- `option`：-h 帮助信息，--undefinesource 删除源端虚拟机
 
 **示例**：
 ```bash
