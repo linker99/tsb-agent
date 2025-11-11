@@ -11,54 +11,11 @@ virtrust 是一个为 openEuler 24.03 LTS SP3 平台设计的可信安全启动�
 - **安全迁移**：支持虚拟机在不同主机间的安全迁移，具备证书验证和完整性检查
 - **开发工具**：提供命令行工具 virtrust-sh和守护进程 libvirtrustd，方便用户操作和系统集成
 
-## 项目结构
-
-### 核心库模块 (`src/virtrust/`)
-
-#### API 接口层 (`api/`)
-- `domain.cpp/h` - 虚拟机生命周期管理 API
-- `context.cpp/h` - 连接上下文管理
-- `defines.h` - API 定义和错误码
-
-#### 基础组件 (`base/`)
-- `custom_logger.cpp/h` - 高性能日志系统
-- `exception.cpp/h` - 异常处理框架
-- `str_utils.cpp/h` - 字符串工具
-- `log_adapt.cpp/h` - 日志适配层
-
-#### 密码学实现 (`crypto/`)
-- `sm3.cpp/h` - 国密 SM3 哈希算法实现
-
-#### 动态库抽象 (`dllib/`)
-- 对 libvirt、libguestfs、libxml2、OpenSSL 的统一封装
-
-#### 工具组件 (`utils/`)
-- `file_io.cpp/h` - 文件 I/O 操作
-- `virt_xml_parser.cpp/h` - XML 配置解析
-- `migrate_helper.cpp/h` - 虚拟机迁移辅助
-- `foreign_mounter.cpp/h` - 外部文件系统挂载
-
-#### 网络通信 (`link/`)
-- `grpc_client.cpp/h` - gRPC 客户端
-- `grpc_server.cpp/h` - gRPC 服务器
-- `migration_service_impl.cpp/h` - 迁移服务实现
-
-### 命令行工具 (`src/virtrust-sh/`)
-- `main.cpp` - CLI 入口点
-- `operator/` - 命令操作器（创建、启动、销毁、列出、迁移等）
-
-### 守护进程 (`src/libvirtrustd/`)
-- 主守护进程实现和工具函数
-
-### TSB 代理 (`src/tsb_agent/`)
-- TSB 代理接口定义和模拟实现
-
 ## 环境要求
 
-### 支持的系统
+### 支持的操作系统
 - openEuler 24.03 SP1
 - openEuler 24.03 SP2
-- openEuler 24.03 SP3
 
 ### 编译依赖
 
@@ -130,38 +87,6 @@ ctest --output-on-failure
 make coverage
 ```
 
-### 运行单个测试
-
-```bash
-cd build/bin
-
-# 域管理测试
-./domain_test
-
-# 日志系统测试
-./custom_logger_test
-
-# SM3 算法测试
-./sm3_test
-
-# 其他模块测试
-./str_utils_test
-./exception_test
-# ... 等等
-```
-
-### 测试覆盖范围
-
-项目采用测试文件与源码文件同目录的结构，覆盖所有核心模块：
-
-- **API 测试**：域管理、上下文操作
-- **基础组件测试**：日志、异常、字符串工具
-- **密码学测试**：SM3 算法正确性验证
-- **动态库测试**：各依赖库集成测试
-- **工具测试**：文件操作、XML 解析、迁移辅助
-- **命令行测试**：各操作命令功能验证
-- **TSB 代理测试**：代理接口和适配器测试
-
 ## 产出物
 
 ### 库文件
@@ -224,10 +149,3 @@ cd build/bin
 - **Debug 构建**：包含调试信息，支持 gdb
 - **Asan 构建**：启用地址消毒，检测内存错误
 - **Coverage 构建**：生成代码覆盖率报告
-
-## 安全注意事项
-
-- 生产构建**必须**设置 `USE_MOCK_TSB_AGENT=Off`
-- TSB 代理接口使用 malloc/free，注意内存管理
-- 所有密码学操作都经过安全验证
-- 完整的边界检查确保内存安全

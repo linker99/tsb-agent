@@ -53,7 +53,8 @@ grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context
     // 已存在session，说明正在迁移
     if (mgr.GetSession(uuid) != nullptr) {
         VIRTRUST_LOG_ERROR(
-            "|PrepareMigration|END|returnF|domain name: {}|Session already exists, this VM is already migrating", domainName);
+            "|PrepareMigration|END|returnF|domain name: {}|Session already exists, this VM is already migrating",
+            domainName);
         response->set_result(1);
         return grpc::Status::OK;
     }

@@ -4,6 +4,7 @@
 
 #include <string>
 #include <string_view>
+
 #include "virtrust/api/defines.h"
 
 namespace virtrust {
