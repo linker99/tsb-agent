@@ -95,7 +95,7 @@ private:
 
     MigrateSessionRc SendStartMigration();
 
-    MigrateSessionRc SendTransferOnce(char *cipher);
+    MigrateSessionRc SendTransferOnce(const std::string &cipher);
 
     MigrateSessionRc SendFinishedNotify(bool success);
 
