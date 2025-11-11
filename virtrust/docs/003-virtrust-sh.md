@@ -333,8 +333,3 @@ virsh list --all
 - **默认日志文件名**：`virtrust.log`
 - **最大命令字符串长度**：1024 字符
 
-## 相关文档
-
-- [Virtrust API 文档](002-virtrust-api.md)
-- [Virtrustd 守护进程文档](004-virtrustd.md)
-- [项目简介](001-introduction.md)

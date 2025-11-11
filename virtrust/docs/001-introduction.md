@@ -9,14 +9,7 @@ virtrust 是一个为 openEuler 24.03 LTS SP3 平台设计的可信安全启动�
 - **可信虚拟机管理**：提供虚拟机完整的生命周期管理，包括创建、启动、停止、销毁和迁移操作
 - **可信计算支持**：基于国密 SM3 算法的信任链验证，支持 vTPCM（虚拟化可信计算模块）管理
 - **安全迁移**：支持虚拟机在不同主机间的安全迁移，具备证书验证和完整性检查
-- **开发工具**：提供命令行工具和守护进程，方便用户操作和系统集成
-
-### 技术架构
-
-- **安全架构**：完整信任链验证（BIOS → bootloader → kernel → TSB）
-- **密码学支持**：国密 SM3 哈希算法实现
-- **网络通信**：基于 gRPC 的高性能通信框架
-- **模块化设计**：清晰的分层架构，便于扩展和维护
+- **开发工具**：提供命令行工具 virtrust-sh和守护进程 libvirtrustd，方便用户操作和系统集成
 
 ## 项目结构
 
@@ -74,10 +67,13 @@ virtrust 是一个为 openEuler 24.03 LTS SP3 平台设计的可信安全启动�
 sudo dnf install gcc g++ cmake make
 
 # 开发库
-sudo dnf install grpc-devel protobuf-devel libboundscheck-devel
+sudo dnf install grpc grpc-devel grpc-plugins protobuf-devel protobuf-compiler
+sudo dnf install libboundscheck-devel
+
+# 运行时依赖
+sudo dnf install libxml2-devel libguestfs-devel openssl-devel libvirt-devel
 
 # 其他依赖（项目会自动下载）
-# - OpenSSL（加密）
 # - spdlog（日志）
 # - gtest（测试框架）
 # - rapidjson（JSON解析）
@@ -235,7 +231,3 @@ cd build/bin
 - TSB 代理接口使用 malloc/free，注意内存管理
 - 所有密码学操作都经过安全验证
 - 完整的边界检查确保内存安全
-
-## 许可证
-
-版权所有 © 2021-2021 华为技术有限公司 版权所有
