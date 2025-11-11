@@ -33,6 +33,7 @@ if(NOT BUILD_TEST AND CMAKE_BUILD_TYPE STREQUAL "Fuzz")
       "CMAKE_BUILD_TYPE is Fuzz but BUILD_TEST has been set to Off, turn on BUILD_TEST automatically."
   )
   set(BUILD_TEST On)
+  message(FATAL "Fuzz is not currently supported!")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
