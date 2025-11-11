@@ -41,7 +41,7 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
  * @return VirtrustRc
  */
 VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName,
-                         const std::string &destUri, unsigned int flags);
+                         const std::string &destUri, unsigned int flags = 0);
 
 /**
  * 启动虚拟机
