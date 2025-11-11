@@ -10,7 +10,7 @@
 #include <vector>
 
 #include "tsb_agent/tsb_agent.h"
-
+#include "libvirtrustd/defines.h"
 #include "virtrust/base/logger.h"
 #include "virtrust/link/defines.h"
 #include "virtrust/link/grpc_client.h"
@@ -44,6 +44,7 @@ grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context
                                                     const protos::PrepareMigRequest *request,
                                                     protos::PrepareMigReply *response)
 {
+    VIRTRUST_LOG_DEBUG("|PrepareMigration|START||start handle rpc request");
     auto &uuid = request->uuid();
     auto &mgr = SessionManager::GetInstance();
 
@@ -72,6 +73,7 @@ grpc::Status MigrationServiceImpl::ExchangePkAndReport(grpc::ServerContext *cont
                                                        const protos::EXchangePkAndReportRequest *request,
                                                        protos::EXchangePkAndReportReply *response)
 {
+    VIRTRUST_LOG_DEBUG("|ExchangePkAndReport|START||start handle rpc request");
     auto &uuid = request->uuid();
     MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
     if (session == nullptr) {
@@ -94,6 +96,7 @@ grpc::Status MigrationServiceImpl::ExchangePkAndReport(grpc::ServerContext *cont
 grpc::Status MigrationServiceImpl::StartMigration(grpc::ServerContext *context, const protos::StartMigRequest *request,
                                                   protos::StartMigReply *response)
 {
+    VIRTRUST_LOG_DEBUG("|StartMigration|START||start handle rpc request");
     auto &uuid = request->uuid();
     MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
     if (session == nullptr) {
@@ -117,6 +120,7 @@ grpc::Status MigrationServiceImpl::SendVRsourceData(grpc::ServerContext *context
                                                     const protos::VRsourceInfoRequest *request,
                                                     protos::VRsourceInfoReply *response)
 {
+    VIRTRUST_LOG_DEBUG("|SendVRsourceData|START||start handle rpc request");
     if (request == nullptr) {
         VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|SendVRsourceData request is nullptr.");
         response->set_result(1);
@@ -145,6 +149,7 @@ grpc::Status MigrationServiceImpl::NotifyVRMigrateResult(grpc::ServerContext *co
                                                          const protos::MigrateResultRequest *request,
                                                          protos::MigrateResultReply *response)
 {
+    VIRTRUST_LOG_DEBUG("|NotifyVRMigrateResult|START||start handle rpc request");
     if (request == nullptr) {
         VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|NotifyVRMigrateResult request is nullptr.");
         response->set_result(1);
@@ -171,7 +176,7 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
                                                  const protos::DomainMigraterRequest *request,
                                                  protos::DomainMigraterReply *response)
 {
-    VIRTRUST_LOG_DEBUG("|MigrationServiceImpl DomainMigrate|START||");
+    VIRTRUST_LOG_DEBUG("|DomainMigrate|START||start handle uds request");
     std::string destIp = ExtractSingleIP(request->desturi());
     if (destIp.empty()) {
         VIRTRUST_LOG_ERROR("|MigrationServiceImpl DomainMigrate|END|returnF|invalid ip, destUri is: {}",
@@ -181,7 +186,7 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
     }
     LinkConfig config;
     config.ip = destIp;
-    config.port = 5030;
+    config.port = LIBVIRTRUSTD_SERVER_PORT;
     RpcClient client(config);
 
     auto &mgr = SessionManager::GetInstance();
@@ -202,7 +207,7 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
     }
 
     response->set_result(0);
-    VIRTRUST_LOG_DEBUG("|MigrationServiceImpl DomainMigrate|END|returnS|");
+    VIRTRUST_LOG_DEBUG("|DomainMigrate|END|returnS|");
     return grpc::Status::OK;
 }
 

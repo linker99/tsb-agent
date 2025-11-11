@@ -27,6 +27,22 @@ struct LinkConfig {
     std::string udsPath;
 };
 
+class ConfigMgr {
+public:
+    static ConfigMgr& Instance() {
+        static ConfigMgr instance;
+        return instance;
+    }
+    void SetLinkConfig(const LinkConfig &config) {
+        linkConfig_ = config;
+    }
+    LinkConfig GetLinkConfig() {
+        return linkConfig_;
+    }
+private:
+    LinkConfig linkConfig_;
+};
+
 struct MigrationConfig {
     std::string domainName;
     std::string uuid;

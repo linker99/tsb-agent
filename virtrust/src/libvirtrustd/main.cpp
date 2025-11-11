@@ -13,6 +13,7 @@
 #include "spdlog/fmt/bundled/core.h"
 
 #include "virtrust/base/logger.h"
+#include "virtrust/link/defines.h"
 #include "virtrust/link/grpc_server.h"
 
 namespace virtrust {
@@ -98,6 +99,7 @@ int ProcessArgs(int argc, char **argv)
 
     auto ret = MakeLinkConfigFromJsonFile(configPath);
     if (ret.has_value()) {
+        ConfigMgr::Instance().SetLinkConfig(ret.value());
         GrpcServer sever(ret.value());
         fmt::print("start link config. Exiting...{}, {}\n", ret.value().udsPath, ret.value().caPath);
         LinkRc linkRc = sever.Start();
