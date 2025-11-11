@@ -187,7 +187,7 @@ int MigrationImportVrootCipher(char *vUuid,  // 虚拟机的uuid
                                char *cipher  // 加密后的密码资源
 );
 
-int MigrationNotity(char *vUuid, // 虚拟机的uuid
+int MigrationNotify(char *vUuid, // 虚拟机的uuid
                     int status);
 
 #ifdef __cplusplus

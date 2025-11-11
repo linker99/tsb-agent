@@ -166,7 +166,7 @@ int MigrationImportVrootCipher(char *vUuid,  // 虚拟机的uuid
     return 0;
 }
 
-int MigrationNotity(char *vUuid, // 虚拟机的uuid
+int MigrationNotify(char *vUuid, // 虚拟机的uuid
                     int status)
 {
     return 0;

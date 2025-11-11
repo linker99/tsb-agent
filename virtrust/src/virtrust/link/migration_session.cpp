@@ -446,7 +446,7 @@ MigrateSessionRc MigrationSession::UndefineVirtDomainBaseUri(const std::string &
 MigrateSessionRc MigrationSession::NotifyVRMigration(bool success)
 {
     auto status = success ? 0 : -1;
-    auto ret = MigrationNotity(const_cast<char *>(sessionId_.c_str()), status);
+    auto ret = MigrationNotify(const_cast<char *>(sessionId_.c_str()), status);
     if (ret != 0) {
         VIRTRUST_LOG_INFO("|NotifyVRMigration|END|returnF|domainName:{}, migration statu: {}|Notify TSB failed.",
                           domainName_, success);
