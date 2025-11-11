@@ -7,8 +7,8 @@
 #include <memory>
 #include <string>
 
-#include "virtrust/base/log_adapt.h"
 #include "virtrust/api/defines.h"
+#include "virtrust/base/log_adapt.h"
 
 // Define log levels since they're not exposed in headers
 #define LOG_TRACE 0
@@ -28,7 +28,7 @@ protected:
         // Clean up any existing logger before each test
         LogAdapt::UnInitialize();
     }
-    
+
     void TearDown() override
     {
         // Clean up after each test
@@ -47,7 +47,7 @@ TEST_F(LogAdaptTest, ValidateParamsValidStdout)
 TEST_F(LogAdaptTest, ValidateParamsValidFile)
 {
     std::string testPath = "/tmp/test.log";
-    VirtrustRc rc = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 5*1024*1024, 10);
+    VirtrustRc rc = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 5 * 1024 * 1024, 10);
     EXPECT_EQ(rc, VirtrustRc::OK);
 }
 
@@ -62,7 +62,7 @@ TEST_F(LogAdaptTest, ValidateParamsInvalidLogType)
 // Test ValidateParams with null path for FILE type
 TEST_F(LogAdaptTest, ValidateParamsNullPathFile)
 {
-    VirtrustRc rc = LogAdapt::ValidateParams(FILE_TYPE, nullptr, 5*1024*1024, 10);
+    VirtrustRc rc = LogAdapt::ValidateParams(FILE_TYPE, nullptr, 5 * 1024 * 1024, 10);
     EXPECT_EQ(rc, VirtrustRc::ERROR);
     EXPECT_FALSE(LogAdapt::gLastErrorMessage.empty());
 }
@@ -80,7 +80,7 @@ TEST_F(LogAdaptTest, ValidateParamsRotationSizeTooSmall)
 TEST_F(LogAdaptTest, ValidateParamsRotationSizeTooLarge)
 {
     std::string testPath = "/tmp/test.log";
-    VirtrustRc rc = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 600*1024*1024, 10); // 600MB, too large
+    VirtrustRc rc = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 600 * 1024 * 1024, 10); // 600MB, too large
     EXPECT_EQ(rc, VirtrustRc::ERROR);
     EXPECT_FALSE(LogAdapt::gLastErrorMessage.empty());
 }
@@ -89,7 +89,7 @@ TEST_F(LogAdaptTest, ValidateParamsRotationSizeTooLarge)
 TEST_F(LogAdaptTest, ValidateParamsRotationCountTooSmall)
 {
     std::string testPath = "/tmp/test.log";
-    VirtrustRc rc = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 5*1024*1024, 0);
+    VirtrustRc rc = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 5 * 1024 * 1024, 0);
     EXPECT_EQ(rc, VirtrustRc::ERROR);
     EXPECT_FALSE(LogAdapt::gLastErrorMessage.empty());
 }
@@ -98,7 +98,7 @@ TEST_F(LogAdaptTest, ValidateParamsRotationCountTooSmall)
 TEST_F(LogAdaptTest, ValidateParamsRotationCountTooLarge)
 {
     std::string testPath = "/tmp/test.log";
-    VirtrustRc rc = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 5*1024*1024, 100);
+    VirtrustRc rc = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 5 * 1024 * 1024, 100);
     EXPECT_EQ(rc, VirtrustRc::ERROR);
     EXPECT_FALSE(LogAdapt::gLastErrorMessage.empty());
 }
@@ -117,8 +117,8 @@ TEST_F(LogAdaptTest, CreateInstanceValidFile)
 {
     std::string testPath = "/tmp/test.log";
     int logType = FILE_TYPE;
-    
-    VirtrustRc rc = LogAdapt::CreateInstance(logType, LOG_DEBUG, testPath.c_str(), 5*1024*1024, 10);
+
+    VirtrustRc rc = LogAdapt::CreateInstance(logType, LOG_DEBUG, testPath.c_str(), 5 * 1024 * 1024, 10);
     EXPECT_EQ(rc, VirtrustRc::OK);
     EXPECT_EQ(logType, FILE_TYPE);
 }
@@ -136,8 +136,8 @@ TEST_F(LogAdaptTest, CreateInstanceRelativePath)
 {
     std::string testPath = "relative/path/test.log"; // Relative path
     int logType = FILE_TYPE;
-    
-    VirtrustRc rc = LogAdapt::CreateInstance(logType, LOG_INFO, testPath.c_str(), 5*1024*1024, 10);
+
+    VirtrustRc rc = LogAdapt::CreateInstance(logType, LOG_INFO, testPath.c_str(), 5 * 1024 * 1024, 10);
     EXPECT_EQ(rc, VirtrustRc::ERROR);
 }
 
@@ -146,8 +146,8 @@ TEST_F(LogAdaptTest, CreateInstanceNonExistentDirectory)
 {
     std::string testPath = "/non/existent/path/test.log";
     int logType = FILE_TYPE;
-    
-    VirtrustRc rc = LogAdapt::CreateInstance(logType, LOG_INFO, testPath.c_str(), 5*1024*1024, 10);
+
+    VirtrustRc rc = LogAdapt::CreateInstance(logType, LOG_INFO, testPath.c_str(), 5 * 1024 * 1024, 10);
     EXPECT_EQ(rc, VirtrustRc::ERROR);
 }
 
@@ -155,13 +155,13 @@ TEST_F(LogAdaptTest, CreateInstanceNonExistentDirectory)
 TEST_F(LogAdaptTest, LogAdaptConstructor)
 {
     std::string testPath = "/tmp/test.log";
-    LogAdapt logAdapt(FILE_TYPE, testPath, 5*1024*1024, 10);
-    
+    LogAdapt logAdapt(FILE_TYPE, testPath, 5 * 1024 * 1024, 10);
+
     // Test setting log level
     logAdapt.SetLogLevel(LOG_ERROR);
     EXPECT_FALSE(logAdapt.IsLogLevelEnabled(LOG_DEBUG));
     EXPECT_TRUE(logAdapt.IsLogLevelEnabled(LOG_ERROR));
-    
+
     // Test invalid log level setting
     logAdapt.SetLogLevel(-1); // Should not crash
 }
@@ -171,9 +171,9 @@ TEST_F(LogAdaptTest, SetTmpLoggerIndirect)
 {
     std::string testPath = "/tmp/tmp_test.log";
     int logType = FILE_TYPE;
-    
+
     // This will call SetTmpLogger internally
-    VirtrustRc rc = LogAdapt::CreateInstance(logType, LOG_INFO, testPath.c_str(), 5*1024*1024, 10);
+    VirtrustRc rc = LogAdapt::CreateInstance(logType, LOG_INFO, testPath.c_str(), 5 * 1024 * 1024, 10);
     EXPECT_EQ(rc, VirtrustRc::OK);
 }
 
@@ -192,7 +192,7 @@ TEST_F(LogAdaptTest, Flush)
     int logType = STDOUT_TYPE;
     VirtrustRc rc = LogAdapt::CreateInstance(logType, LOG_INFO, nullptr, 0, 0);
     EXPECT_EQ(rc, VirtrustRc::OK);
-    
+
     // Test flush - should not crash
     EXPECT_NO_THROW(LogAdapt::Flush());
 }
@@ -201,8 +201,8 @@ TEST_F(LogAdaptTest, Flush)
 TEST_F(LogAdaptTest, LogMethod)
 {
     std::string testPath = "/tmp/log_test.log";
-    LogAdapt logAdapt(FILE_TYPE, testPath, 5*1024*1024, 10);
-    
+    LogAdapt logAdapt(FILE_TYPE, testPath, 5 * 1024 * 1024, 10);
+
     // Initialize the logger
     VirtrustRc rc = logAdapt.Initialize();
     // Note: This might fail in test environment, but we can test the method call
@@ -210,7 +210,7 @@ TEST_F(LogAdaptTest, LogMethod)
         // Test logging at different levels
         rc = logAdapt.Log(LOG_INFO, "TEST", "Test message");
         EXPECT_EQ(rc, VirtrustRc::OK);
-        
+
         rc = logAdapt.Log(LOG_ERROR, "ERROR", "Error message");
         EXPECT_EQ(rc, VirtrustRc::OK);
     }
@@ -220,11 +220,11 @@ TEST_F(LogAdaptTest, LogMethod)
 TEST_F(LogAdaptTest, CreateInstanceDuplicate)
 {
     int logType = STDOUT_TYPE;
-    
+
     // First call
     VirtrustRc rc1 = LogAdapt::CreateInstance(logType, LOG_INFO, nullptr, 0, 0);
     EXPECT_EQ(rc1, VirtrustRc::OK);
-    
+
     // Second call with same instance
     VirtrustRc rc2 = LogAdapt::CreateInstance(logType, LOG_ERROR, nullptr, 0, 0);
     EXPECT_EQ(rc2, VirtrustRc::OK);
@@ -235,21 +235,13 @@ TEST_F(LogAdaptTest, CreateInstanceDifferentLevels)
 {
     std::string testPath = "/tmp/level_test.log";
     int logType = FILE_TYPE;
-    
+
     // Test with different log levels
-    std::vector<int> logLevels = {
-        LOG_TRACE,
-        LOG_DEBUG,
-        LOG_INFO,
-        LOG_WARN,
-        LOG_ERROR,
-        LOG_CRITICAL,
-        LOG_OFF
-    };
-    
+    std::vector<int> logLevels = {LOG_TRACE, LOG_DEBUG, LOG_INFO, LOG_WARN, LOG_ERROR, LOG_CRITICAL, LOG_OFF};
+
     for (int level : logLevels) {
         LogAdapt::UnInitialize(); // Clean up before each attempt
-        VirtrustRc rc = LogAdapt::CreateInstance(logType, level, testPath.c_str(), 5*1024*1024, 10);
+        VirtrustRc rc = LogAdapt::CreateInstance(logType, level, testPath.c_str(), 5 * 1024 * 1024, 10);
         EXPECT_EQ(rc, VirtrustRc::OK);
     }
 }
@@ -258,13 +250,13 @@ TEST_F(LogAdaptTest, CreateInstanceDifferentLevels)
 TEST_F(LogAdaptTest, ValidateParamsRotationSizeEdgeCases)
 {
     std::string testPath = "/tmp/test.log";
-    
+
     // Test minimum valid size (1MB)
-    VirtrustRc rc1 = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 1*1024*1024, 10);
+    VirtrustRc rc1 = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 1 * 1024 * 1024, 10);
     EXPECT_EQ(rc1, VirtrustRc::OK);
-    
+
     // Test maximum valid size (500MB)
-    VirtrustRc rc2 = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 500*1024*1024, 10);
+    VirtrustRc rc2 = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 500 * 1024 * 1024, 10);
     EXPECT_EQ(rc2, VirtrustRc::OK);
 }
 
@@ -272,13 +264,13 @@ TEST_F(LogAdaptTest, ValidateParamsRotationSizeEdgeCases)
 TEST_F(LogAdaptTest, ValidateParamsRotationCountEdgeCases)
 {
     std::string testPath = "/tmp/test.log";
-    
+
     // Test minimum valid count (1)
-    VirtrustRc rc1 = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 5*1024*1024, 1);
+    VirtrustRc rc1 = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 5 * 1024 * 1024, 1);
     EXPECT_EQ(rc1, VirtrustRc::OK);
-    
+
     // Test maximum valid count (64)
-    VirtrustRc rc2 = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 5*1024*1024, 64);
+    VirtrustRc rc2 = LogAdapt::ValidateParams(FILE_TYPE, testPath.c_str(), 5 * 1024 * 1024, 64);
     EXPECT_EQ(rc2, VirtrustRc::OK);
 }
 
