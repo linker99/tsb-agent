@@ -29,16 +29,20 @@ struct LinkConfig {
 
 class ConfigMgr {
 public:
-    static ConfigMgr& Instance() {
+    static ConfigMgr &Instance()
+    {
         static ConfigMgr instance;
         return instance;
     }
-    void SetLinkConfig(const LinkConfig &config) {
+    void SetLinkConfig(const LinkConfig &config)
+    {
         linkConfig_ = config;
     }
-    LinkConfig GetLinkConfig() {
+    LinkConfig GetLinkConfig()
+    {
         return linkConfig_;
     }
+
 private:
     LinkConfig linkConfig_;
 };

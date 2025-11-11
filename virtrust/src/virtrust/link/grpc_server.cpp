@@ -3,6 +3,7 @@
  */
 
 #include "virtrust/link/grpc_server.h"
+
 #include "virtrust/base/logger.h"
 #include "virtrust/base/str_utils.h"
 #include "virtrust/link/defines.h"
@@ -59,7 +60,7 @@ void GrpcServer::RunServer()
 {
     try {
         MigrationServiceImpl service;
-        std::string serverAddress = config_.ip + ":"+ std::to_string(config_.port);
+        std::string serverAddress = config_.ip + ":" + std::to_string(config_.port);
         grpc::EnableDefaultHealthCheckService(true);
         grpc::reflection::InitProtoReflectionServerBuilderPlugin();
 

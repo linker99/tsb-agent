@@ -810,7 +810,8 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
 
     auto retClient = client.DomainMigrate(migration_config);
     if (retClient != 0) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|DomainMigrate failed domainName: {}, retClient:{}", domainName, retClient);
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|DomainMigrate failed domainName: {}, retClient:{}", domainName,
+                           retClient);
         return VirtrustRc::ERROR;
     }
 

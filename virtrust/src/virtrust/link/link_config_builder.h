@@ -31,7 +31,6 @@ public:
 
 #undef VIRTRUST_LINK_BUILDER_ADD
 
-
     LinkConfig Build()
     {
         return config_;

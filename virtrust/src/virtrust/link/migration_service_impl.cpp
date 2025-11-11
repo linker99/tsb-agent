@@ -9,8 +9,9 @@
 #include <thread>
 #include <vector>
 
-#include "tsb_agent/tsb_agent.h"
 #include "libvirtrustd/defines.h"
+#include "tsb_agent/tsb_agent.h"
+
 #include "virtrust/base/logger.h"
 #include "virtrust/link/defines.h"
 #include "virtrust/link/grpc_client.h"

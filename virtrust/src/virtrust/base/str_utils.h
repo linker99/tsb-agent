@@ -4,11 +4,11 @@
 
 #pragma once
 
+#include <fstream>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <memory>
-#include <fstream>
 
 namespace virtrust {
 
@@ -139,7 +139,6 @@ inline bool startsWithIgnoreSpaces(const std::string &str, const std::string_vie
 inline std::string ReadFile(const std::string &filename)
 {
     std::ifstream file(filename);
-    return std::string((std::istreambuf_iterator<char>(file)),
-                       std::istreambuf_iterator<char>());
+    return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 }
 } // namespace virtrust
