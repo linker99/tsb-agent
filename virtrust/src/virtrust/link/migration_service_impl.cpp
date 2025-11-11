@@ -47,12 +47,13 @@ grpc::Status MigrationServiceImpl::PrepareMigration(grpc::ServerContext *context
 {
     VIRTRUST_LOG_DEBUG("|PrepareMigration|START||start handle rpc request");
     auto &uuid = request->uuid();
+    auto &domainName = request->domainname();
     auto &mgr = SessionManager::GetInstance();
 
     // 已存在session，说明正在迁移
     if (mgr.GetSession(uuid) != nullptr) {
         VIRTRUST_LOG_ERROR(
-            "|PrepareMigration|END|returnF|uuid: {}|Session already exists, this VM is already migrating");
+            "|PrepareMigration|END|returnF|domain name: {}|Session already exists, this VM is already migrating", domainName);
         response->set_result(1);
         return grpc::Status::OK;
     }
@@ -76,9 +77,10 @@ grpc::Status MigrationServiceImpl::ExchangePkAndReport(grpc::ServerContext *cont
 {
     VIRTRUST_LOG_DEBUG("|ExchangePkAndReport|START||start handle rpc request");
     auto &uuid = request->uuid();
+    auto &domainName = request->domainname();
     MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
     if (session == nullptr) {
-        VIRTRUST_LOG_ERROR("|ExchangePkAndReport|END|returnF|uuid: {}|Can't find session.");
+        VIRTRUST_LOG_ERROR("|ExchangePkAndReport|END|returnF|domain name: {}|Can't find session.", domainName);
         response->set_result(1);
         return grpc::Status::OK;
     }
@@ -99,9 +101,10 @@ grpc::Status MigrationServiceImpl::StartMigration(grpc::ServerContext *context, 
 {
     VIRTRUST_LOG_DEBUG("|StartMigration|START||start handle rpc request");
     auto &uuid = request->uuid();
+    auto &domainName = request->domainname();
     MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
     if (session == nullptr) {
-        VIRTRUST_LOG_ERROR("|StartMigration|END|returnF|uuid: {}|Can't find session.");
+        VIRTRUST_LOG_ERROR("|StartMigration|END|returnF|domain name: {}|Can't find session.", domainName);
         response->set_result(1);
         return grpc::Status::OK;
     }
@@ -123,14 +126,14 @@ grpc::Status MigrationServiceImpl::SendVRsourceData(grpc::ServerContext *context
 {
     VIRTRUST_LOG_DEBUG("|SendVRsourceData|START||start handle rpc request");
     if (request == nullptr) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|SendVRsourceData request is nullptr.");
+        VIRTRUST_LOG_ERROR("|SendVRsourceData|END|returnF||request is nullptr.");
         response->set_result(1);
         return grpc::Status::OK;
     }
     auto &uuid = request->uuid();
     MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
     if (session == nullptr) {
-        VIRTRUST_LOG_ERROR("|StartMigration|END|returnF|SendVRsourceData uuid: {}|Can't find session.");
+        VIRTRUST_LOG_ERROR("|SendVRsourceData|END|returnF|uuid: {}|Can't find session.", uuid);
         response->set_result(1);
         return grpc::Status::OK;
     }
@@ -159,7 +162,7 @@ grpc::Status MigrationServiceImpl::NotifyVRMigrateResult(grpc::ServerContext *co
     auto &uuid = request->uuid();
     MigrationSession *session = SessionManager::GetInstance().GetSession(uuid);
     if (session == nullptr) {
-        VIRTRUST_LOG_ERROR("|StartMigration|END|returnF|NotifyVRMigrateResult uuid: {}|Can't find session.");
+        VIRTRUST_LOG_ERROR("|StartMigration|END|returnF|NotifyVRMigrateResult uuid: {}|Can't find session.", uuid);
         response->set_result(1);
         return grpc::Status::OK;
     }

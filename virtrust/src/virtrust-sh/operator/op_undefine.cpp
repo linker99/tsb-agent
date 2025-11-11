@@ -113,7 +113,7 @@ void OpUndefine::PrintUsage()
                "    undefine - undefine a domain\n"
                "\n"
                "  SYNOPSIS:\n"
-               "    destroy [options] <domain>\n"
+               "    undefine [options] <domain>\n"
                "\n"
                "  OPTIONS:\n"
                "    -h | --help                    this help\n"

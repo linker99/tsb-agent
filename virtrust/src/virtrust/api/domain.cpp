@@ -304,13 +304,28 @@ VirtrustRc CheckCreateDomainName(const std::string &arg, std::string &domainName
         }
     }
     return VirtrustRc::OK;
-} // namespace
+}
+
+void GetConnectArgs(const std::string &arg, std::string &value, size_t i, const std::vector<std::string> &args)
+{
+    // 处理--connect ***
+    if (arg == "--connect" && i + 1 < args.size() && !args[i + 1].empty() && args[i + 1].front() != '-') {
+        value = args[i + 1];
+    }
+    // 处理--connect=***
+    bool isLongContains = arg.length() > 10 && arg.substr(0, 10) == "--connect="; // 10是--connect=的长度
+    if (isLongContains) {
+        value = arg.substr(arg.find('=') + 1);
+    }
+}
 
 VirtrustRc ValidateAndPrepareArgs(const std::vector<std::string> &args, std::vector<char *> &execArgs,
-                                  std::string &domainName, bool &allowStoreMeasurements)
+                                  std::string &domainName, bool &allowStoreMeasurements,
+                                  const std::unique_ptr<ConnCtx> &conn)
 {
 
     execArgs.reserve(args.size() + 3);
+    std::string connectArgs;
     for (size_t i = 0; i < args.size(); ++i) {
         const auto &arg = args[i];
         if (startsWithIgnoreSpaces(arg, ALLOW_STORE_MEASUREMENTS)) {
@@ -328,15 +343,24 @@ VirtrustRc ValidateAndPrepareArgs(const std::vector<std::string> &args, std::vec
         if (CheckCreateDomainName(arg, domainName, i, args) != VirtrustRc::OK) {
             return VirtrustRc::ERROR;
         }
+        (void)GetConnectArgs(arg, connectArgs, i, args);
         execArgs.push_back(const_cast<char *>(arg.c_str()));
     }
     execArgs.push_back(const_cast<char *>("--noautoconsole"));
     execArgs.push_back(const_cast<char *>("--noreboot"));
-    execArgs.push_back(nullptr);
     if (domainName.empty()) {
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||domain name must be given.");
         return VirtrustRc::ERROR;
     }
+    if (connectArgs.empty()) {
+        execArgs.reserve(args.size() + 5);
+        execArgs.push_back(const_cast<char *>("--connect"));
+        execArgs.push_back(strdup(conn->GetUri().c_str()));
+    } else {
+        conn->SetUri(connectArgs);
+    }
+    execArgs.push_back(nullptr);
+
     return VirtrustRc::OK;
 }
 
@@ -561,6 +585,7 @@ auto ToMaps(int tsbVmNum, Description *tsbVmInfo, int virtVmNum, virDomainPtr *v
     }
     return std::make_pair(tsbVmMap, virtVmMap);
 }
+} // namespace
 
 VirtrustRc CheckMaxDomainCount()
 {
@@ -568,18 +593,17 @@ VirtrustRc CheckMaxDomainCount()
     Description *tsbVmInfo = nullptr;
     int result = GetVRoots(&tsbVmNum, &tsbVmInfo);
     if (result != 0) {
-        VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||Failed to get tsb domains");
+        VIRTRUST_LOG_ERROR("|CheckMaxDomainCount|END|returnF||Failed to get tsb domains");
         return VirtrustRc::ERROR;
     }
     if (tsbVmNum == MAX_DOMAIN_COUNT) {
         FreeDescription(&tsbVmInfo);
-        VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||support max domain count is: {}", MAX_DOMAIN_COUNT);
+        VIRTRUST_LOG_ERROR("|CheckMaxDomainCount|END|returnF||support max domain count is: {}", MAX_DOMAIN_COUNT);
         return VirtrustRc::ERROR;
     }
     FreeDescription(&tsbVmInfo);
     return VirtrustRc::OK;
 }
-} // namespace
 
 VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<std::string> &args)
 {
@@ -599,7 +623,7 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
     std::string domainName;
     bool allowStoreMeasurements = false;
     execArgs.reserve(args.size() + 3); // +3 for --noautoconsole, --noreboot and nullptr
-    if (ValidateAndPrepareArgs(args, execArgs, domainName, allowStoreMeasurements) != VirtrustRc::OK) {
+    if (ValidateAndPrepareArgs(args, execArgs, domainName, allowStoreMeasurements, conn) != VirtrustRc::OK) {
         return VirtrustRc::ERROR;
     }
     std::string argStr = MakeString(execArgs);
@@ -741,7 +765,7 @@ VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
             default:
                 VIRTRUST_LOG_ERROR("Unsupported LigLevel: {}", static_cast<int>(it.second.first));
         }
-        if (printErrToCli && !rc && it.second.first != LogLevel::ERROR) {
+        if (printErrToCli && !rc && it.second.first == LogLevel::ERROR) {
             fmt::print(stderr, "\n{}\n", msg);
         }
         domainInfos.erase(it.first);

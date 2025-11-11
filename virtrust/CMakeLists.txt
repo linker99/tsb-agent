@@ -33,6 +33,7 @@ if(NOT BUILD_TEST AND CMAKE_BUILD_TYPE STREQUAL "Fuzz")
       "CMAKE_BUILD_TYPE is Fuzz but BUILD_TEST has been set to Off, turn on BUILD_TEST automatically."
   )
   set(BUILD_TEST On)
+  message(FATAL "Fuzz is not currently supported!")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -169,9 +170,9 @@ if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
     add_custom_target(
       coverage
       COMMAND
-        ${LCOV_PATH} --capture --directory . --exclue "build/*" --exclude
+        ${LCOV_PATH} --capture --directory . --exclude "build/*" --exclude
         "external/*" --exclude "/usr/*" --output-file coverage.info
-        --ignore-errors mismatch,inconsistent
+        --ignore-errors mismatch,inconsistent,unused
       COMMAND ${GENHTML_PATH} coverage.info --output-directory
               ${CMAKE_BINARY_DIR}/coverage_report --ignore-errors inconsistent
       WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
