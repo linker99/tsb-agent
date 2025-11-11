@@ -54,7 +54,7 @@ message EXchangePkAndReportRequest {
     string domainName = 1;
     string uuid = 2;
     string cert = 3;
-    string publicKey = 4;  //公钥
+    bytes publicKey = 4;  //公钥
     TrustReportNew hostReport = 5; // struct
     TrustReportNew vmReport = 6; // struct
 }
@@ -64,7 +64,7 @@ message EXchangePkAndReportReply{
     string domainName = 2;
     string uuid = 3;
     string cert = 4;
-    string publicKey = 5;  //公钥
+    bytes publicKey = 5;  //公钥
     TrustReportNew hostReport = 6; // struct
     TrustReportNew vmReport = 7; // struct
 }
@@ -79,7 +79,7 @@ message StartMigReply {
 }
 
 message VRsourceInfoRequest{
-   string data = 1;
+   bytes data = 1;
    string uuid = 2;
 }
 
