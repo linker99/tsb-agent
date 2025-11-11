@@ -287,7 +287,7 @@ VirtrustRc CheckCreateDomainName(const std::string &arg, std::string &domainName
     }
     // 处理--name=***或-n=***或-n*****
     bool isLongContainsName = arg.length() > 7 && arg.substr(0, 7) == "--name="; // 7是--name=的长度
-    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n";     // 这里大于3是处理-n并且紧跟字符的情况
+    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n"; // 这里大于3是处理-n并且紧跟字符的情况
     if (isLongContainsName || isShortContainsName) {
         if (isLongContainsName || (isLongContainsName && arg.find('=') != std::string::npos)) {
             domainName = arg.substr(arg.find('=') + 1);
@@ -344,9 +344,9 @@ VirtrustRc UndefineDomainWithRetry(std::unique_ptr<DomainCtx> &domain, const std
                                    unsigned int flags, Libvirt &libvirt)
 {
 
-    for (int i = 1; i < 3; i++) {
+    for (int i = 1; i <= 3; i++) {
         VIRTRUST_LOG_INFO("try to undefine domain: {}, try times: {}", domainName, i);
-        if (libvirt.virDomainUndefineFlags(domain->Get(), flags) > 0) {
+        if (libvirt.virDomainUndefineFlags(domain->Get(), flags) >= 0) {
             VIRTRUST_LOG_INFO("undefine domain: {} success, try times: {}", domainName, i);
 
             return VirtrustRc::OK;
@@ -462,7 +462,7 @@ bool CompareTsbVirtState(int tsb, int virt)
 {
     switch (virt) {
         case VIR_DOMAIN_RUNNING:
-            return tsb == 2;
+            return tsb == 1;
         case VIR_DOMAIN_NOSTATE:
         case VIR_DOMAIN_BLOCKED:
         case VIR_DOMAIN_PAUSED:
@@ -529,7 +529,7 @@ auto ToMaps(int tsbVmNum, Description *tsbVmInfo, int virtVmNum, virDomainPtr *v
 {
     // create tsb map
     std::unordered_map<std::string, Description> tsbVmMap;
-    for (unsigned int i = 0; i < static_cast<unsigned int>(virtVmNum); i++) {
+    for (int i = 0; i < tsbVmNum; i++) {
         std::string tsbVmUuid = std::string((tsbVmInfo + i)->uuid);
         // skip, if flags are only LIST_DOMAIN_ACTIVE&, and domain is not running
         if (flags == DomainListFlags::LIST_DOMAINS_ACTIVE &&
@@ -757,8 +757,8 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
                            static_cast<unsigned int>(MIGRATE_UNDEFINE_SOURCE));
         return VirtrustRc::ERROR;
     }
-    if (destUri.empty() || destUri.find("qemu+tls") != 0) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|destUrt is only support starts with qemu+tls");
+    if (destUri.empty() || destUri.find("qemu+tls://") != 0) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|destUrt is only support starts with qemu+tls://");
         return VirtrustRc::ERROR;
     }
     // 校验虚拟机是否tsb和virsh都存在 并获取uuid
@@ -770,15 +770,14 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
     }
     std::string uuid;
     bool exists = std::any_of(domainInfos.begin(), domainInfos.end(), [&domainName, &uuid](const auto &pair) {
-        if (pair.second.domainName == domainName) {
+        if (pair.second.domainName == domainName && pair.second.state == VIR_DOMAIN_SHUTOFF) {
             uuid = pair.first;
             return true;
         }
         return false;
     });
     if (!exists) {
-        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|domain: {} not exist or state is not consistent with virsh",
-                           domainName);
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|domain: {} not exist or state is not shut off", domainName);
         return VirtrustRc::ERROR;
     }
 
@@ -788,7 +787,6 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
     config.udsPath = UDS_PATH;
     UdsClient client(config);
 
-    // TODO: Obtain the necessary parameters here.
     auto localUri = conn->GetUri();
     MigrationConfig migration_config{
         .domainName = domainName,
@@ -820,11 +818,11 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
     if (isOnlyTsb) {
         std::string uuidStr = domainName;
         VIRTRUST_LOG_INFO("only update tsb resource");
-        if (domainName.size() != 36) {
+        if (domainName.size() != 36) { // UUIDchang长度为36
             VIRTRUST_LOG_DEBUG("|DomainStart|END|returnF||invalid domain UUID: {}", domainName);
             return VirtrustRc::ERROR;
         }
-        if (StopVRoot(uuidStr.data()) != 0) {
+        if (StartVRoot(uuidStr.data()) != 0) {
             VIRTRUST_LOG_DEBUG("|DomainStart|END|returnF||start vRoot failed,UUID: {}", domainName);
             return VirtrustRc::ERROR;
         }

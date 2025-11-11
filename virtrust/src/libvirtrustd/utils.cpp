@@ -153,7 +153,6 @@ LinkConfig ParseJsonDocToConfig(const rapidjson::Document &jsonDoc)
     FIND_KEY(skPath, std::string, std::string(LIBVIRTRUSTD_SK_PATH));
     FIND_KEY(ip, std::string, std::string(LIBVIRTRUSTD_SERVER_ADDR));
     FIND_KEY(udsPath, std::string, std::string(LIBVIRTRUSTD_UDS_PATH));
-    FIND_KEY(ipMask, std::string, std::string(LIBVIRTRUSTD_SERVER_ADDR_MASK));
     FIND_KEY(port, uint16_t, LIBVIRTRUSTD_SERVER_PORT);
 
 #undef FIND_KEY

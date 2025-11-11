@@ -17,10 +17,7 @@ namespace virtrust {
 VIRTRUST_MAKE_SMART(EVP_MD_CTX, Openssl::GetInstance().EVP_MD_CTX_free);
 VIRTRUST_MAKE_SMART(EVP_MD, Openssl::GetInstance().EVP_MD_free);
 
-enum class Sm3Rc : uint32_t {
-    OK = 0,
-    ERROR = 1
-};
+enum class Sm3Rc : uint32_t { OK = 0, ERROR = 1 };
 
 class Sm3 {
 public:

@@ -11,12 +11,7 @@ namespace virtrust {
 constexpr std::string_view VIRTRUST_DEFAULT_URI = "qemu:///session";
 constexpr std::string_view UDS_PATH = "/tmp/grpc.sock";
 
-enum class VirtrustRc : uint32_t {
-    OK = 0,
-    ERROR = 1,
-    CHECK_FAILED = 2,
-    INCONSISTENT_RESOURCE = 3
-};
+enum class VirtrustRc : uint32_t { OK = 0, ERROR = 1, CHECK_FAILED = 2, INCONSISTENT_RESOURCE = 3 };
 
 enum DomainUndefineFlags {
     DOMAIN_UNDEFINE_NVRAM = (1 << 2),
