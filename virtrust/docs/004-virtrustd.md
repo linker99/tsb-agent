@@ -88,64 +88,21 @@ virtrustd --config <config_file> [options]
 
 ```json
 {
-  "server": {
-    "addr": "127.0.0.1",
-    "port": 5031,
-    "uds_path": "/tmp/grpc.sock"
-  },
-  "tls": {
-    "ca_path": "ca-cert.pem",
-    "cert_path": "server-cert.pem",
-    "key_path": "server-sk.pem"
-  }
+    "caPath": "ca-cert.pem",
+    "certPath": "server-cert.pem",
+    "skPath": "server-sk.pem",
+    "ip": "127.0.0.1",
+    "udsPath": "/tmp/grpc.sock"
 }
 ```
 
 #### 配置字段说明
 
-**server 部分**：
-- `addr`：服务器监听地址，默认为 "127.0.0.1"
-- `port`：服务器监听端口，默认为 5031
+- `ca_path`：CA 证书文件路径
+- `cert_path`：服务器证书文件路径
+- `sk_path`：服务器私钥文件路径，默认为 "server-sk.pem"
+- `ip`：服务器监听地址，默认为 "127.0.0.1"
 - `uds_path`：Unix Domain Socket 路径，默认为 "/tmp/grpc.sock"
-
-**tls 部分**：
-- `ca_path`：CA 证书文件路径，默认为 "ca-cert.pem"
-- `cert_path`：服务器证书文件路径，默认为 "server-cert.pem"
-- `key_path`：服务器私钥文件路径，默认为 "server-sk.pem"
-
-### 示例配置文件
-
-**基础配置 (basic.json)**：
-```json
-{
-  "server": {
-    "addr": "127.0.0.1",
-    "port": 5031,
-    "uds_path": "/tmp/grpc.sock"
-  },
-  "tls": {
-    "ca_path": "/etc/virtrust/certs/ca-cert.pem",
-    "cert_path": "/etc/virtrust/certs/server-cert.pem",
-    "key_path": "/etc/virtrust/certs/server-sk.pem"
-  }
-}
-```
-
-**生产环境配置 (production.json)**：
-```json
-{
-  "server": {
-    "addr": "0.0.0.0",
-    "port": 5031,
-    "uds_path": "/var/run/virtrustd.sock"
-  },
-  "tls": {
-    "ca_path": "/etc/ssl/certs/virtrust-ca.pem",
-    "cert_path": "/etc/ssl/private/virtrust-server.pem",
-    "key_path": "/etc/ssl/private/virtrust-server.key"
-  }
-}
-```
 
 ## 运行和管理
 
