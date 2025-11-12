@@ -72,23 +72,24 @@ static void ReportToProto(const trust_report_new &report, protos::TrustReportNew
     size_t bios_pcr_len = strnlen(reinterpret_cast<const char *>(report.content.bios_pcr), DEFAULT_PCR_SIZE);
     content->set_bios_pcr(reinterpret_cast<const char *>(report.content.bios_pcr), bios_pcr_len);
 
-    size_t boot_loader_pcr_len = strnlen(reinterpret_cast<const char*>(report.content.boot_loader_pcr), DEFAULT_PCR_SIZE);
-    content->set_boot_loader_pcr(reinterpret_cast<const char*>(report.content.boot_loader_pcr), boot_loader_pcr_len);
+    size_t boot_loader_pcr_len =
+        strnlen(reinterpret_cast<const char *>(report.content.boot_loader_pcr), DEFAULT_PCR_SIZE);
+    content->set_boot_loader_pcr(reinterpret_cast<const char *>(report.content.boot_loader_pcr), boot_loader_pcr_len);
 
-    size_t kernel_pcr_len = strnlen(reinterpret_cast<const char*>(report.content.kernel_pcr), DEFAULT_PCR_SIZE);
-    content->set_kernel_pcr(reinterpret_cast<const char*>(report.content.kernel_pcr), kernel_pcr_len);
+    size_t kernel_pcr_len = strnlen(reinterpret_cast<const char *>(report.content.kernel_pcr), DEFAULT_PCR_SIZE);
+    content->set_kernel_pcr(reinterpret_cast<const char *>(report.content.kernel_pcr), kernel_pcr_len);
 
-    size_t tsb_pcr_len = strnlen(reinterpret_cast<const char*>(report.content.tsb_pcr), DEFAULT_PCR_SIZE);
-    content->set_tsb_pcr(reinterpret_cast<const char*>(report.content.tsb_pcr), tsb_pcr_len);
+    size_t tsb_pcr_len = strnlen(reinterpret_cast<const char *>(report.content.tsb_pcr), DEFAULT_PCR_SIZE);
+    content->set_tsb_pcr(reinterpret_cast<const char *>(report.content.tsb_pcr), tsb_pcr_len);
 
-    size_t boot_pcr_len = strnlen(reinterpret_cast<const char*>(report.content.boot_pcr), DEFAULT_PCR_SIZE);
-    content->set_boot_pcr(reinterpret_cast<const char*>(report.content.boot_pcr), boot_pcr_len);
+    size_t boot_pcr_len = strnlen(reinterpret_cast<const char *>(report.content.boot_pcr), DEFAULT_PCR_SIZE);
+    content->set_boot_pcr(reinterpret_cast<const char *>(report.content.boot_pcr), boot_pcr_len);
 
     content->set_be_nonce(report.content.be_nonce);
 
     // 转换 append_data
-    size_t append_data_len = strnlen(reinterpret_cast<const char*>(report.append_data), MAX_TRUST_REPORT_APPENDDATA);
-    protoReport->set_append_data(reinterpret_cast<const char*>(report.append_data), append_data_len);
+    size_t append_data_len = strnlen(reinterpret_cast<const char *>(report.append_data), MAX_TRUST_REPORT_APPENDDATA);
+    protoReport->set_append_data(reinterpret_cast<const char *>(report.append_data), append_data_len);
 }
 
 static trust_report_new ReportFromProto(const protos::TrustReportNew &protoReport)

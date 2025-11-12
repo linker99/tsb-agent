@@ -131,6 +131,9 @@ struct trust_report_new {
 
 // NOTE All memories are allocated by using "malloc", remeber to free them after
 // use.
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 int GetVRoots(int *vtpcmNums, struct Description **vtpcmInfo);
 
@@ -157,7 +160,7 @@ int GetReport(char *pUuid,                         // 物理机的uuid
               struct trust_report_new *vmreport    // 输出：virtual machine report
 );
 
-int VerifyReport(char *pUuid,                         // 物理机的uuid
+int VerifyTrustReport(char *pUuid,                         // 物理机的uuid
                  char *vUuid,                         // 虚拟机的uuid
                  struct trust_report_new *hostreport, // host report
                  struct trust_report_new *vmreport    // virtual machine report
@@ -171,21 +174,22 @@ int MigrationGetCert(char *vUuid,   // 虚拟机的uuid
 );
 
 int MigrationCheckPeerPk(char *vUuid, // 虚拟机的uuid
-                         char *pk1,   // peer cert 公钥 (REVIEW: 改成 cert?)
-                         int pk1Len,  // peer cert 公钥证书长度 (REVIEW: 改成 cert?)
-                         char *pk2,   // peer 临时生成的随机密钥对的公钥, a.k.a. pubkey
-                         int pk2Len   // 证书长度
+                         char *cert,  // peer cert 公钥 (REVIEW: 改成 cert?)
+                         char *pk2    // peer 临时生成的随机密钥对的公钥, a.k.a. pubkey
 );
 
-int MigrationGetVRootCipher(char *vUuid,   // 虚拟机的uuid
+int MigrationGetVrootCipher(char *vUuid,   // 虚拟机的uuid
                             char **cipher, // 输出：加密后的密码资源
                             int *cipherLen // 输出：密文长度
 );
 
-int MigrationImportVRootCipher(char *vUuid,  // 虚拟机的uuid
-                               char *cipher, // 加密后的密码资源
-                               int cipherLen // 密文长度
+int MigrationImportVrootCipher(char *vUuid,  // 虚拟机的uuid
+                               char *cipher  // 加密后的密码资源
 );
 
 int MigrationNotify(char *vUuid, // 虚拟机的uuid
                     int status);
+
+#ifdef __cplusplus
+}
+#endif

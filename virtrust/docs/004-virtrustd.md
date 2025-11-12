@@ -4,14 +4,10 @@
 
 Virtrust Daemon (virtrustd) 是 virtrust 项目的守护进程服务，提供基于 gRPC 的远程 API 服务。它作为后端服务运行，接受来自客户端的虚拟机管理请求，并通过 virtrust API 库执行相应的操作。
 
-## 功能特性
-
-- **gRPC 服务接口**：提供高性能的远程过程调用接口
-- **守护进程模式**：以后台服务形式运行，支持信号处理
-- **配置文件驱动**：通过 JSON 配置文件进行灵活配置
-- **TLS 安全支持**：支持 TLS 加密通信和证书验证
-- **日志记录**：详细的服务运行日志记录
-- **信号处理**：优雅的服务启动和关闭
+- **默认服务器地址**：127.0.0.1
+- **默认服务器端口**：5031
+- **默认 Unix Socket**：/tmp/grpc.sock
+- **默认日志文件**：/var/log/virtrustd.log
 
 ## 系统架构
 
@@ -40,7 +36,7 @@ libvirt 虚拟化层
 
 ### 系统要求
 
-- **操作系统**：openEuler 24.03 LTS SP3 或兼容系统
+- **操作系统**：openEuler 24.03 LTS SP1 或 openEuler 24.03 LTS SP2
 - **权限**：需要足够的权限来管理虚拟机
 - **依赖**：libvirt、gRPC 相关库
 
@@ -293,149 +289,17 @@ sudo chmod 600 server-key.pem
 sudo mv ca-cert.pem server-cert.pem server-key.pem /etc/virtrust/certs/
 ```
 
+4. **libvirt证书**：
+```bash
+参考 https://libvirt.org/kbase/tlscerts.html
+```
+
 ### 防火墙配置
 
 ```bash
 # 开放 gRPC 服务端口
 sudo firewall-cmd --permanent --add-port=5031/tcp
+# 开放 libvirt tls方式端口
+sudo firewall-cmd --permanent --add-port=16514/tcp
 sudo firewall-cmd --reload
 ```
-
-### 访问控制
-
-1. **网络隔离**：使用防火墙规则限制访问源
-2. **用户权限**：确保只有授权用户可以访问服务
-3. **证书验证**：启用客户端证书验证
-
-## 性能优化
-
-### 连接池配置
-
-```json
-{
-  "server": {
-    "max_connections": 100,
-    "connection_timeout": 30,
-    "keepalive_timeout": 60
-  }
-}
-```
-
-### 资源限制
-
-```bash
-# 设置文件描述符限制
-ulimit -n 65536
-
-# 设置进程限制
-systemd-run --property=LimitNOFILE=65536 virtrustd --config config.json
-```
-
-## 监控和维护
-
-### 健康检查
-
-```bash
-# 检查服务端口
-netstat -tlnp | grep 5031
-
-# 检查进程状态
-ps aux | grep virtrustd
-
-# 检查 Unix Socket
-ls -la /tmp/grpc.sock
-```
-
-### 性能监控
-
-```bash
-# CPU 和内存使用情况
-top -p $(pgrep virtrustd)
-
-# 网络连接状态
-ss -tlnp | grep 5031
-
-# 磁盘 I/O 情况
-iotop -p $(pgrep virtrustd)
-```
-
-## 故障排除
-
-### 常见问题
-
-1. **服务启动失败**：
-   - 检查配置文件语法
-   - 验证证书文件路径和权限
-   - 确认端口未被占用
-
-2. **客户端连接失败**：
-   - 检查网络连接
-   - 验证 TLS 证书
-   - 确认防火墙设置
-
-3. **权限错误**：
-   - 检查文件权限设置
-   - 确认用户组成员关系
-   - 验证 SELinux 策略
-
-### 调试方法
-
-1. **启用调试模式**：
-```bash
-sudo virtrustd --config /etc/virtrust/virtrustd.json --debug
-```
-
-2. **查看详细日志**：
-```bash
-sudo tail -f /var/log/virtrustd.log
-sudo journalctl -u virtrustd -f
-```
-
-3. **连接测试**：
-```bash
-# 测试 TCP 连接
-telnet localhost 5031
-
-# 测试 Unix Socket
-nc -U /tmp/grpc.sock
-```
-
-## API 接口
-
-virtrustd 提供 gRPC API 接口，具体接口定义请参考：
-- Proto 文件：`proto/virtrust.proto`
-- API 文档：[Virtrust API 文档](002-virtrust-api.md)
-
-### 客户端示例
-
-```python
-import grpc
-import virtrust_pb2
-import virtrust_pb2_grpc
-
-# 创建 gRPC 连接
-channel = grpc.insecure_channel('localhost:5031')
-stub = virtrust_pb2_grpc.VirtrustServiceStub(channel)
-
-# 调用 API
-request = virtrust_pb2.DomainListRequest()
-response = stub.DomainList(request)
-```
-
-## 版本信息
-
-- **当前版本**：1.0.0
-- **默认服务器地址**：127.0.0.1
-- **默认服务器端口**：5031
-- **默认 Unix Socket**：/tmp/grpc.sock
-- **默认日志文件**：/var/log/virtrustd.log
-
-## 相关文档
-
-- [Virtrust API 文档](002-virtrust-api.md)
-- [Virtrust Shell 用户手册](003-virtrust-sh.md)
-- [项目简介](001-introduction.md)
-
-## 许可证
-
-Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.

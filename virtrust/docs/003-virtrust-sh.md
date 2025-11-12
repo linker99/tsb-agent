@@ -4,13 +4,7 @@
 
 Virtrust Shell (virtrust-sh) 是 virtrust 项目的命令行界面工具，为用户提供了交互式的虚拟机管理功能。它基于 virtrust API 库构建，支持虚拟机的完整生命周期管理操作。
 
-## 功能特性
-
 - **虚拟机生命周期管理**：创建、启动、停止、销毁、迁移和删除虚拟机
-- **命令行接口**：支持单个命令执行和批量操作
-- **日志记录**：详细的操作日志记录，便于问题排查和审计
-- **灵活配置**：支持自定义 hypervisor 连接 URI
-- **调试模式**：提供详细的调试信息输出
 
 ## 安装和使用
 
@@ -45,11 +39,11 @@ virtrust-sh [options]... <command> [args...]
 
 ### 1. create - 创建虚拟机
 
-创建新的虚拟机实例，基于 libvirt 的 virt-install 工具。
+创建新的虚拟机实例，基于 libvirt 的 virt-install 工具实现。
 
 **基本语法**：
 ```bash
-virtrust-sh create [virt-install 参数...]
+virtrust-sh create [virt-install 支持的参数...]
 ```
 
 **参数说明**：
@@ -65,7 +59,7 @@ virtrust-sh create \
   --memory 2048 \
   --vcpus 2 \
   --disk path=/var/lib/libvirt/images/test-vm.qcow2,size=10 \
-  --cdrom /path/to/install.iso \
+  --cdrom /path/to/install.iso f
   --network network=default
 
 # 使用自定义连接 URI
@@ -139,12 +133,13 @@ virtrust-sh undefine test-vm
 
 **基本语法**：
 ```bash
-virtrust-sh migrate <domain_name> <dest_uri> [flags]
+virtrust-sh migrate [option] <domain_name> <dest_uri> 
 ```
 
 **参数说明**：
 - `domain_name`：要迁移的虚拟机名称
 - `dest_uri`：目标主机 URI，格式为 `<protocol>://<host>:<port>/<path>`
+- `option`：-h 帮助信息，--undefinesource 删除源端虚拟机
 
 **示例**：
 ```bash
@@ -175,21 +170,7 @@ virtrust-sh -d list
 
 ## 日志管理
 
-### 日志文件位置
-
 virtrust-sh 会将详细的操作日志写入当前工作目录下的 `virtrust.log` 文件。
-
-### 日志级别
-
-- **默认级别**：INFO
-- **调试模式**：DEBUG（使用 `-d` 选项启用）
-
-### 日志内容包括
-
-- 操作命令和参数
-- 执行结果和时间戳
-- 错误信息和堆栈跟踪
-- libvirt 库的详细错误信息
 
 ## 使用示例
 
@@ -255,86 +236,3 @@ virtrust-sh -c $REMOTE_URI create \
 virtrust-sh migrate local-vm qemu+tls://192.168.1.100/system
 ```
 
-## 错误处理和故障排除
-
-### 常见错误类型
-
-1. **连接错误**：无法连接到 libvirt 守护进程
-2. **权限错误**：当前用户没有足够的权限执行操作
-3. **参数错误**：命令参数格式不正确或缺少必需参数
-4. **资源错误**：系统资源不足（内存、磁盘空间等）
-5. **依赖错误**：virt-install 或其他依赖工具不可用
-
-### 故障排除步骤
-
-1. **检查日志**：查看 `virtrust.log` 文件获取详细错误信息
-2. **验证连接**：确认 libvirt 服务正在运行且可访问
-3. **检查权限**：确保当前用户有权限执行虚拟机操作
-4. **验证参数**：检查命令参数格式和完整性
-5. **查看系统资源**：确认有足够的系统资源
-
-### 调试技巧
-
-```bash
-# 启用详细调试信息
-virtrust-sh -d start test-vm
-
-# 使用不同的连接 URI 进行测试
-virtrust-sh -c qemu:///system list
-
-# 检查 libvirt 连接状态
-virsh list --all
-```
-
-## 最佳实践
-
-### 1. 命令规范
-
-- 使用描述性的虚拟机名称
-- 在脚本中添加适当的错误处理
-- 记录重要操作的时间和结果
-
-### 2. 资源管理
-
-- 定期清理不再需要的虚拟机
-- 监控系统资源使用情况
-- 合理配置虚拟机规格
-
-### 3. 安全考虑
-
-- 限制 virtrust-sh 的执行权限
-- 使用安全的连接方式（如 TLS）
-- 定期审查操作日志
-
-### 4. 备份策略
-
-- 定期备份重要的虚拟机配置
-- 在执行破坏性操作前创建快照
-- 保留关键操作的历史记录
-
-## 性能优化
-
-### 1. 批量操作
-
-对于多个虚拟机的操作，建议使用脚本进行批量处理，而不是逐个手动执行。
-
-### 2. 连接复用
-
-在同一会话中多次执行命令时，使用相同的连接 URI 可以减少连接开销。
-
-### 3. 日志管理
-
-定期清理或轮转日志文件，避免日志文件过大影响系统性能。
-
-## 版本信息
-
-- **当前版本**：1.0.0
-- **默认 virt-install 路径**：`/usr/bin/virt-install`
-- **默认日志文件名**：`virtrust.log`
-- **最大命令字符串长度**：1024 字符
-
-## 相关文档
-
-- [Virtrust API 文档](002-virtrust-api.md)
-- [Virtrustd 守护进程文档](004-virtrustd.md)
-- [项目简介](001-introduction.md)

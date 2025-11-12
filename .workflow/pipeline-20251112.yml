@@ -1,0 +1,37 @@
+version: '1.0'
+name: pipeline-20251112
+displayName: pipeline-20251112
+triggers:
+  trigger: auto
+  push:
+    branches:
+      prefix:
+        - ''
+stages:
+  - name: stage-88e57b03
+    displayName: virtrust
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: build@gcc
+        name: build_gcc
+        displayName: GCC 构建
+        gccVersion: '10.3'
+        commands:
+          - apt-get update
+          - apt-get install -y libstdc++6 libgrpc++ libgrpc-dev protobuf-compiler protobuf-compiler-grpc libprotobuf-dev libxml2-dev libguestfs-dev libssl-dev libvirt-dev
+          - grpc_cpp_plugin --version
+          - cd virtrust
+          - mkdir build
+          - cd build
+          - cmake -G 'Unix Makefiles' ../ && make -j
+        artifacts:
+          - name: BUILD_ARTIFACT
+            path:
+              - ./bin
+        caches: []
+        notify: []
+        strategy:
+          retry: '0'
+          resource: '{"limits":{"cpu":"8","memory":"16"}}'

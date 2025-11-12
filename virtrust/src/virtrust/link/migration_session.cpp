@@ -45,8 +45,9 @@ MigrationSession *SessionManager::GetSession(const std::string &sessionId)
 {
     std::lock_guard<std::mutex> lock(mtx_);
     auto it = sessions_.find(sessionId);
-    if (it == sessions_.end())
+    if (it == sessions_.end()) {
         return nullptr;
+    }
     return it->second.get();
 }
 
@@ -112,7 +113,8 @@ MigrateSessionRc MigrationSession::SendExchangeKey()
     protos::EXchangePkAndReportRequest req;
     MigrateSessionRc rc = GetExchangePkAndReport(&req, nullptr);
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|SendExchangeKey|END|returnF|domain name: {}|Get local cert and report failed.", domainName_);
+        VIRTRUST_LOG_ERROR("|SendExchangeKey|END|returnF|domain name: {}|Get local cert and report failed.",
+                           domainName_);
         OnFail();
         return MigrateSessionRc::ERROR;
     }
@@ -120,7 +122,8 @@ MigrateSessionRc MigrationSession::SendExchangeKey()
     protos::EXchangePkAndReportReply res;
     int32_t ret = rpcClient_->ExchangePkAndReport(5, req, &res);
     if (ret != 0 || res.result() != 0) {
-        VIRTRUST_LOG_ERROR("|SendExchangeKey|END|returnF|domain name: {}|Exchange cert and report failed.", domainName_);
+        VIRTRUST_LOG_ERROR("|SendExchangeKey|END|returnF|domain name: {}|Exchange cert and report failed.",
+                           domainName_);
         OnFail();
         return MigrateSessionRc::ERROR;
     }
@@ -135,7 +138,8 @@ MigrateSessionRc MigrationSession::OnExchangeKeyResponseReceived(protos::EXchang
     // 1. 校验对端证书
     MigrateSessionRc rc = VerifyCertificate(res.uuid(), res.cert(), res.publickey());
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|OnExchangeKeyResponseReceived|END|returnF|domain name: {}|Verify peer cert failed.", domainName_);
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyResponseReceived|END|returnF|domain name: {}|Verify peer cert failed.",
+                           domainName_);
         OnFail();
         return MigrateSessionRc::ERROR;
     }
@@ -161,7 +165,8 @@ MigrateSessionRc MigrationSession::SendStartMigration()
     protos::StartMigReply res;
     int32_t ret = rpcClient_->StartMigration(5, req, &res);
     if (ret != 0) {
-        VIRTRUST_LOG_ERROR("|SendStartMigration|END|returnF|domain name: {}|Send start migration signal failed.", domainName_);
+        VIRTRUST_LOG_ERROR("|SendStartMigration|END|returnF|domain name: {}|Send start migration signal failed.",
+                           domainName_);
         OnFail();
         return MigrateSessionRc::ERROR;
     }
@@ -179,26 +184,25 @@ MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
     char *cipher = nullptr;
     int cipherLen = 0;
     // 收集密码资源
-    auto ret = MigrationGetVRootCipher(const_cast<char *>(sessionId_.c_str()), &cipher, &cipherLen);
-    if (ret != 0) {
-        VIRTRUST_LOG_ERROR("|OnStartMigrationResponseReceived|END|returnF|domain name: {}|MigrationGetVRootCipher failed.",
-                           domainName_);
+    auto ret = MigrationGetVrootCipher(const_cast<char *>(sessionId_.c_str()), &cipher, &cipherLen);
+    if (ret != 0 || cipher == nullptr) {
+        VIRTRUST_LOG_ERROR(
+            "|OnStartMigrationResponseReceived|END|returnF|domain name: {}|MigrationGetVRootCipher failed.",
+            domainName_);
         OnFail();
         return MigrateSessionRc::ERROR;
     }
+
+    std::string cipherStr(cipher, cipherLen);
+    free(cipher);
+
     // 进入传输阶段
     EnterState(State::Transferring);
-    return SendTransferOnce(cipher);
+    return SendTransferOnce(cipherStr);
 }
 
-MigrateSessionRc MigrationSession::SendTransferOnce(char *cipher)
+MigrateSessionRc MigrationSession::SendTransferOnce(const std::string &cipher)
 {
-    if (cipher == nullptr) {
-        VIRTRUST_LOG_ERROR("|SendTransferOnce|END|returnF||cipher is null.");
-        OnFail();
-        return OnTransferResponseReceived(false);
-    }
-
     // 1.调用libvirt命令进行迁移
     MigrateSessionRc rc = MigrateByLibvirt();
     if (rc != MigrateSessionRc::OK) {
@@ -210,9 +214,7 @@ MigrateSessionRc MigrationSession::SendTransferOnce(char *cipher)
     // 2.传输数据
     protos::VRsourceInfoRequest req;
     req.set_uuid(sessionId_);
-    std::string cipherString(cipher);
-    req.set_data(cipherString);
-    free(cipher);
+    req.set_data(cipher);
     protos::VRsourceInfoReply res;
     int32_t ret = rpcClient_->SendVRsourceData(5, req, &res);
     // 传输数据失败
@@ -302,7 +304,7 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
 
     trust_report_new hostReport;
     trust_report_new vmReport;
-    ret = GetReport(nullptr, uuid.data(), &hostReport, &vmReport);
+    ret = GetReport(uuid.data(), uuid.data(), &hostReport, &vmReport);
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|domain name: {}|Get local report failed.", domainName_);
         return MigrateSessionRc::ERROR;
@@ -332,7 +334,7 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
 
 MigrateSessionRc MigrationSession::VerifyCertificate(std::string uuid, std::string cert, std::string pubkey)
 {
-    int ret = MigrationCheckPeerPk(uuid.data(), cert.data(), cert.size(), pubkey.data(), pubkey.size());
+    int ret = MigrationCheckPeerPk(uuid.data(), cert.data(), pubkey.data());
     return ret == 0 ? MigrateSessionRc::OK : MigrateSessionRc::ERROR;
 }
 
@@ -342,8 +344,8 @@ MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustRepo
     trust_report_new hostReport = ReportFromProto(hostProtoReport);
     trust_report_new vmReport = ReportFromProto(vmProtoReport);
 
-    // 调用TSB API进行报告校验
-    auto ret = VerifyReport(nullptr, sessionId_.data(), &hostReport, &vmReport);
+    // 调用TSB API进行报告校验, 目前不对UUID进行校验
+    auto ret = VerifyTrustReport(sessionId_.data(), sessionId_.data(), &hostReport, &vmReport);
     return ret == 0 ? MigrateSessionRc::OK : MigrateSessionRc::ERROR;
 }
 
@@ -543,8 +545,9 @@ MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const protos::EX
                                                                 protos::EXchangePkAndReportReply *response)
 {
     if (state_ != State::WaitingKey) {
-        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|domain name: {}|Waiting for exchanging key timeout.",
-                           domainName_);
+        VIRTRUST_LOG_ERROR(
+            "|OnExchangeKeyRequestReceived|END|returnF|domain name: {}|Waiting for exchanging key timeout.",
+            domainName_);
         Cleanup();
         return MigrateSessionRc::ERROR;
     }
@@ -552,8 +555,8 @@ MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const protos::EX
     // 1. 获取本端证书和报告
     MigrateSessionRc rc = GetExchangePkAndReport(nullptr, response);
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|domain name: {}|Get public key and report failed.",
-                           domainName_);
+        VIRTRUST_LOG_ERROR(
+            "|OnExchangeKeyRequestReceived|END|returnF|domain name: {}|Get public key and report failed.", domainName_);
         Cleanup();
         return MigrateSessionRc::ERROR;
     }
@@ -561,7 +564,8 @@ MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const protos::EX
     // 2. 校验对端证书
     rc = VerifyCertificate(request->uuid(), request->cert(), request->publickey());
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|domain name: {}|Verify peer cert failed.", domainName_);
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|domain name: {}|Verify peer cert failed.",
+                           domainName_);
         Cleanup();
         return MigrateSessionRc::ERROR;
     }
@@ -569,7 +573,8 @@ MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const protos::EX
     // 3. 校验对端报告
     rc = VerifyHostAndVmReport(request->hostreport(), request->vmreport());
     if (rc != MigrateSessionRc::OK) {
-        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|domain name: {}|Verify peer report failed.", domainName_);
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|domain name: {}|Verify peer report failed.",
+                           domainName_);
         Cleanup();
         return MigrateSessionRc::ERROR;
     }
@@ -583,8 +588,9 @@ MigrateSessionRc MigrationSession::OnStartMigrationRequestReceived()
 {
     if (state_ != State::CertVerify) {
         Cleanup();
-        VIRTRUST_LOG_ERROR(
-            "|OnStartMigrationRequestReceived|END|returnF|domain name: {}|Waiting for starting migration signal timeout.", domainName_);
+        VIRTRUST_LOG_ERROR("|OnStartMigrationRequestReceived|END|returnF|domain name: {}|Waiting for starting "
+                           "migration signal timeout.",
+                           domainName_);
         return MigrateSessionRc::ERROR;
     }
 
@@ -597,17 +603,19 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
 {
     if (state_ != State::Transferring) {
         Cleanup();
-        VIRTRUST_LOG_ERROR("|OnTransferDataRequestReceived|END|returnF|domain name: {}|Waiting for transfering timeout.", domainName_);
+        VIRTRUST_LOG_ERROR(
+            "|OnTransferDataRequestReceived|END|returnF|domain name: {}|Waiting for transfering timeout.", domainName_);
         return MigrateSessionRc::ERROR;
     }
     // 服务端校验客户端发来的虚拟机资源信息
-    auto ret = MigrationImportVRootCipher(const_cast<char *>(request->uuid().c_str()),
-                                          const_cast<char *>(request->data().c_str()), request->data().size());
+    auto ret = MigrationImportVrootCipher(const_cast<char *>(request->uuid().c_str()),
+                                          const_cast<char *>(request->data().c_str()));
     if (ret != 0) {
         EnterState(State::Failed);
         Cleanup();
         VIRTRUST_LOG_ERROR(
-            "|OnTransferDataRequestReceived|END|returnF|domain name: {}|MigrationImportVrootCipher failed.", domainName_);
+            "|OnTransferDataRequestReceived|END|returnF|domain name: {}|MigrationImportVrootCipher failed.",
+            domainName_);
         return MigrateSessionRc::ERROR;
     }
     EnterState(State::Transferring);

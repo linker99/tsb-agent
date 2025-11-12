@@ -261,7 +261,7 @@ bool UpdateMeasure(std::string_view domainName, std::string &uuid)
 
 bool CheckAllowStoreMeasurements(const std::string &args)
 {
-    if (args.find(ALLOW_STORE_MEASUREMENTS) != std::string::npos) {
+    if (args.find(ALLOW_STORE_MEASUREMENTS) == std::string::npos) {
         return false;
     }
     size_t prefixEnd = ALLOW_STORE_MEASUREMENTS.length();
@@ -420,7 +420,7 @@ VirtrustRc CreateDomainAndVRoot(const std::unique_ptr<ConnCtx> &conn, const std:
         return VirtrustRc::OK;
     }
     std::string uuidStr(uuid);
-    if (UpdateMeasure(domainName, uuidStr)) {
+    if (!UpdateMeasure(domainName, uuidStr)) {
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||UpdateMeasure failed");
         (void)UndefineDomainWithRetry(domain, domainName, VIR_DOMAIN_UNDEFINE_NVRAM, libvirt);
         return VirtrustRc::ERROR;
@@ -465,12 +465,12 @@ VirtrustRc UndefineTsbResource(const std::string &domainName)
             if (tsbRet != 0) {
                 VIRTRUST_LOG_ERROR("DomainUndefine UndefineTsbResource|END|returnF||RemoveVRoot "
                                    "failed.");
+                FreeDescription(&tsbVmInfo);
+                return VirtrustRc::ERROR;
             }
             FreeDescription(&tsbVmInfo);
-            return VirtrustRc::ERROR;
+            return VirtrustRc::OK;
         }
-        FreeDescription(&tsbVmInfo);
-        return VirtrustRc::OK;
     }
     if (!isMatch) {
         FreeDescription(&tsbVmInfo);
@@ -672,7 +672,7 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
 VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags,
                          bool isOnlyTsb)
 {
-    VIRTRUST_LOG_DEBUG("|DomainDestroy||START||");
+    VIRTRUST_LOG_DEBUG("|DomainDestroy||START||destroy domainName:{}, isonlyTsb:{}", domainName, isOnlyTsb);
     if (conn == nullptr) {
         VIRTRUST_LOG_ERROR("|DomainDestroy|END|returnF|| ConnCtx is nullptr.");
         return VirtrustRc::ERROR;
@@ -862,7 +862,7 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
 VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags,
                        bool isOnlyTsb)
 {
-    VIRTRUST_LOG_DEBUG("|DomainStart||START||domainName: {}", domainName);
+    VIRTRUST_LOG_DEBUG("|DomainStart||START||start domainName: {}, isonlyTsb:{}", domainName, isOnlyTsb);
     if (conn == nullptr) {
         VIRTRUST_LOG_ERROR("|DomainStart|END|returnF|| ConnCtx is nullptr.");
         return VirtrustRc::ERROR;
@@ -888,6 +888,10 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
             return VirtrustRc::ERROR;
         }
         return VirtrustRc::OK;
+    }
+    if (flags != DOMAIN_START_NONE) {
+        VIRTRUST_LOG_ERROR("flags only support: {}", static_cast<unsigned int>(flags));
+        return VirtrustRc::ERROR;
     }
     auto domain = std::make_unique<DomainCtx>(conn, domainName);
     if (domain->Get() == nullptr) {

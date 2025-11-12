@@ -2,7 +2,7 @@
 
 本文档描述了 virtrust 库对外提供的主要 API 接口，这些接口主要用于虚拟机域管理，包括创建、启动、停止、迁移和查询等操作。
 
-## 核心概念
+## 核心数据结构
 
 ### 连接上下文 (ConnCtx)
 - **作用**：表示与 libvirt 的连接上下文
@@ -67,7 +67,7 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
 
 ```cpp
 VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName,
-                         const std::string &destUri, unsigned int flags);
+                         const std::string &destUri, unsigned int flags = 0);
 ```
 
 **参数说明**：
@@ -232,11 +232,3 @@ switch (rc) {
         break;
 }
 ```
-
-## 注意事项
-
-1. **连接管理**：确保连接上下文在调用 API 前已正确建立
-2. **资源清理**：使用 `isOnlyTsb` 参数时要清楚其作用范围
-3. **权限要求**：确保调用进程有足够的权限执行虚拟机操作
-4. **并发安全**：避免同时对同一虚拟机执行冲突的操作
-5. **错误恢复**：在操作失败时可能需要手动检查和清理资源状态

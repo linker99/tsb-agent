@@ -4,6 +4,10 @@
 
 #include "virtrust/link/grpc_server.h"
 
+#include <unistd.h>
+
+#include <filesystem>
+
 #include "virtrust/base/logger.h"
 #include "virtrust/base/str_utils.h"
 #include "virtrust/link/defines.h"
@@ -25,7 +29,7 @@ LinkRc GrpcServer::Start()
     if (running_) {
         return LinkRc::ERROR;
     }
-    ::unlink(config_.udsPath.c_str());
+    std::filesystem::remove(config_.udsPath.c_str());
     server_thread_ = std::make_unique<std::thread>([this]() { RunServer(); });
 
     // 等待服务器启动
@@ -52,7 +56,7 @@ void GrpcServer::Stop()
     }
 
     // 清理 UDS 文件
-    ::unlink(config_.udsPath.c_str());
+    std::filesystem::remove(config_.udsPath.c_str());
     running_ = false;
 }
 

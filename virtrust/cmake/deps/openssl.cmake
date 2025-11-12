@@ -3,6 +3,11 @@
 ExternalProject_Add(
   openssl
   PREFIX ${CMAKE_DEPS_PREFIX}
+  # use gitee first
+  GIT_REPOSITORY https://gitee.com/mirrors/openssl.git
+  GIT_TAG openssl-3.3.2
+  GIT_SHALLOW On
+  # alternatively, download through gitub
   URL https://github.com/openssl/openssl/archive/refs/tags/openssl-3.3.2.tar.gz
   URL_HASH
     SHA256=bedbb16955555f99b1a7b1ba90fc97879eb41025081be359ecd6a9fcbdf1c8d2

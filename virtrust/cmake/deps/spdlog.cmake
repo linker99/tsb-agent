@@ -5,14 +5,17 @@ file(MAKE_DIRECTORY ${CMAKE_DEPS_PREFIX}/lib64)
 
 ExternalProject_Add(
   spdlog
+  # use gitee first
+  GIT_REPOSITORY https://gitee.com/mirrors_trending/spdlog.git
+  GIT_TAG v1.14.1
+  GIT_SHALLOW On
+  # alternatively, download through gitub
   URL https://github.com/gabime/spdlog/archive/refs/tags/v1.14.1.tar.gz
   URL_HASH
     SHA256=1586508029a7d0670dfcb2d97575dcdc242d3868a259742b69f100801ab4e16b
   CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=On
-             -DCMAKE_CXX_STANDARD=17
-             -DCMAKE_C_STANDARD_REQUIRED=Yes
              -DCMAKE_INSTALL_PREFIX=${CMAKE_DEPS_PREFIX}
-             -DCMAKE_CPP_FLAGS=-isystem\ ${CMAKE_DEPS_INCLUDEDIR}
+             -DSPDLOG_BUILD_EXAMPLE=OFF
   PREFIX ${CMAKE_DEPS_PREFIX}
   UPDATE_COMMAND ""
   EXCLUDE_FROM_ALL true
