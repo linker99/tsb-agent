@@ -43,12 +43,15 @@ virtrust-sh [options]... <command> [args...]
 
 **基本语法**：
 ```bash
-virtrust-sh create [virt-install 支持的参数...]
+virtrust-sh create [options] [virt-install 支持的参数...]
 ```
 
+**选项说明**：
+- `-h | --help`：显示帮助信息
+- `--allow-store-measurements`：允许存储测量数据（使用此选项时必须提供 `--name` 参数）
+
 **参数说明**：
-- 所有参数将传递给 virt-install 工具
-- 必须包含虚拟机名称参数
+- 必须包含虚拟机名称参数（使用 `--name` 指定）
 - 支持所有 virt-install 的标准参数
 
 **示例**：
@@ -76,11 +79,15 @@ virtrust-sh -c qemu+tcp://host/system create \
 
 **基本语法**：
 ```bash
-virtrust-sh start <domain_name>
+virtrust-sh start [options] <domain_name>
 ```
 
+**选项说明**：
+- `-h | --help`：显示帮助信息
+- `--only-tsb`：仅更新 TSB 资源，需要提供虚拟机的 UUID 作为 domain_name
+
 **参数说明**：
-- `domain_name`：要启动的虚拟机名称
+- `domain_name`：要启动的虚拟机名称或 UUID（使用 `--only-tsb` 选项时必须使用 UUID）
 
 **示例**：
 ```bash
@@ -89,6 +96,9 @@ virtrust-sh start test-vm
 
 # 使用调试模式启动
 virtrust-sh -d start test-vm
+
+# 仅更新 TSB 资源
+virtrust-sh start --only-tsb <vm-uuid>
 ```
 
 ### 3. destroy - 停止虚拟机
@@ -97,16 +107,23 @@ virtrust-sh -d start test-vm
 
 **基本语法**：
 ```bash
-virtrust-sh destroy <domain_name>
+virtrust-sh destroy [options] <domain_name>
 ```
 
+**选项说明**：
+- `-h | --help`：显示帮助信息
+- `--only-tsb`：仅更新 TSB 资源，需要提供虚拟机的 UUID 作为 domain_name
+
 **参数说明**：
-- `domain_name`：要停止的虚拟机名称
+- `domain_name`：要停止的虚拟机名称或 UUID（使用 `--only-tsb` 选项时必须使用 UUID）
 
 **示例**：
 ```bash
 # 停止虚拟机
 virtrust-sh destroy test-vm
+
+# 仅更新 TSB 资源
+virtrust-sh destroy --only-tsb <vm-uuid>
 ```
 
 ### 4. undefine - 删除虚拟机定义
@@ -115,16 +132,31 @@ virtrust-sh destroy test-vm
 
 **基本语法**：
 ```bash
-virtrust-sh undefine <domain_name>
+virtrust-sh undefine [options] <domain_name>
 ```
 
+**选项说明**：
+- `-h | --help`：显示帮助信息
+- `--nvram`：删除 NVRAM 文件（与 `--keep-nvram` 互斥）
+- `--keep-nvram`：保留 NVRAM 文件（与 `--nvram` 互斥）
+- `--only-tsb`：仅删除 TSB 资源，需要提供虚拟机的 UUID 作为 domain_name
+
 **参数说明**：
-- `domain_name`：要删除定义的虚拟机名称
+- `domain_name`：要删除定义的虚拟机名称或 UUID（使用 `--only-tsb` 选项时必须使用 UUID）
 
 **示例**：
 ```bash
 # 删除虚拟机定义
 virtrust-sh undefine test-vm
+
+# 删除虚拟机定义并删除 NVRAM 文件
+virtrust-sh undefine --nvram test-vm
+
+# 删除虚拟机定义但保留 NVRAM 文件
+virtrust-sh undefine --keep-nvram test-vm
+
+# 仅删除 TSB 资源
+virtrust-sh undefine --only-tsb <vm-uuid>
 ```
 
 ### 5. migrate - 迁移虚拟机
@@ -133,13 +165,16 @@ virtrust-sh undefine test-vm
 
 **基本语法**：
 ```bash
-virtrust-sh migrate [option] <domain_name> <dest_uri> 
+virtrust-sh migrate [options] <domain_name> <dest_uri>
 ```
+
+**选项说明**：
+- `-h | --help`：显示帮助信息
+- `--undefinesource`：迁移完成后删除源主机的虚拟机定义
 
 **参数说明**：
 - `domain_name`：要迁移的虚拟机名称
 - `dest_uri`：目标主机 URI，格式为 `<protocol>://<host>:<port>/<path>`
-- `option`：-h 帮助信息，--undefinesource 删除源端虚拟机
 
 **示例**：
 ```bash
@@ -148,6 +183,9 @@ virtrust-sh migrate test-vm qemu+tls://192.168.1.100:16509/system
 
 # 使用 TLS 加密迁移
 virtrust-sh migrate test-vm qemu+tls://dest-host/system
+
+# 迁移并删除源主机虚拟机定义
+virtrust-sh migrate --undefinesource test-vm qemu+tls://dest-host/system
 ```
 
 ### 6. list - 列出虚拟机信息
@@ -159,13 +197,37 @@ virtrust-sh migrate test-vm qemu+tls://dest-host/system
 virtrust-sh list [options]
 ```
 
+**选项说明**：
+- `-h | --help`：显示帮助信息
+- `-a | --all`：列出所有虚拟机（包括活动和非活动的虚拟机，默认只列出活动虚拟机）
+
+**输出列说明**：
+- `Id`：虚拟机 ID（非活动虚拟机显示 "-"）
+- `Name`：虚拟机名称
+- `State`：虚拟机状态（running、paused、shut down、shut off、crashed、unknown）
+
 **示例**：
 ```bash
-# 列出所有虚拟机
+# 列出所有活动虚拟机
 virtrust-sh list
+
+# 列出所有虚拟机（包括非活动的）
+virtrust-sh list --all
 
 # 使用调试模式列出虚拟机
 virtrust-sh -d list
+
+# 查看帮助信息
+virtrust-sh list --help
+```
+
+**示例输出**：
+```
+   Id   Name                 State
+-------------------------------
+    1   test-vm-1           running
+    2   test-vm-2           shut off
+    -   test-vm-3           paused
 ```
 
 ## 日志管理
@@ -174,7 +236,7 @@ virtrust-sh 会将详细的操作日志写入当前工作目录下的 `virtrust.
 
 ## 使用示例
 
-### 完整虚拟机生命周期管理
+完整虚拟机生命周期管理
 
 ```bash
 # 1. 创建虚拟机
@@ -198,41 +260,5 @@ virtrust-sh destroy demo-vm
 
 # 5. 删除虚拟机定义
 virtrust-sh undefine demo-vm
-```
-
-### 批量操作脚本
-
-```bash
-#!/bin/bash
-
-# 设置调试模式
-DEBUG_FLAG="-d"
-
-# 批量启动虚拟机
-for vm in vm1 vm2 vm3; do
-    echo "Starting $vm..."
-    virtrust-sh $DEBUG_FLAG start $vm
-done
-
-# 批量列出虚拟机状态
-echo "Virtual machine status:"
-virtrust-sh $DEBUG_FLAG list
-```
-
-### 远程管理示例
-
-```bash
-# 连接到远程 libvirt 守护进程
-REMOTE_URI="qemu+tcp://192.168.1.100/system"
-
-# 在远程主机上创建虚拟机
-virtrust-sh -c $REMOTE_URI create \
-  --name remote-vm \
-  --memory 2048 \
-  --vcpus 2 \
-  --disk path=/var/lib/libvirt/images/remote-vm.qcow2,size=10
-
-# 迁移虚拟机到远程主机
-virtrust-sh migrate local-vm qemu+tls://192.168.1.100/system
 ```
 

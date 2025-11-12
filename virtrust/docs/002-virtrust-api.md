@@ -39,9 +39,10 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
 - 失败返回相应的错误码
 
 **注意事项**：
-- 名称字段是必须的
-- 确保 virt-install 路径正确且可执行
-- 支持所有 virt-install 的标准参数
+- `ConnCtx` 类中 `uri` 的长度为 [1, 1024]；注意可同时设置此 uri 以及 `virt-install --connect uri`，此时 `virt-install` 的 `uri` 会覆盖前置设置。
+- 名称字段（`--name`）是必须的
+- 确保 virt-install 路径正确且可执行，默认的 virt-install 二进制路径为 /usr/bin/virt-install
+- 支持所有 virt-install 的标准参数，args 中每个 string 最大长度为 1024，vector 支持最大 size 为 150
 
 ### 2. DomainDestroy - 停止虚拟机
 
@@ -62,6 +63,10 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
 
 **功能描述**：
 停止指定的虚拟机。可选择是否只处理 TSB 资源或执行完整的销毁操作。
+
+**注意事项**：
+- 当使用 `--only-tsb/isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
+- domainName 长度为 [1, 200]
 
 ### 3. DomainMigrate - 迁移虚拟机
 
@@ -106,6 +111,10 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
 **功能描述**：
 启动指定的虚拟机。可以选择仅处理 TSB 资源或执行完整的启动流程。
 
+**注意事项**：
+- 当使用 `--only-tsb/isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
+- domainName 长度为 [1, 200]
+
 ### 5. DomainUndefine - 删除虚拟机
 
 ```cpp
@@ -129,6 +138,10 @@ VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::strin
 
 **功能描述**：
 删除虚拟机的定义。处理 NVRAM 文件和 TSB 资源的清理。
+
+**注意事项**：
+- domainName 长度为 [1, 200]
+- 当使用 `--only-tsb/isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
 
 ### 6. DomainList - 展示虚拟机
 
@@ -165,6 +178,10 @@ struct DomainInfo {
 
 **功能描述**：
 查询并列出符合条件的虚拟机信息，同时检查 TSB 资源和 libvirt 资源的一致性。
+
+**注意事项**：
+- `ConnCtx` 类中 `uri` 的长度为 [1, 1024]
+- 当使用 `--only-tsb/isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
 
 ## 使用示例
 
