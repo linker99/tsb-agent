@@ -7,8 +7,7 @@ else()
   add_library(tsb-agent INTERFACE)
   file(COPY /root/libinterfac.so DESTINATION ${CMAKE_DEPS_LIBDIR})
   target_link_directories(tsb-agent INTERFACE ${CMAKE_DEPS_LIBDIR})
-  target_link_libraries(tsb-agent
-                        INTERFACE libinterfac.so)
+  target_link_libraries(tsb-agent INTERFACE libinterfac.so)
 endif()
 
 # NOTE Make sure targets are linekd to tsb-agent

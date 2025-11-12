@@ -161,9 +161,9 @@ int GetReport(char *pUuid,                         // 物理机的uuid
 );
 
 int VerifyTrustReport(char *pUuid,                         // 物理机的uuid
-                 char *vUuid,                         // 虚拟机的uuid
-                 struct trust_report_new *hostreport, // host report
-                 struct trust_report_new *vmreport    // virtual machine report
+                      char *vUuid,                         // 虚拟机的uuid
+                      struct trust_report_new *hostreport, // host report
+                      struct trust_report_new *vmreport    // virtual machine report
 );
 
 int MigrationGetCert(char *vUuid,   // 虚拟机的uuid
@@ -183,8 +183,8 @@ int MigrationGetVrootCipher(char *vUuid,   // 虚拟机的uuid
                             int *cipherLen // 输出：密文长度
 );
 
-int MigrationImportVrootCipher(char *vUuid,  // 虚拟机的uuid
-                               char *cipher  // 加密后的密码资源
+int MigrationImportVrootCipher(char *vUuid, // 虚拟机的uuid
+                               char *cipher // 加密后的密码资源
 );
 
 int MigrationNotify(char *vUuid, // 虚拟机的uuid
