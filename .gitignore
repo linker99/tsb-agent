@@ -1,0 +1,23 @@
+# Test data
+*.pem
+*.srl
+*.csr
+*.cert
+
+# Build file
+virtrust/build/*
+
+.vscode
+
+*.claude
+
+transcript.txt
+
+.cache
+
+*.pb.cc
+*.pb.h
+
+# ides
+
+.idea
