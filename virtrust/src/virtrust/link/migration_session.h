@@ -66,7 +66,7 @@ public:
 
     MigrateSessionRc OnStartMigrationRequestReceived();
 
-    MigrateSessionRc OnTransferDataRequestReceived(const protos::VRsourceInfoRequest *request);
+    MigrateSessionRc OnTransferDataRequestReceived(const protos::VRsourceInfoRequest *request, int32_t &result);
 
     MigrateSessionRc OnFinishedRequestReceived(bool finished);
 
@@ -114,7 +114,7 @@ private:
 
     MigrateSessionRc GetVirConnContext(const std::string &uri, std::unique_ptr<ConnCtx> &outConn);
 
-    void UndoMigration();
+    void UndoMigration(int32_t result);
 
     MigrateSessionRc UndefineVirtDomainBaseUri(const std::string &uri);
 

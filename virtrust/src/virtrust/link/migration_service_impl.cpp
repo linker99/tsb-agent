@@ -138,9 +138,13 @@ grpc::Status MigrationServiceImpl::SendVRsourceData(grpc::ServerContext *context
         return grpc::Status::OK;
     }
     // 服务端
-    MigrateSessionRc rc = session->OnTransferDataRequestReceived(request);
+    int32_t result = 0;
+    MigrateSessionRc rc = session->OnTransferDataRequestReceived(request, result);
     if (rc != MigrateSessionRc::OK) {
         response->set_result(1);
+        if (result != 0) {
+            response->set_result(result);
+        }
         return grpc::Status::OK;
     }
 

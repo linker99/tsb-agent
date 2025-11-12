@@ -36,11 +36,13 @@ enum {
 };
 
 enum ErrorCode {
-    SUCCESS,
+    SUCCESS = 0,
     ERR_INVALID_INPUT,
     ERR_MEMORY_ALLOCA,
     ERR_INVALID_FORMAT,
     ERR_INVALID_UUID,
+    ERR_CREATE_KEY,
+    ERR_SIGN_CERT,
     ERR_FILE_LOCK,
     ERR_READ_FILE,
     ERR_WRITE_FILE,
@@ -48,6 +50,8 @@ enum ErrorCode {
     ERR_DUPLICATE_UUID,
     ERR_PUBKEY_MISMATCH,
     ERR_CERT_MISMATCH,
+    ERR_HUUID_MISMATCH,
+    ERR_VUUID_MISMATCH,
 };
 
 struct Description {

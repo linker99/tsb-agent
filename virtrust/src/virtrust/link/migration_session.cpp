@@ -233,7 +233,7 @@ MigrateSessionRc MigrationSession::SendTransferOnce(const std::string &cipher, c
     // 传输数据失败
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|SendTransferOnce|END|returnF||failed to tansfer data for: {}", domainName_);
-        UndoMigration();
+        UndoMigration(ret);
         return MigrateSessionRc::ERROR;
     }
 
@@ -245,7 +245,7 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool transferRet)
     // 对端校验数据失败
     if (!transferRet) {
         VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF||peer verify data faild: {}", domainName_);
-        UndoMigration();
+        UndoMigration(0);
         return MigrateSessionRc::ERROR;
     }
 
@@ -254,7 +254,7 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool transferRet)
     if (rc != MigrateSessionRc::OK) {
         VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF|domain name: {}|MigrationNotify failure failed.",
                            domainName_);
-        UndoMigration();
+        UndoMigration(0);
         return MigrateSessionRc::ERROR;
     }
 
@@ -417,15 +417,16 @@ MigrateSessionRc MigrationSession::GetVirConnContext(const std::string &uri, std
 }
 
 // 撤销迁移操作
-void MigrationSession::UndoMigration()
+void MigrationSession::UndoMigration(int32_t ret)
 {
     // 防止server端误调
     if (role_ != Role::Initiator) {
         return;
     }
-
-    // 1.基于uri删除libvirt虚拟机
-    UndefineVirtDomainBaseUri(destUri_);
+    if (ret != ERR_DUPLICATE_UUID) {
+        // 1.基于uri删除libvirt虚拟机
+        UndefineVirtDomainBaseUri(destUri_);
+    }
 
     // 2.通知TSB迁移失败
     NotifyVRMigration(false);
@@ -475,18 +476,21 @@ MigrateSessionRc MigrationSession::NotifyVRMigration(bool success)
 
 MigrateSessionRc MigrationSession::GetVmInfo(Description &vmInfo)
 {
-    Description* raw = nullptr;
+    Description *raw = nullptr;
     int vNums = 0;
     int ret = GetVRoots(&vNums, &raw);
 
-    std::unique_ptr<Description, void(*)(Description*)> vInfos(raw, [](Description* p){ if (p) free(p); });
+    std::unique_ptr<Description, void (*)(Description *)> vInfos(raw, [](Description *p) {
+        if (p)
+            free(p);
+    });
 
     if (ret != 0 || raw == nullptr || vNums <= 0) {
         VIRTRUST_LOG_INFO("|GetVmInfo|END|returnF||Get all vm descriptions failed.");
         return MigrateSessionRc::ERROR;
     }
 
-    const std::string& uuid = sessionId_;
+    const std::string &uuid = sessionId_;
 
     for (int i = 0; i < vNums; ++i) {
         if (std::strncmp(vInfos.get()[i].uuid, uuid.c_str(), sizeof(vInfos.get()[i].uuid)) == 0) {
@@ -637,7 +641,8 @@ MigrateSessionRc MigrationSession::OnStartMigrationRequestReceived()
     return MigrateSessionRc::OK;
 }
 
-MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::VRsourceInfoRequest *request)
+MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::VRsourceInfoRequest *request,
+                                                                 int32_t &result)
 {
     if (state_ != State::Transferring) {
         Cleanup();
@@ -662,10 +667,11 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
     auto vmInfo = DescriptionFromProto(protosDesc);
     ret = CreateVRoot(&vmInfo);
     if (ret != 0) {
+        result = ret;
         EnterState(State::Failed);
         Cleanup();
-        VIRTRUST_LOG_ERROR(
-            "|OnTransferDataRequestReceived|END|returnF|domain name: {}|CreateVRoot failed.", domainName_);
+        VIRTRUST_LOG_ERROR("|OnTransferDataRequestReceived|END|returnF|domain name: {}|CreateVRoot failed.",
+                           domainName_);
         return MigrateSessionRc::ERROR;
     }
 

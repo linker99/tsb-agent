@@ -13,7 +13,7 @@
 
 namespace virtrust::mock {
 
-// Test fixture for TSB agent interface tests
+// Test fixture for Tsb agent interface tests
 class TsbAgentItfTest : public ::testing::Test {
 protected:
     // Helper method to verify that a function returns OK
