@@ -1,0 +1,33 @@
+version: '1.0'
+name: pipeline-20251111
+displayName: pipeline-20251111
+triggers:
+  trigger: auto
+  push:
+    branches:
+      prefix:
+        - ''
+stages:
+  - name: stage-9b022c7d
+    displayName: virtrust
+    strategy: naturally
+    trigger: auto
+    executor: []
+    steps:
+      - step: build@gcc
+        name: build_gcc
+        displayName: GCC 构建
+        gccVersion: '9.4'
+        commands:
+          - '# 新建build目录，切换到build目录'
+          - 'mkdir build && cd build '
+          - '# 生成Unix平台的makefiles文件并执行构建'
+          - cmake -G 'Unix Makefiles' ../ && make -j
+        artifacts:
+          - name: BUILD_ARTIFACT
+            path:
+              - ./bin
+        caches: []
+        notify: []
+        strategy:
+          retry: '0'
