@@ -1,0 +1,6 @@
+{
+    "caPath": "ca-cert.pem",
+    "certPath": "server-cert.pem",
+    "skPath": "server-sk.pem",
+    "ip": "127.0.0.1"
+}

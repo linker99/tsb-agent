@@ -1,0 +1,168 @@
+syntax = "proto3";
+
+package virtrust.protos;
+
+// The greeting service definition.
+service MigrationService {
+  // 1: 准备迁移
+  rpc PrepareMigration (PrepareMigRequest) returns (PrepareMigReply) {}
+
+  // 2: 交换公钥
+  rpc ExchangePkAndReport(EXchangePkAndReportRequest) returns(EXchangePkAndReportReply) {}
+
+
+  //3: 开始迁移
+  rpc StartMigration(StartMigRequest) returns(StartMigReply) {}
+
+
+  // 4：迁移虚机密码资源
+  rpc  SendVRsourceData(VRsourceInfoRequest) returns(VRsourceInfoReply) {}
+
+  //5: 通知迁移结果
+  rpc  NotifyVRMigrateResult(MigrateResultRequest) returns (MigrateResultReply) {}
+
+  // 6: 迁移请求
+  rpc DomainMigrate(DomainMigraterRequest) returns (DomainMigraterReply) {}
+
+}
+
+message DomainMigraterRequest {
+    string domainName = 1;
+    string uuid = 2;
+    string destUri = 3;
+    string localUri = 4;
+    uint32 flags = 5;
+}
+
+message DomainMigraterReply {
+    uint32 result = 1;
+}
+
+message PrepareMigRequest {
+     string domainName = 1;
+     string uuid = 2;
+     string destUri = 3;
+     string localUri = 4;
+     uint32 flags = 5;
+}
+
+message PrepareMigReply {
+     uint32 result = 1;
+}
+
+message EXchangePkAndReportRequest {
+    string domainName = 1;
+    string uuid = 2;
+    string cert = 3;
+    bytes publicKey = 4;  //公钥
+    TrustReportNew hostReport = 5; // struct
+    TrustReportNew vmReport = 6; // struct
+}
+
+message EXchangePkAndReportReply{
+    uint32 result = 1;
+    string domainName = 2;
+    string uuid = 3;
+    string cert = 4;
+    bytes publicKey = 5;  //公钥
+    TrustReportNew hostReport = 6; // struct
+    TrustReportNew vmReport = 7; // struct
+}
+
+message StartMigRequest {
+     string domainName = 1;
+     string uuid = 2;
+}
+
+message StartMigReply {
+     uint32 result = 1;
+}
+
+message VRsourceInfoRequest{
+   bytes cipherData = 1;
+   string uuid = 2;
+   Description vtpcmInfo = 3;
+}
+
+message  VRsourceInfoReply{
+  uint32 result = 1;
+}
+
+message MigrateResultRequest {
+  uint32 result = 1;
+  string domainName = 2;
+  string uuid = 3;
+}
+
+message MigrateResultReply {
+  uint32 result = 1;
+}
+
+// Trust report structures for migration
+message GlobalControlPolicy {
+  uint32 be_size = 1;
+  uint32 be_boot_measure_on = 2;
+  uint32 be_program_measure_on = 3;
+  uint32 be_dynamic_measure_on = 4;
+  uint32 be_boot_control = 5;
+  uint32 be_program_control = 6;
+  uint32 be_tsb_flag1 = 7;
+  uint32 be_tsb_flag2 = 8;
+  uint32 be_tsb_flag3 = 9;
+  uint32 be_program_measure_mode = 10;
+  uint32 be_program_use_cache = 11;
+  uint32 be_dmeasure_use_cache = 12;
+  uint32 be_dmeasure_max_busy_delay = 13;
+  uint32 be_process_dmeasure_ref_mode = 14;
+  uint32 be_process_dmeasure_match_mode = 15;
+  uint32 be_process_measure_match_mode = 16;
+  uint32 be_process_dmeasure_lib_mode = 17;
+  uint32 be_process_verify_lib_mode = 18;
+  uint32 be_process_dmeasure_sub_process_mode = 19;
+  uint32 be_process_dmeasure_old_process_mode = 20;
+  uint32 be_process_dmeasure_interval = 21;
+}
+
+message TrustReportContentNew {
+  uint64 be_host_report_time = 1;
+  uint64 be_host_startup_time = 2;
+  bytes host_id = 3; // MAX_HOST_ID_SIZE (32 bytes)
+  bytes tpcm_id = 4; // MAX_TPCM_ID_SIZE (32 bytes)
+  GlobalControlPolicy global_control_policy = 5;
+  uint32 be_eval = 6;
+  uint32 be_host_ip = 7;
+  uint32 be_illegal_program_load = 8;
+  uint32 be_illegal_lib_load = 9;
+  uint32 be_illegal_kernel_module_load = 10;
+  uint32 be_illegal_file_access = 11;
+  uint32 be_illegal_device_access = 12;
+  uint32 be_illegal_network_inreq = 13;
+  uint32 be_illegal_network_outreq = 14;
+  uint32 be_process_code_measure_fail = 15;
+  uint32 be_process_data_measure_fail = 16;
+  uint32 be_notify_fail = 17;
+  uint32 be_boot_measure_result = 18;
+  uint32 be_boot_times = 19;
+  uint32 be_tpcm_time = 20;
+  uint32 be_tpcm_report_time = 21;
+  uint32 be_log_number = 22;
+  bytes log_hash = 23; // DEFAULT_HASH_SIZE (32 bytes)
+  bytes bios_pcr = 24; // DEFAULT_PCR_SIZE (32 bytes)
+  bytes boot_loader_pcr = 25; // DEFAULT_PCR_SIZE (32 bytes)
+  bytes kernel_pcr = 26; // DEFAULT_PCR_SIZE (32 bytes)
+  bytes tsb_pcr = 27; // DEFAULT_PCR_SIZE (32 bytes)
+  bytes boot_pcr = 28; // DEFAULT_PCR_SIZE (32 bytes)
+  uint64 be_nonce = 29;
+}
+
+message TrustReportNew {
+  TrustReportContentNew content = 1;
+  bytes append_data = 2; // MAX_TRUST_REPORT_APPENDDATA (50KB)
+}
+
+// VTPCM description structure
+message Description {
+  int32 state = 1;    // 启动，挂起等状态
+  bytes name = 2;     // 名称，创建时有hw设置 (255 bytes)
+  bytes uuid = 3;     // 虚拟机的uuid (37 bytes)
+}
