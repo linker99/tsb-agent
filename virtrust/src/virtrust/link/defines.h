@@ -17,6 +17,8 @@ enum class LinkRc : uint32_t {
     ERROR = 1,
 };
 
+constexpr uint16_t WAIT_RUN_SERVER_SECONDS = 2;
+
 struct LinkConfig {
     std::string caPath;
     std::string certPath;

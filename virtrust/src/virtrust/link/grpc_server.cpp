@@ -29,7 +29,7 @@ LinkRc GrpcServer::Start()
     server_thread_ = std::make_unique<std::thread>([this]() { RunServer(); });
 
     // 等待服务器启动
-    std::this_thread::sleep_for(std::chrono::seconds(2)); // 2秒之后启动
+    std::this_thread::sleep_for(std::chrono::seconds(WAIT_RUN_SERVER_SECONDS)); // 2秒之后启动
 
     if (!running_) {
         return LinkRc::ERROR;

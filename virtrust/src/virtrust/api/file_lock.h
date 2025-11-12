@@ -28,7 +28,7 @@ public:
             }
 
             // Try to acquire the lock
-            if (flock(fd_, LOCK_EX | LOCK_NB) == -1) {
+            if (flock(fd_, LOCK_EX) == -1) {
                 VIRTRUST_LOG_ERROR("Failed to lock file {}, msg {}", fileName, strerror(errno));
                 close(fd_);
                 fd_ = -1;

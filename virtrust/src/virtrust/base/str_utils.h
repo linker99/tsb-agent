@@ -139,6 +139,6 @@ inline bool startsWithIgnoreSpaces(const std::string &str, const std::string_vie
 inline std::string ReadFile(const std::string &filename)
 {
     std::ifstream file(filename);
-    return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+    return {std::istreambuf_iterator<char>(file), std::istreambuf_iterator<char>()};
 }
 } // namespace virtrust

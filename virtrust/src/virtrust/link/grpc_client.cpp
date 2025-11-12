@@ -64,7 +64,7 @@ int32_t RpcClient::PrepareMigration(uint32_t timeout, const protos::PrepareMigRe
         channel_creds = grpc::SslCredentials(ssl_opts);
     }
 
-    std::shared_ptr<grpc::Channel> channel = grpc::CreateChannel(serverAddress, channel_creds);
+    auto channel = grpc::CreateChannel(serverAddress, channel_creds);
     std::unique_ptr<protos::MigrationService::Stub> stub = protos::MigrationService::NewStub(channel);
 
     // 创建 ClientContext

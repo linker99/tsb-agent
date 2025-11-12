@@ -27,7 +27,7 @@ private:
     OpRc CheckOptions(int longindex);
     std::string domainName_ = "unknown";
     unsigned int flags_ = 0;
-    bool isOnlyTsb_ = false;
+    bool onlyTsb_ = false;
 };
 
 } // namespace virtrust

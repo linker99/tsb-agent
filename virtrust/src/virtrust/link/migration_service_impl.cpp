@@ -189,9 +189,8 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
         response->set_result(1);
         return grpc::Status::OK;
     }
-    LinkConfig config;
+    LinkConfig config = ConfigMgr::Instance().GetLinkConfig();
     config.ip = destIp;
-    config.port = LIBVIRTRUSTD_SERVER_PORT;
     RpcClient client(config);
 
     auto &mgr = SessionManager::GetInstance();

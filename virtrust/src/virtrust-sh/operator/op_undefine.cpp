@@ -30,7 +30,7 @@ OpRc OpUndefine::Exec()
         VIRTRUST_LOG_ERROR("Failed to establish connection to: {}", config_.uri);
         return OpRc::ERROR;
     }
-    return ParseVirtrustRc(DomainUndefine(conn_, domainName_, flags_, isOnlyTsb_));
+    return ParseVirtrustRc(DomainUndefine(conn_, domainName_, flags_, onlyTsb_));
 }
 
 OpRc OpUndefine::CheckOptions(int longindex)
@@ -48,7 +48,7 @@ OpRc OpUndefine::CheckOptions(int longindex)
         }
         flags_ = DOMAIN_UNDEFINE_KEEP_NVRAM;
     } else if (longindex == 2) { // --only-tsb
-        isOnlyTsb_ = true;
+        onlyTsb_ = true;
     } else {
         fmt::print("Invalid option index: {}\n", longindex);
         PrintUsage();
