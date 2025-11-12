@@ -168,46 +168,25 @@ TSB-agent/virtrust/
 
 ### Core Components
 
-## External Dependencies
-- **OpenSSL 3.3.2** - Cryptographic operations (built statically)
-- **libboundscheck** - Memory safety and bounds checking
-- **RapidJSON** - JSON parsing and generation
-- **libvirt** - Virtualization API integration
-- **libguestfs** - Guest filesystem access
-- **libxml2** - XML processing
-
-## Features
-
-### Domain Management API
-- **VM Lifecycle**: Create, start, stop, destroy, migrate, list virtual machine domains
-- **Trust Measurement**: Boot chain validation and measurement verification
-- **Security Policy**: Configurable security policies and controls
-- **Resource Management**: Memory, CPU, and storage resource allocation
-
-### vTPCM Management
-- **Virtual TPM**: Creation, startup, stop, and removal of virtual TPM instances
-- **Trust Reporting**: Generation and verification of trust reports
-- **Migration Support**: Secure migration of trusted VMs between hosts
-- **Policy Control**: Security policy enforcement and management
-
-### Command Line Interface
-- **virtrust-sh**: Interactive shell for domain management operations
-- **Operators**: Specialized commands for different operations
-- **Batch Processing**: Support for scriptable operations
-
-### Security Architecture
-- **Trust Chain Validation**: BIOS → bootloader → kernel → TSB validation
-- **Memory Safety**: Bounds checking and secure memory management
-- **Cryptographic Security**: SM3 hash algorithm implementation
-- **Secure Migration**: Encrypted VM migration with certificate verification
-
 ## Building from Source
 
 ### Prerequisites
-- **openEuler 24.03 LTS SP3** or compatible Linux distribution
-- **CMake 3.14.1+**
-- **GCC 8+** or **Clang 10+** with C++17 support
-- **Git**
+
+Supporting OS:
+- openEuler 24.03 SP1
+- openEuler 24.03 SP2
+
+```bash
+# c++ toolchain
+sudo dnf install gcc g++ cmake make
+
+# compile dependencies
+sudo dnf install grpc grpc-devel grpc-plugins protobuf-devel protobuf-compiler
+sudo dnf install libboundscheck-devel
+
+# run-time dependencies
+sudo dnf install libxml2-devel libguestfs-devel openssl-devel libvirt-devel
+```
 
 ### Build Commands
 
@@ -285,48 +264,3 @@ genhtml coverage.info --output-directory coverage_report
 # Or use clang-format directly
 find src -name "*.cpp" -o -name "*.h" | xargs clang-format -i
 ```
-
-## Security Considerations
-
-### Trust Chain Validation
-The system implements complete trust chain validation:
-1. **BIOS/UEFI** measurements
-2. **Bootloader** integrity verification
-3. **Kernel** module verification
-4. **TSB Agent** validation
-5. **Application** layer measurements
-
-### Memory Safety
-- Comprehensive bounds checking with libboundscheck
-- Secure memory allocation and deallocation
-- Protection against buffer overflows and memory corruption
-- Automatic memory leak detection in debug builds
-
-### Cryptographic Security
-- SM3 hash algorithm implementation for Chinese cryptographic standards
-- Certificate-based authentication for migration
-- Encrypted communication channels
-- Secure key storage and management
-
-## Contributing
-
-### Development Workflow
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes with proper tests
-4. Ensure code formatting (`./format-all.sh`)
-5. Run tests (`ctest --output-on-failure`)
-6. Submit a pull request
-
-### Code Style
-- Follow Google C++ Style Guide
-- Use clang-format for consistent formatting
-- Include comprehensive unit tests
-- Document public APIs with Doxygen
-- Use meaningful commit messages
-
-### Testing Requirements
-- All new features must include unit tests
-- Maintain code coverage above 80%
-- Test both positive and negative scenarios
-- Include integration tests for complex workflows
