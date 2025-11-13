@@ -15,7 +15,7 @@ Source5:        libboundscheck.tar.gz
 BuildRequires:  gcc, make
 BuildRequires:  gcc-c++ >= 7, cmake >= 3.14
 # Optional devel-time dependencies if using system libraries
-#BuildRequires:  rapidjson-devel, spdlog-devel, gtest-devel, libboundscheck-devel
+#BuildRequires:  rapidjson-devel, spdlog-devel, gtest-devel, libboundscheck
 
 # Runtime Requires
 Requires:       libvirt-devel, libxml2-devel, openssl-devel, libguestfs-devel
@@ -39,8 +39,8 @@ virtualization scenarios on openEuler.
 %prep
 %autosetup -n %{name}-%{version}
 
-# 将依赖包解压到 CMake 期望的目录：build/deps/src
-# 注意目录命名需与 cmake/deps/*.cmake 中 ExternalProject 名称一致
+# Extract dependency packages to directories expected by CMake: build/deps/src
+# Note: Directory names must match ExternalProject names in cmake/deps/*.cmake
 #   - googletest
 #   - openssl (BUILD_IN_SOURCE On)
 #   - rapidjson
@@ -90,18 +90,19 @@ install -d -m 750 %{buildroot}%{_bindir}
 install -d -m 750 %{buildroot}%{_includedir}/%{name}
 install -d -m 750 %{buildroot}%{_sysconfdir}/%{name}
 install -d -m 750 %{buildroot}%{_localstatedir}/log/%{name}
+install -d -m 750 %{buildroot}%{_sysconfdir}/virtrust
 
-# 库文件
+# Library files
 install -m 550 %{lib_out_dir}/libvirtrust-shared.so      %{buildroot}%{_libdir}
 
-# 可执行文件
+# Executable files
 install -m 550 %{bin_out_dir}/virtrust-sh                %{buildroot}%{_bindir}
 install -m 550 %{bin_out_dir}/libvirtrustd               %{buildroot}%{_bindir}
 
-# 配置文件
-install -pm 644 %{root_dir}/test/data/config.json      %{_sysconfdir}/virtrust/config.json
+# Configuration files
+install -pm 644 %{root_dir}/test/data/config.json        %{buildroot}%{_sysconfdir}/virtrust/config.json
 
-# 头文件（如果项目有 include/）
+# Header files (if project has include/)
 if [ -d include ]; then
     cp -a include/* %{buildroot}%{_includedir}/%{name}/
 fi
