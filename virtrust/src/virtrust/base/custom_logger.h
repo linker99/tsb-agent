@@ -58,8 +58,7 @@ public:
 
     /**
      * 初始化日志相关
-     * @param path[IN] 日志路径 nullptr
-     * 不输出到文件，要输出到文件时是带文件名的路径，路径需存在。
+     * @param path[IN] 日志路径 nullptr不输出到文件，要输出到文件时是带文件名的绝对路径，路径需存在，长度[1, 4096]。
      * @param logLevel[IN] 日志级别 默认INFO。
      * @param rotationFileSize[IN]
      * 单个日志文件大小，单位字节bytes,默认20*1024*1024*1024（20M）范围[1*1024*1024,500*1024*1024]。
