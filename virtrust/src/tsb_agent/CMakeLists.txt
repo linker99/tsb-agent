@@ -4,10 +4,13 @@
 if(USE_MOCK_TSB_AGENT)
   add_subdirectory(mock)
 else()
-  add_library(tsb-agent INTERFACE)
-  file(COPY /root/libinterfac.so DESTINATION ${CMAKE_DEPS_LIBDIR})
-  target_link_directories(tsb-agent INTERFACE ${CMAKE_DEPS_LIBDIR})
-  target_link_libraries(tsb-agent INTERFACE libinterfac.so)
+  add_library(tsb-agent STATIC tsb_agent_adaptor.cpp)
+  set_target_properties(tsb-agent PROPERTIES
+          POSITION_INDEPENDENT_CODE ON
+  )
+  target_link_libraries(tsb-agent PRIVATE dl)
+  target_include_directories(tsb-agent PRIVATE ${CMAKE_DEPS_INCLUDEDIR}
+          $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 endif()
 
 # NOTE Make sure targets are linekd to tsb-agent

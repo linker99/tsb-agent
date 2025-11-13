@@ -1,34 +1,60 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
 
-ExternalProject_Add(
-  googletest
-  # use gitee first
-  GIT_REPOSITORY https://gitee.com/mirrors/googletest.git
-  GIT_TAG v1.15.2
-  GIT_SHALLOW On
-  # alternatively, download through gitub
-  URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.tar.gz
-  URL_HASH
-    SHA256=7b42b4d6ed48810c5362c265a17faebe90dc2373c885e5216439d37927f02926
-  CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=On #
-             -DCMAKE_CXX_STANDARD=17 #
-             -DCMAKE_C_STANDARD_REQUIRED=Yes #
-             -DCMAKE_INSTALL_PREFIX=${CMAKE_DEPS_PREFIX} #
-             -DBUILD_GMOCK=On #
-  PREFIX ${CMAKE_DEPS_PREFIX}
-  UPDATE_COMMAND ""
-  BUILD_BYPRODUCTS ${CMAKE_DEPS_LIBDIR}/libgtest${CMAKE_STATIC_LIBRARY_SUFFIX}
-  BUILD_BYPRODUCTS
-    ${CMAKE_DEPS_LIBDIR}/libgtest_main${CMAKE_STATIC_LIBRARY_SUFFIX}
-  BUILD_BYPRODUCTS ${CMAKE_DEPS_LIBDIR}/libgmock${CMAKE_STATIC_LIBRARY_SUFFIX}
-  BUILD_BYPRODUCTS
-    ${CMAKE_DEPS_LIBDIR}/libgmock_main${CMAKE_STATIC_LIBRARY_SUFFIX}
-  EXCLUDE_FROM_ALL true
-  DOWNLOAD_EXTRACT_TIMESTAMP On
-  LOG_DOWNLOAD On
-  LOG_CONFIGURE On
-  LOG_BUILD On
-  LOG_INSTALL On)
+set(_gtest_src "${CMAKE_DEPS_SRCDIR}/googletest")
+if(EXISTS "${_gtest_src}")
+  message(STATUS "Using local source for googletest: ${_gtest_src}")
+  ExternalProject_Add(
+    googletest
+    SOURCE_DIR ${_gtest_src}
+    CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=On #
+               -DCMAKE_CXX_STANDARD=17 #
+               -DCMAKE_C_STANDARD_REQUIRED=Yes #
+               -DCMAKE_INSTALL_PREFIX=${CMAKE_DEPS_PREFIX} #
+               -DBUILD_GMOCK=On #
+    PREFIX ${CMAKE_DEPS_PREFIX}
+    DOWNLOAD_COMMAND ""
+    UPDATE_COMMAND ""
+    BUILD_BYPRODUCTS ${CMAKE_DEPS_LIBDIR}/libgtest${CMAKE_STATIC_LIBRARY_SUFFIX}
+    BUILD_BYPRODUCTS
+      ${CMAKE_DEPS_LIBDIR}/libgtest_main${CMAKE_STATIC_LIBRARY_SUFFIX}
+    BUILD_BYPRODUCTS ${CMAKE_DEPS_LIBDIR}/libgmock${CMAKE_STATIC_LIBRARY_SUFFIX}
+    BUILD_BYPRODUCTS
+      ${CMAKE_DEPS_LIBDIR}/libgmock_main${CMAKE_STATIC_LIBRARY_SUFFIX}
+    EXCLUDE_FROM_ALL true
+    LOG_CONFIGURE On
+    LOG_BUILD On
+    LOG_INSTALL On)
+else()
+  ExternalProject_Add(
+    googletest
+    # use gitee first
+    GIT_REPOSITORY https://gitee.com/mirrors/googletest.git
+    GIT_TAG v1.15.2
+    GIT_SHALLOW On
+    # alternatively, download through gitub
+    URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.tar.gz
+    URL_HASH
+      SHA256=7b42b4d6ed48810c5362c265a17faebe90dc2373c885e5216439d37927f02926
+    CMAKE_ARGS -DCMAKE_POSITION_INDEPENDENT_CODE=On #
+               -DCMAKE_CXX_STANDARD=17 #
+               -DCMAKE_C_STANDARD_REQUIRED=Yes #
+               -DCMAKE_INSTALL_PREFIX=${CMAKE_DEPS_PREFIX} #
+               -DBUILD_GMOCK=On #
+    PREFIX ${CMAKE_DEPS_PREFIX}
+    UPDATE_COMMAND ""
+    BUILD_BYPRODUCTS ${CMAKE_DEPS_LIBDIR}/libgtest${CMAKE_STATIC_LIBRARY_SUFFIX}
+    BUILD_BYPRODUCTS
+      ${CMAKE_DEPS_LIBDIR}/libgtest_main${CMAKE_STATIC_LIBRARY_SUFFIX}
+    BUILD_BYPRODUCTS ${CMAKE_DEPS_LIBDIR}/libgmock${CMAKE_STATIC_LIBRARY_SUFFIX}
+    BUILD_BYPRODUCTS
+      ${CMAKE_DEPS_LIBDIR}/libgmock_main${CMAKE_STATIC_LIBRARY_SUFFIX}
+    EXCLUDE_FROM_ALL true
+    DOWNLOAD_EXTRACT_TIMESTAMP On
+    LOG_DOWNLOAD On
+    LOG_CONFIGURE On
+    LOG_BUILD On
+    LOG_INSTALL On)
+endif()
 
 import_static_lib_from(libgtest googletest)
 import_static_lib_from(libgtest_main googletest)

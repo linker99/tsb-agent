@@ -40,7 +40,8 @@ libvirt 虚拟化层
 - **权限**：需要足够的权限来管理虚拟机
 - **依赖**：libvirt、gRPC 相关库
 
-### 安装步骤
+
+### 源码安装步骤
 
 1. **编译安装**：
 ```bash
@@ -55,7 +56,7 @@ sudo cmake --install build
 2. **创建配置文件**：
 ```bash
 sudo mkdir -p /etc/virtrust
-sudo cp config-example.json /etc/virtrust/virtrustd.json
+sudo cp test/data/config.json /etc/virtrust/config.json
 ```
 
 3. **创建日志目录**：
@@ -65,22 +66,17 @@ sudo touch /var/log/virtrustd.log
 sudo chmod 644 /var/log/virtrustd.log
 ```
 
-## 配置管理
-
-### 基本语法
-
-```bash
-virtrustd --config <config_file> [options]
+### RPM 部署
+1. **构建 RPM 包**
+```shell
+sh rpm/build_rpm.sh
+```
+2. **安装**
+```shell
+sudo rpm -ivh ~/rpmbuild/RPMS/aarch64/TSB-agent-1.0.0-1.aarch64.rpm
 ```
 
-### 命令行选项
-
-| 选项 | 长选项 | 参数 | 描述 |
-|------|--------|------|------|
-| 无 | `--config` | 文件路径 | 配置文件路径（必需） |
-| `-d` | `--debug` | 无 | 启用调试模式 |
-| 无 | `--help` | 无 | 显示帮助信息 |
-| 无 | `--version` | 无 | 显示版本信息 |
+## 配置管理
 
 ### 配置文件格式
 
@@ -115,6 +111,15 @@ sudo virtrustd --config /etc/virtrust/virtrustd.json
 # 调试模式启动
 sudo virtrustd --config /etc/virtrust/virtrustd.json --debug
 ```
+
+### 命令行选项
+
+| 选项 | 长选项 | 参数 | 描述 |
+|------|--------|------|------|
+| 无 | `--config` | 文件路径 | 配置文件路径（必需） |
+| `-d` | `--debug` | 无 | 启用调试模式 |
+| 无 | `--help` | 无 | 显示帮助信息 |
+| 无 | `--version` | 无 | 显示版本信息 |
 
 ### 系统服务配置
 
