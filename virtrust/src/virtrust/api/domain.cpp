@@ -425,7 +425,7 @@ VirtrustRc CreateDomainAndVRoot(const std::unique_ptr<ConnCtx> &conn, const std:
         (void)UndefineDomainWithRetry(domain, domainName, VIR_DOMAIN_UNDEFINE_NVRAM, libvirt);
         return VirtrustRc::ERROR;
     }
-    VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||");
+    VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||create domain:{} success", domainName);
     return VirtrustRc::OK;
 }
 
@@ -530,7 +530,7 @@ bool ConsistencyCheck(const std::unordered_map<std::string, Description> &tsbVmM
                 std::make_pair(LogLevel::ERROR,
                                fmt::format("Inconsistent vm (tsb uuid:{}, name {}) "
                                            "its data is inconsistent with tsb, consider update this "
-                                           "instance by \"virsh start/destroy DOMAIN_NAME\", or\"virtrust-sh "
+                                           "instance by \"virsh start/destroy DOMAIN_NAME\", or \"virtrust-sh "
                                            "start/destroy --only-tsb DOMAIN_UUID\".",
                                            tsb.first, tsb.second.name)));
             out = false;
@@ -607,7 +607,7 @@ VirtrustRc CheckMaxDomainCount()
 
 VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<std::string> &args)
 {
-    VIRTRUST_LOG_DEBUG("|DomainCreate||START||");
+    VIRTRUST_LOG_DEBUG("|DomainCreate||START||start domain create");
     if (conn == nullptr) {
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF|| ConnCtx is nullptr.");
         return VirtrustRc::ERROR;
@@ -665,7 +665,7 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
             return VirtrustRc::ERROR;
         }
     }
-    VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||");
+    VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||create domainNa:{} success", domainName);
     return VirtrustRc::OK;
 }
 
@@ -719,14 +719,14 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
         VIRTRUST_LOG_ERROR("stop vRoot failed: {}", domainName);
         return VirtrustRc::ERROR;
     }
-    VIRTRUST_LOG_DEBUG("|DomainDestroy||END|returnS||domainName: {}", domainName);
+    VIRTRUST_LOG_DEBUG("|DomainDestroy||END|returnS||destroy domainName: {} success", domainName);
     return VirtrustRc::OK;
 }
 
 VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
                       std::unordered_map<std::string, DomainInfo> &domainInfos, bool printErrToCli)
 {
-    VIRTRUST_LOG_DEBUG("|DomainList||START||");
+    VIRTRUST_LOG_DEBUG("|DomainList||START||start list");
     if (conn == nullptr) {
         VIRTRUST_LOG_ERROR("|DomainList|END|returnF|| ConnCtx is nullptr.");
         return VirtrustRc::ERROR;
@@ -786,14 +786,14 @@ VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
     if (virtVmInfo != nullptr) {
         free(virtVmInfo);
     }
-    VIRTRUST_LOG_DEBUG("|DomainList|END|returnS||");
+    VIRTRUST_LOG_DEBUG("|DomainList|END|returnS||list domain success");
     return VirtrustRc::OK;
 }
 
 VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName,
                          const std::string &destUri, unsigned int flags)
 {
-    VIRTRUST_LOG_DEBUG("|DomainMigrate||START||");
+    VIRTRUST_LOG_DEBUG("|DomainMigrate||START||start migrate");
     if (conn == nullptr) {
         VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|| ConnCtx is nullptr.");
         return VirtrustRc::ERROR;
@@ -855,7 +855,7 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
         return VirtrustRc::ERROR;
     }
 
-    VIRTRUST_LOG_DEBUG("|DomainMigrate||END|returnS||domainName: {}", domainName);
+    VIRTRUST_LOG_DEBUG("|DomainMigrate||END|returnS||migrate domainName: {} success", domainName);
     return VirtrustRc::OK;
 }
 
@@ -914,14 +914,14 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
         VIRTRUST_LOG_ERROR("failed to start domain: {}", domainName);
         return VirtrustRc::ERROR;
     }
-    VIRTRUST_LOG_DEBUG("|DomainStart||END|returnS|domainName: {}", domainName);
+    VIRTRUST_LOG_DEBUG("|DomainStart||END|returnS|start domainName: {} success", domainName);
     return VirtrustRc::OK;
 }
 
 VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags,
                           bool isOnlyTsb)
 {
-    VIRTRUST_LOG_DEBUG("|DomainUndefine||START||domainName: {}", domainName);
+    VIRTRUST_LOG_DEBUG("|DomainUndefine||START||undefine domainName: {}", domainName);
     if (conn == nullptr) {
         VIRTRUST_LOG_ERROR("|DomainUndefine|END|returnF|| ConnCtx is nullptr.");
         return VirtrustRc::ERROR;
@@ -981,7 +981,7 @@ VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::strin
                            uuid, domainName);
         return VirtrustRc::ERROR;
     }
-    VIRTRUST_LOG_DEBUG("|DomainUndefine|END|returnS||domainName: {}", domainName);
+    VIRTRUST_LOG_DEBUG("|DomainUndefine|END|returnS||undefine domainName: {} success", domainName);
     return VirtrustRc::OK;
 }
 } // namespace virtrust
