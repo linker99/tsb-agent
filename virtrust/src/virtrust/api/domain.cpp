@@ -416,7 +416,7 @@ VirtrustRc CreateDomainAndVRoot(const std::unique_ptr<ConnCtx> &conn, const std:
         return VirtrustRc::ERROR;
     }
     if (!allowStoreMeasurements) {
-        VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||");
+        VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||create domainName : {} success", domainName);
         return VirtrustRc::OK;
     }
     std::string uuidStr(uuid);
@@ -425,7 +425,7 @@ VirtrustRc CreateDomainAndVRoot(const std::unique_ptr<ConnCtx> &conn, const std:
         (void)UndefineDomainWithRetry(domain, domainName, VIR_DOMAIN_UNDEFINE_NVRAM, libvirt);
         return VirtrustRc::ERROR;
     }
-    VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||create domain:{} success", domainName);
+    VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||create domainName: {} success", domainName);
     return VirtrustRc::OK;
 }
 
@@ -665,7 +665,7 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
             return VirtrustRc::ERROR;
         }
     }
-    VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||create domainNa:{} success", domainName);
+    VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||create domainName : {} success", domainName);
     return VirtrustRc::OK;
 }
 
@@ -698,6 +698,7 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
             VIRTRUST_LOG_ERROR("stop vRoot failed, uuid: {}", uuidStr);
             return VirtrustRc::ERROR;
         }
+        VIRTRUST_LOG_DEBUG("|DomainDestroy||END|returnS||destroy domainName: {} success", domainName);
         return VirtrustRc::OK;
     }
     auto &libvirt = Libvirt::GetInstance();
@@ -887,6 +888,7 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
             VIRTRUST_LOG_DEBUG("|DomainStart|END|returnF||start vRoot failed,UUID: {}", domainName);
             return VirtrustRc::ERROR;
         }
+        VIRTRUST_LOG_DEBUG("|DomainStart||END|returnS|start domainName: {} success", domainName);
         return VirtrustRc::OK;
     }
     if (flags != DOMAIN_START_NONE) {
