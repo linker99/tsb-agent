@@ -87,8 +87,7 @@ sudo rpm -ivh ~/rpmbuild/RPMS/aarch64/TSB-agent-1.0.0-1.aarch64.rpm
     "caPath": "ca-cert.pem",
     "certPath": "server-cert.pem",
     "skPath": "server-sk.pem",
-    "ip": "127.0.0.1",
-    "udsPath": "/tmp/grpc.sock"
+    "ip": "127.0.0.1"
 }
 ```
 
@@ -98,7 +97,6 @@ sudo rpm -ivh ~/rpmbuild/RPMS/aarch64/TSB-agent-1.0.0-1.aarch64.rpm
 - `cert_path`：服务器证书文件路径
 - `sk_path`：服务器私钥文件路径，默认为 "server-sk.pem"
 - `ip`：服务器监听地址，默认为 "127.0.0.1"
-- `uds_path`：Unix Domain Socket 路径，默认为 "/tmp/grpc.sock"
 
 ## 运行和管理
 
