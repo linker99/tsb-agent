@@ -210,6 +210,8 @@ grpc::Status MigrationServiceImpl::DomainMigrate(grpc::ServerContext *context,
     auto ret = session->Start();
     session->Cleanup();
     if (ret != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|MigrationServiceImpl DomainMigrate|END|returnF|domain : {} migrate failed.",
+                           request->domainname());
         response->set_result(1);
         return grpc::Status::OK;
     }
