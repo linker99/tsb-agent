@@ -90,6 +90,7 @@ install -d -m 750 %{buildroot}%{_bindir}
 install -d -m 750 %{buildroot}%{_includedir}/%{name}
 install -d -m 750 %{buildroot}%{_sysconfdir}/%{name}
 install -d -m 750 %{buildroot}%{_localstatedir}/log/%{name}
+install -d -m 750 %{buildroot}%{_sysconfdir}/virtrust
 
 # 库文件
 install -m 550 %{lib_out_dir}/libvirtrust-shared.so      %{buildroot}%{_libdir}
@@ -99,7 +100,7 @@ install -m 550 %{bin_out_dir}/virtrust-sh                %{buildroot}%{_bindir}
 install -m 550 %{bin_out_dir}/libvirtrustd               %{buildroot}%{_bindir}
 
 # 配置文件
-install -pm 644 %{root_dir}/test/data/config.json      %{_sysconfdir}/virtrust/config.json
+install -pm 644 %{root_dir}/test/data/config.json        %{buildroot}%{_sysconfdir}/virtrust/config.json
 
 # 头文件（如果项目有 include/）
 if [ -d include ]; then
