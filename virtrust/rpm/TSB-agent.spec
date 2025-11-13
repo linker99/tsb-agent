@@ -64,7 +64,7 @@ tar -xzf %{SOURCE4} -C "$DEPS_SRC/spdlog" --strip-components=1
 mkdir -p "$DEPS_SRC/libboundscheck-src"
 tar -xzf %{SOURCE5} -C "$DEPS_SRC/libboundscheck-src" --strip-components=1
 
-%global root_dir    %{name}-%{version}
+%global root_dir    %{_builddir}/%{name}-%{version}
 %global build_dir   %{_builddir}/%{name}-%{version}/build
 %global lib_out_dir %{build_dir}/lib64
 %global bin_out_dir %{build_dir}/bin

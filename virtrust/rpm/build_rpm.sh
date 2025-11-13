@@ -111,7 +111,6 @@ echo "==> Preparing rpmbuild tree"
 RPMBUILD_ROOT="$HOME/rpmbuild"
 mkdir -p "$RPMBUILD_ROOT"/{SPECS,SRPMS,RPMS,BUILD,BUILDROOT}
 
-# 可以直接用仓库里的 spec，不必复制，但有些人喜欢 copy 一份到 SPECS 里：
 cp -f "$SPEC_FILE" "$RPMBUILD_ROOT/SPECS/"
 
 echo "==> Running rpmbuild"

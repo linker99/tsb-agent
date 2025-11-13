@@ -25,7 +25,7 @@ sudo dnf install gcc g++ cmake make
 
 # 开发库
 sudo dnf install grpc grpc-devel grpc-plugins protobuf-devel protobuf-compiler
-sudo dnf install libboundscheck-devel
+sudo dnf install libboundscheck
 
 # 运行时依赖
 sudo dnf install libxml2-devel libguestfs-devel openssl-devel libvirt-devel
