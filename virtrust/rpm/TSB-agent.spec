@@ -1,5 +1,5 @@
 Name:           TSB-agent
-Version:        1.0.0
+Version:        0.0.1
 Release:        1
 Summary:        Trusted Software Base Agent for openEuler
 Summary(zh_CN): 可信基础软件代理（TSB-agent）
