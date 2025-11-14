@@ -192,7 +192,7 @@ sudo dnf install libxml2-devel libguestfs-devel openssl-devel libvirt-devel
 
 ```bash
 # Clone the repository
-git clone https://gitee.com/jamie-cui/TSB-agent.git
+git clone https://gitee.com/openEuler/TSB-agent.git
 cd TSB-agent/virtrust
 
 # Configure build (Release mode with tests)

@@ -77,7 +77,7 @@ function build_output() {
     pushd build
     cmake .. -DCMAKE_BUILD_TYPE=${build_type} \
         -DBUILD_TEST=${enable_test}\
-        -DUSE_MOCK_TSB_AGENT=On \
+        -DUSE_MOCK_TSB_AGENT=Off \
         -DCMAKE_INSTALL_PREFIX=${OUTPUT_DIR}/virtrust \
     make
     make install

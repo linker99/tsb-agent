@@ -63,7 +63,7 @@ public:
     // Check whether dlopen and dlsym has succeed
     DllibRc CheckOk() const
     {
-        return ok_ ? DllibRc::OK : DllibRc::ERROR;
+        return libptr_ != nullptr ? DllibRc::OK : DllibRc::ERROR;
     }
 
     size_t Size() const
@@ -90,13 +90,15 @@ protected:
 
         // reset to default
         size_ = 0;
-        ok_ = true;
     }
 
     DllibRc SelfDlOpen()
     {
         libptr_ = dlopen(libName_.data(), RTLD_NOW | RTLD_GLOBAL);
-        return libptr_ != nullptr ? DllibRc::OK : DllibRc::ERROR;
+        if (libptr_ == nullptr) {
+            throw std::runtime_error(std::string(dlerror()));
+        }
+        return DllibRc::OK;
     }
 
     template <class R, class... Args> void SelfDlSym(std::string_view funName, DlFun<R, Args...> &outFun)
@@ -106,9 +108,6 @@ protected:
         }
 
         void *funPtr = dlsym(libptr_, funName.data());
-        if (funPtr == nullptr) {
-            ok_ = false;
-        }
         size_++; // always add up internal size counter
         outFun = DlFun<R, Args...>(funName, reinterpret_cast<R (*)(Args...)>(funPtr));
     }
@@ -121,7 +120,6 @@ private:
     // WARNING: DO NOT manually manipulate those pointers
     std::vector<void *> funCache_; // cache DO NOT own pointers, those pointers should read only
     size_t size_ = 0;
-    bool ok_ = true;
 };
 
 // The second argument is the templateHelper which helps template deduction
