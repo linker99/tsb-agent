@@ -25,6 +25,3 @@ target_include_directories(
                       ${CMAKE_DEPS_INCLUDEDIR})
 
 target_link_libraries(virtrust-sh PRIVATE virtrust-sh-obj virtrust-shared)
-
-install(TARGETS virtrust-sh RUNTIME DESTINATION bin PERMISSIONS OWNER_READ
-                                                                OWNER_EXECUTE)

@@ -64,10 +64,9 @@ tar -xzf %{SOURCE4} -C "$DEPS_SRC/spdlog" --strip-components=1
 mkdir -p "$DEPS_SRC/libboundscheck-src"
 tar -xzf %{SOURCE5} -C "$DEPS_SRC/libboundscheck-src" --strip-components=1
 
-%global root_dir    %{_builddir}/%{name}-%{version}
-%global build_dir   %{_builddir}/%{name}-%{version}/build
-%global lib_out_dir %{build_dir}/lib64
-%global bin_out_dir %{build_dir}/bin
+%global root_dir        %{_builddir}/%{name}-%{version}
+%global build_dir       %{_builddir}/%{name}-%{version}/build
+%global output_dir      %{_builddir}/%{name}-%{version}/output
 
 %build
 export CFLAGS="%{optflags}"
@@ -78,34 +77,31 @@ cmake -S . -B build \
     -DCMAKE_CXX_STANDARD=17 \
     -DCMAKE_CXX_STANDARD_REQUIRED=ON \
     -DENABLE_DOWNLOAD_DEPS=Off \
-    -DCMAKE_LIBRARY_OUTPUT_DIRECTORY=%{lib_out_dir} \
-    -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=%{bin_out_dir}
+    -DCMAKE_INSTALL_PREFIX=%{output_dir}
 
 cmake --build build -- -j%{?_smp_build_ncpus}
+
+cmake --install build
 
 %install
 rm -rf %{buildroot}
 install -d -m 750 %{buildroot}%{_libdir}
 install -d -m 750 %{buildroot}%{_bindir}
-install -d -m 750 %{buildroot}%{_includedir}/%{name}
-install -d -m 750 %{buildroot}%{_sysconfdir}/%{name}
-install -d -m 750 %{buildroot}%{_localstatedir}/log/%{name}
+install -d -m 750 %{buildroot}%{_includedir}/virtrust
 install -d -m 750 %{buildroot}%{_sysconfdir}/virtrust
 
 # Library files
-install -m 550 %{lib_out_dir}/libvirtrust-shared.so      %{buildroot}%{_libdir}
+install -m 550 %{output_dir}/lib64/libvirtrust-shared.so        %{buildroot}%{_libdir}
 
 # Executable files
-install -m 550 %{bin_out_dir}/virtrust-sh                %{buildroot}%{_bindir}
-install -m 550 %{bin_out_dir}/libvirtrustd               %{buildroot}%{_bindir}
+install -m 550 %{output_dir}/bin/virtrust-sh                    %{buildroot}%{_bindir}
+install -m 550 %{output_dir}/bin/libvirtrustd                   %{buildroot}%{_bindir}
+
+# Header files
+install -m 644 %{output_dir}/include/virtrust/api/*.h           %{buildroot}%{_includedir}/virtrust
 
 # Configuration files
-install -pm 644 %{root_dir}/test/data/config.json        %{buildroot}%{_sysconfdir}/virtrust/config.json
-
-# Header files (if project has include/)
-if [ -d include ]; then
-    cp -a include/* %{buildroot}%{_includedir}/%{name}/
-fi
+install -pm 644 %{root_dir}/test/data/config.json               %{buildroot}%{_sysconfdir}/virtrust/config.json
 
 %files
 %dir %attr(0750, root, root) %{_sysconfdir}/virtrust/
@@ -114,7 +110,7 @@ fi
 %{_libdir}/libvirtrust-shared.so
 %{_bindir}/virtrust-sh
 %{_bindir}/libvirtrustd
-
+%{_includedir}/virtrust/*.h
 
 %post
 /sbin/ldconfig
