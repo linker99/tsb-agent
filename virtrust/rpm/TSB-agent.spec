@@ -83,9 +83,13 @@ cmake --install build
 
 %install
 rm -rf %{buildroot}
+
+# Directory
 install -d -m 750 %{buildroot}%{_libdir}
 install -d -m 750 %{buildroot}%{_bindir}
 install -d -m 750 %{buildroot}%{_includedir}/virtrust
+install -d -m 755 %{buildroot}%{_includedir}/virtrust/api
+install -d -m 755 %{buildroot}%{_includedir}/virtrust/base
 install -d -m 750 %{buildroot}%{_sysconfdir}/virtrust
 
 # Library files
@@ -96,7 +100,8 @@ install -m 550 %{output_dir}/bin/virtrust-sh                    %{buildroot}%{_b
 install -m 550 %{output_dir}/bin/libvirtrustd                   %{buildroot}%{_bindir}
 
 # Header files
-install -m 644 %{output_dir}/include/virtrust/api/*.h           %{buildroot}%{_includedir}/virtrust
+install -m 644 %{output_dir}/include/virtrust/api/*.h           %{buildroot}%{_includedir}/virtrust/api
+install -m 644 %{output_dir}/include/virtrust/base/*.h          %{buildroot}%{_includedir}/virtrust/base
 
 # Configuration files
 install -pm 644 %{root_dir}/test/data/config.json               %{buildroot}%{_sysconfdir}/virtrust/config.json
@@ -108,7 +113,8 @@ install -pm 644 %{root_dir}/test/data/config.json               %{buildroot}%{_s
 %{_libdir}/libvirtrust-shared.so
 %{_bindir}/virtrust-sh
 %{_bindir}/libvirtrustd
-%{_includedir}/virtrust/*.h
+%{_includedir}/virtrust/api/*.h
+%{_includedir}/virtrust/base/*.h
 
 %post
 /sbin/ldconfig
