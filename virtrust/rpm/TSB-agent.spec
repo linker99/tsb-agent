@@ -12,10 +12,8 @@ Source3:        rapidjson-v1.1.0.tar.gz
 Source4:        spdlog-v1.14.1.tar.gz
 Source5:        libboundscheck.tar.gz
 
-BuildRequires:  gcc, make
-BuildRequires:  gcc-c++ >= 7, cmake >= 3.14
-# Optional devel-time dependencies if using system libraries
-#BuildRequires:  rapidjson-devel, spdlog-devel, gtest-devel, libboundscheck
+BuildRequires:  gcc, make, libboundscheck
+BuildRequires:  gcc-c++ >= 7, cmake >= 3.14, grpc, grpc-devel, grpc-plugins, protobuf-devel, protobuf-compiler
 
 # Runtime Requires
 Requires:       libvirt-devel, libxml2-devel, openssl-devel, libguestfs-devel

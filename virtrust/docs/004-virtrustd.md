@@ -75,7 +75,25 @@ sh rpm/build_rpm.sh
 ```shell
 sudo rpm -ivh ~/rpmbuild/RPMS/aarch64/TSB-agent-1.0.0-1.aarch64.rpm
 ```
+安装完成后，可在以下位置找到可执行文件、头文件、库文件和配置文件：
+```shell
+# 可执行文件
+/usr/bin/libvirtrustd
+/usr/bin/virtrust-sh
 
+# 头文件目录
+/usr/include/virtrust/
+
+# 库文件
+/usr/lib64/libvirtrust-shared.so
+
+# 示例配置文件
+/etc/virtrust/config.json
+```
+3. **卸载**
+```shell
+rpm -e TSB-agent
+```
 ## 配置管理
 
 ### 配置文件格式
