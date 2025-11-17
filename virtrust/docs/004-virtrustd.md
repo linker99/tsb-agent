@@ -281,3 +281,9 @@ sudo firewall-cmd --permanent --add-port=5031/tcp
 sudo firewall-cmd --permanent --add-port=16514/tcp
 sudo firewall-cmd --reload
 ```
+
+### 通信矩阵
+| Source Device | Source IP      | Source Port | Destination Device | Destination IP      | Destination Port | Protocol | Is Listening Port Configurable | Authentication | Encryption  |
+| ------------- | -------------- |-------------| ------------------ | ------------------- | ---------------- | -------- | ------------------------------ | -------------- | ----------- |
+| Source Node   | Source host IP | Random port allocated by the system     | Destination Node   | Destination host IP | 5031             | TCP      | No                             | Certificate    | TLS 1.2/1.3 |
+| Source Node   | Source host IP | Random port allocated by the system     | Destination Node   | Destination host IP | 16514            | TCP      | Yes                            | Certificate    | TLS 1.2/1.3 |
