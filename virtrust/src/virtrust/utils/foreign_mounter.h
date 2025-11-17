@@ -14,38 +14,6 @@ namespace virtrust {
 
 enum class LinuxDistro { OPENEULER, CENTOS, UBUNTU, DEBIAN, FEDORA };
 
-class VerifyConfig {
-public:
-    VerifyConfig() = default;
-
-    VerifyConfig(const std::string &guestName, const std::string &diskPath, const std::string &loaderPath,
-                 LinuxDistro distro = LinuxDistro::OPENEULER);
-
-    std::string GetGuestName();
-    std::string GetDiskPath();
-    std::string GetLoaderPath();
-    std::string GetShimPath();
-    std::string GetGrubPath();
-    std::string GetGrubCfgPath();
-    std::string GetInitrdPath();
-    std::string GetLinuzPath();
-
-    void ParseGrubCfgContent(const std::string &content);
-
-private:
-    std::string guestName_;
-    std::string diskPath_;
-    std::string loaderPath_;
-    std::string shimPath_;
-    std::string grubPath_;
-    std::string grubCfgPath_;
-    std::string initrdPath_;
-    std::string linuzPath_;
-    LinuxDistro linuxDistro_;
-
-    std::string ParseGrubCfgLine(const std::string &line);
-};
-
 enum class ForeignMounterRc : uint32_t {
     OK = 0,
     ERROR = 1,
@@ -120,4 +88,41 @@ private:
     ForeignMounterRc MountFilesystems(const std::string &root);
 };
 
+class VerifyConfig {
+public:
+    VerifyConfig() = default;
+
+    VerifyConfig(const std::string &guestName, const std::string &diskPath, const std::string &loaderPath,
+                 LinuxDistro distro = LinuxDistro::OPENEULER);
+
+    std::string GetGuestName();
+    std::string GetDiskPath();
+    std::string GetLoaderPath();
+    std::string GetShimPath();
+    std::string GetGrubPath();
+    std::string GetGrubCfgPath();
+    std::string GetInitrdPath();
+    std::string GetLinuzPath();
+
+    std::string GetBiosVersion(ForeignMounter &mounter);
+    std::string GetGrubVersion(ForeignMounter &mounter);
+    std::string GetInitrdVersion();
+    std::string GetLinuzVersion();
+
+    void ParseGrubCfgContent(const std::string &content);
+    std::string ParseGrubVersion(const std::string &content);
+
+private:
+    std::string guestName_;
+    std::string diskPath_;
+    std::string loaderPath_;
+    std::string shimPath_;
+    std::string grubPath_;
+    std::string grubCfgPath_;
+    std::string initrdPath_;
+    std::string linuzPath_;
+    LinuxDistro linuxDistro_;
+
+    std::string ParseGrubCfgLine(const std::string &line);
+};
 } // namespace virtrust

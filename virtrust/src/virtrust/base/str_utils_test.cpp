@@ -158,4 +158,27 @@ TEST(StrUtils, StartsWith)
     EXPECT_FALSE(StrStartsWith("", "Hello"));
     EXPECT_TRUE(StrStartsWith("Hello World", ""));
 }
+
+TEST(StrUtils, ExtractStringsFromBinary)
+{
+    // Test basic functionality with ASCII strings
+    static const char kContent1[] = "Hello\x00\x01World\x02\x03Test";
+    std::string content1(kContent1, sizeof(kContent1) - 1);
+
+    auto result1 = ExtractStringsFromBinary(content1);
+    ASSERT_EQ(result1.size(), (size_t)3);
+    EXPECT_EQ(result1[0], "Hello");
+    EXPECT_EQ(result1[1], "World");
+    EXPECT_EQ(result1[2], "Test");
+
+    // Test with numbers and special printable characters
+    static const char kContent2[] = "Version: 1.2.3\x00Path: /usr/bin\nStatus: OK";
+    std::string content2(kContent2, sizeof(kContent2) - 1);
+
+    auto result2 = ExtractStringsFromBinary(content2);
+    ASSERT_EQ(result2.size(), (size_t)3);
+    EXPECT_EQ(result2[0], "Version: 1.2.3");
+    EXPECT_EQ(result2[1], "Path: /usr/bin");
+    EXPECT_EQ(result2[2], "Status: OK");
+}
 } // namespace virtrust

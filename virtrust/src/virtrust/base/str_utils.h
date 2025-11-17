@@ -122,12 +122,12 @@ inline size_t StrCountChar(const std::string &str, char target)
     return cnt;
 }
 
-inline bool StrStartsWith(const std::string_view &s, const std::string_view &prefix)
+inline bool StrStartsWith(std::string_view s, std::string_view prefix)
 {
     return s.size() >= prefix.size() && s.compare(0, prefix.size(), prefix) == 0;
 }
 
-inline bool startsWithIgnoreSpaces(const std::string &str, const std::string_view &prefix)
+inline bool StartsWithIgnoreSpaces(const std::string &str, std::string_view prefix)
 {
     size_t start = str.find_first_not_of(' ');
     if (start == std::string::npos) {
@@ -140,5 +140,30 @@ inline std::string ReadFile(const std::string &filename)
 {
     std::ifstream file(filename);
     return {(std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>()};
+}
+
+inline std::vector<std::string> ExtractStringsFromBinary(std::string_view content, const size_t minLen = 4)
+{
+    std::vector<std::string> out;
+    std::string cur;
+
+    for (const char c: content) {
+        const unsigned char uc = static_cast<unsigned char>(c);
+        // the blank space is in isprint()
+        if (isprint(uc) || c == '\t') {
+            cur.push_back(c);
+        } else {
+            if (cur.size() >= minLen) {
+                out.emplace_back(cur);
+            }
+            cur.clear();
+        }
+    }
+
+    if (cur.size() >= minLen) {
+        out.emplace_back(cur);
+    }
+
+    return out;
 }
 } // namespace virtrust

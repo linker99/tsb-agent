@@ -328,7 +328,7 @@ VirtrustRc ValidateAndPrepareArgs(const std::vector<std::string> &args, std::vec
     std::string connectArgs;
     for (size_t i = 0; i < args.size(); ++i) {
         const auto &arg = args[i];
-        if (startsWithIgnoreSpaces(arg, ALLOW_STORE_MEASUREMENTS)) {
+        if (StartsWithIgnoreSpaces(arg, ALLOW_STORE_MEASUREMENTS)) {
             if (CheckAllowStoreMeasurements(arg)) {
                 allowStoreMeasurements = true;
 

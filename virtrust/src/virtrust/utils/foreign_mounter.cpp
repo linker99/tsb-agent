@@ -7,6 +7,7 @@
 #include <cstring>
 #include <string>
 #include <string_view>
+#include <filesystem>
 
 #include "spdlog/fmt/fmt.h"
 
@@ -26,6 +27,8 @@ constexpr std::string_view DEFAULT_INITRD_PREFIX = "initrd";
 constexpr std::string_view DEFAULT_LINUZ_PREFIX = "linux";
 constexpr char PATH_SEPARATOR = '/';
 constexpr std::string_view BACKEND_VALUE = "direct";
+constexpr std::string_view BIOS_VERSION_FILE_PATH = "/sys/class/dmi/id/bios_version";
+constexpr std::string_view TARGET_GRUB_VERSION = "GRUB version";
 
 inline ForeignMounterRc ParseRc(DllibRc rc)
 {
@@ -185,6 +188,87 @@ std::string VerifyConfig::ParseGrubCfgLine(const std::string &line)
     }
     // add prefix
     return fmt::format("{}/{}", DEFAULT_BOOT_PATH, StrTrim(filename, PATH_SEPARATOR));
+}
+
+
+std::string VerifyConfig::GetBiosVersion(ForeignMounter &mounter)
+{
+    if (!mounter.CheckMount()) {
+        VIRTRUST_LOG_ERROR("|GetBiosVersion|END|||Mounter should be mounted firstly.");
+        return "";
+    }
+
+    std::string biosVersion;
+    ForeignMounterRc rc = mounter.ReadFile(BIOS_VERSION_FILE_PATH, biosVersion);
+    if (rc != ForeignMounterRc::OK) {
+        VIRTRUST_LOG_ERROR("|GetBiosVersion|END|||Read file from image failed: {}.", BIOS_VERSION_FILE_PATH);
+        return "";
+    }
+
+    return StrTrimWhitespace(biosVersion);
+}
+
+// 从grubaa64.efi文件中获取 GRUB 版本号
+std::string VerifyConfig::GetGrubVersion(ForeignMounter &mounter) {
+    if (!mounter.CheckMount()) {
+        VIRTRUST_LOG_ERROR("|GetGrubVersion|END|||Mounter should be mounted firstly.");
+        return "";
+    }
+
+    std::string content;
+    ForeignMounterRc rc = mounter.ReadFile(GetGrubPath(), content);
+    if (rc != ForeignMounterRc::OK) {
+        VIRTRUST_LOG_ERROR("|GetGrubVersion|END|||Read file from image failed: {}.", GetGrubPath());
+        return "";
+    }
+
+    auto lines = ExtractStringsFromBinary(content);
+    std::string grubVersion;
+    for (size_t i = 0; i < lines.size(); ++i) {
+        if (lines[i].find(TARGET_GRUB_VERSION) != std::string::npos) {
+            if (i + 1 < lines.size()) {
+                grubVersion = lines[i + 1];  // 下一行即版本号
+                break;
+            }
+        }
+    }
+
+    // 未找到
+    if (grubVersion.empty()) {
+        VIRTRUST_LOG_ERROR(
+            "|GetGrubVersion|END|||Failed to extract version: '{}', not found or has no following line in {}.",
+            TARGET_GRUB_VERSION, GetGrubPath());
+        return "";
+    }
+
+    return StrTrimWhitespace(grubVersion);
+}
+
+std::string VerifyConfig::GetInitrdVersion()
+{
+    auto initrdPath = GetInitrdPath();
+    if (initrdPath.empty()) {
+        VIRTRUST_LOG_ERROR(
+            "|GetInitrdVersion|END|||Should first initialize initrd path by parsing the grub config file.");
+        return "";
+    }
+
+    std::filesystem::path p(initrdPath);
+    return p.stem().string();
+}
+
+
+std::string VerifyConfig::GetLinuzVersion()
+{
+    auto linuzPath = GetLinuzPath();
+    if (linuzPath.empty()) {
+        VIRTRUST_LOG_ERROR(
+            "|GetLinuzVersion|END|||Should first initialize linuz path by parsing the grub config file.");
+        return "";
+    }
+
+    std::filesystem::path p(linuzPath);
+    return p.filename().string();
 }
 
 ForeignMounterRc ForeignMounter::TryInit()
