@@ -1,6 +1,6 @@
 # Virtrust API 接口文档
 
-本文档描述了 virtrust 库对外提供的主要 API 接口，这些接口主要用于虚拟机域管理，包括创建、启动、停止、迁移和查询等操作。
+本文档描述了 virtrust 库对外提供的主要 API 接口，这些接口主要用于虚拟机域管理，包括创建、启动、停止、迁移、查询和删除等操作。
 
 ## 核心数据结构
 
@@ -56,13 +56,13 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
 - `domainName`：虚拟机名称或 UUID
   - 当 `isOnlyTsb` 为 true 时，只更新 TSB 相关资源
   - 当 `isOnlyTsb` 为 true 时，使用 UUID 时将忽略 flags 入参
-- `flags`：销毁标志，参考 `DomainDestroyFlags`（当前仅定义 `DOMAIN_DESTROY_NONE = 0`）
+- `flags`：强制停止标志，参考 `DomainDestroyFlags`（当前仅定义 `DOMAIN_DESTROY_NONE = 0`）
 - `isOnlyTsb`：是否只更新 TSB 资源的标志
-  - `true`：仅更新 TSB 资源，不执行实际的虚拟机销毁
-  - `false`：执行完整的虚拟机销毁操作
+  - `true`：仅更新 TSB 资源，不执行实际的虚拟机强制停止
+  - `false`：执行完整的虚拟机强制停止操作
 
 **功能描述**：
-停止指定的虚拟机。可选择是否只处理 TSB 资源或执行完整的销毁操作。
+停止指定的虚拟机。可选择是否只处理 TSB 资源或执行完整的强制停止操作。
 
 **注意事项**：
 - 当使用 `--only-tsb/isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
@@ -84,7 +84,7 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
   - 示例：`qemu+tls://7.7.7.7:8080/system`
 - `flags`：迁移标志
   - 默认为 0：不删除源端虚拟机
-  - `MIGRATE_UNDEFINE_SOURCE`：迁移成功后取消定义源端虚拟机
+  - `MIGRATE_UNDEFINE_SOURCE`：迁移成功后删除源端虚拟机
 
 **功能描述**：
 将虚拟机从当前主机迁移到目标主机。支持安全的迁移过程，包括 TSB 资源的同步。
