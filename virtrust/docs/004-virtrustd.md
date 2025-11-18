@@ -269,7 +269,14 @@ sudo mv ca-cert.pem server-cert.pem server-key.pem /etc/virtrust/certs/
 
 4. **libvirt证书**：
 ```bash
-参考 https://libvirt.org/kbase/tlscerts.html
+参考 https://libvirt.org/kbase/tlscerts.html 
+可使用src/script下的[generate_libvirt_tls_certs.sh 服务端IP](../src/script/generate_libvirt_tls_certs.sh) 生成证书，然后将证书复制到对应的服务端和客户端位置。
+生成的证书在执行目录的libvirt_tlscerts目录下，证书应放置的路径如下
+服务端和客户端：CA证书 -> /etc/pki/CA/cacert.pem
+服务端：服务器私钥 -> /etc/pki/libvirt/private/serverkey.pem
+服务端：服务器证书 -> /etc/pki/libvirt/servercert.pem
+客户端：客户端私钥 -> /etc/pki/libvirt/private/clientkey.pem
+客户端：客户端证书 -> /etc/pki/libvirt/clientcert.pem
 ```
 
 ### 防火墙配置
