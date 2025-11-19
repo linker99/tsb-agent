@@ -344,7 +344,7 @@ VirtrustRc ValidateAndPrepareArgs(const std::vector<std::string> &args, std::vec
             return VirtrustRc::ERROR;
         }
         (void)GetConnectArgs(arg, connectArgs, i, args);
-        execArgs.push_back(const_cast<char *>(arg.c_str()));
+        execArgs.push_back(const_cast<char *>(arg.data()));
     }
     execArgs.push_back(const_cast<char *>("--noautoconsole"));
     execArgs.push_back(const_cast<char *>("--noreboot"));
@@ -355,7 +355,7 @@ VirtrustRc ValidateAndPrepareArgs(const std::vector<std::string> &args, std::vec
     if (connectArgs.empty()) {
         execArgs.reserve(args.size() + 5);
         execArgs.push_back(const_cast<char *>("--connect"));
-        execArgs.push_back(strdup(conn->GetUri().c_str()));
+        execArgs.push_back(strdup(conn->GetUri().data()));
     } else {
         conn->SetUri(connectArgs);
     }
@@ -398,7 +398,7 @@ VirtrustRc CreateDomainAndVRoot(const std::unique_ptr<ConnCtx> &conn, const std:
     }
     Description description{};
     description.state = 0;
-    if (strncpy_s(description.name, sizeof(description.name), domainName.c_str(), sizeof(description.name) - 1) !=
+    if (strncpy_s(description.name, sizeof(description.name), domainName.data(), sizeof(description.name) - 1) !=
         EOK) {
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||strncpy_s domainName failed.");
 
