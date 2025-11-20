@@ -278,7 +278,7 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool transferRet)
         if (tsbRet != 0) {
             VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF||tsb resource remove "
                                "failed, maybe not exist tsb resource uuid: "
-                               "{},domainName: {},use virsh to undefine domain.",
+                               "{},domainName: {}.",
                                sessionId_, domainName_);
         }
     }

@@ -68,7 +68,7 @@ void Logger::Log(LogLevel level, std::string_view msg)
 void Logger::SetDisplayLogLevel(LogLevel level)
 {
     if (static_cast<int>(level) >= static_cast<int>(LogLevel::UNKNOWN)) {
-        fmt::print(stderr, "log level is invalid : {}", static_cast<int>(level));
+        fmt::print(stderr, "log level is invalid : {}\n", static_cast<int>(level));
     }
 
     if (LogAdapt::gSpdLogger != nullptr && LogAdapt::gSpdLogger->spdLogger != nullptr) {
@@ -93,21 +93,21 @@ VirtrustRc Logger::InitLog(int logLevel, const char *path, int rotationFileSize,
 {
 
     if (logLevel < static_cast<int>(LogLevel::TRACE) || logLevel > static_cast<int>(LogLevel::CRITICAL)) {
-        fmt::print(stderr, "Invalid log level: {}", logLevel);
+        fmt::print(stderr, "Invalid log level: {}\n", logLevel);
         return VirtrustRc::ERROR;
     }
 
     int logType = (path != nullptr) ? FILE_TYPE : STDOUT_TYPE;
     auto rc = LogAdapt::ValidateParams(logType, path, rotationFileSize, rotationFileCount);
     if (rc != VirtrustRc::OK) {
-        fmt::print(stderr, "LogAdapt param validation failed, return: {}, msg: {}", static_cast<uint32_t>(rc),
+        fmt::print(stderr, "LogAdapt param validation failed, return: {}, msg: {}\n", static_cast<uint32_t>(rc),
                    LogAdapt::gLastErrorMessage);
         return rc;
     }
 
     rc = LogAdapt::CreateInstance(logType, logLevel, path, rotationFileSize, rotationFileCount);
     if (rc != VirtrustRc::OK) {
-        fmt::print(stderr, "LogAdapt create instance failed, return: {}", static_cast<uint32_t>(rc));
+        fmt::print(stderr, "LogAdapt create instance failed, return: {}\n", static_cast<uint32_t>(rc));
         return rc;
     }
 

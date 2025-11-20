@@ -979,7 +979,7 @@ VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::strin
     if (tsbRet != 0) {
         VIRTRUST_LOG_ERROR("|DomainUndefine|END|returnF||tsb resource remove "
                            "failed, maybe not exist tsb resource uuid: "
-                           "{},domainName: {},use virsh to undefine domain.",
+                           "{},domainName: {}.",
                            uuid, domainName);
         return VirtrustRc::ERROR;
     }

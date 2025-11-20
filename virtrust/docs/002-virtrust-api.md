@@ -7,7 +7,8 @@
 ### 连接上下文 (ConnCtx)
 - **作用**：表示与 libvirt 的连接上下文
 - **默认 URI**：`qemu:///session`
-- **创建方式**：使用 `std::make_unique<ConnCtx>()` 创建，可通过 `SetUri()` 方法设置连接地址
+- **创建方式**：使用 `std::make_unique<ConnCtx>()` 创建，可通过 `SetUri(std::string uri)` 方法设置连接地址，可设置
+  `qemu:///session`和`qemu:///system`，通过`GetUri()`方法可查看当前设置的uri
 
 ### 返回值 (VirtrustRc)
 所有 API 函数都返回 `VirtrustRc` 枚举类型的返回值：
