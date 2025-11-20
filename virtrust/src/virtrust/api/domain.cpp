@@ -914,6 +914,9 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
     }
     if (Libvirt::GetInstance().virDomainCreateWithFlags(domain->Get(), flags) < 0) {
         VIRTRUST_LOG_ERROR("failed to start domain: {}", domainName);
+        if (StopVRoot(uuid.data()) != 0) {
+            VIRTRUST_LOG_ERROR("stop vRoot failed domain: {}", domainName);
+        }
         return VirtrustRc::ERROR;
     }
     VIRTRUST_LOG_DEBUG("|DomainStart||END|returnS|start domainName: {} success", domainName);
