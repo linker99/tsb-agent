@@ -560,6 +560,11 @@ auto ToMaps(int tsbVmNum, Description *tsbVmInfo, int virtVmNum, virDomainPtr *v
             !CompareTsbVirtState((tsbVmInfo + i)->state, VIR_DOMAIN_RUNNING)) {
             continue;
         }
+         // 如果查INACTIVE 过滤running态的
+        if (flags == DomainListFlags::LIST_DOMAINS_INACTIVE &&
+            CompareTsbVirtState((tsbVmInfo + i)->state, VIR_DOMAIN_RUNNING)) {
+            continue;
+        }
         tsbVmMap.emplace(tsbVmUuid, *(tsbVmInfo + i));
     }
     // create virt map
@@ -579,6 +584,9 @@ auto ToMaps(int tsbVmNum, Description *tsbVmInfo, int virtVmNum, virDomainPtr *v
         outInfo.nrVirtCpu = info.nrVirtCpu;
         outInfo.cpuTime = info.cpuTime;
         if (flags == DomainListFlags::LIST_DOMAINS_ACTIVE && outInfo.state != VIR_DOMAIN_RUNNING) {
+            continue;
+        }
+        if (flags == DomainListFlags::LIST_DOMAINS_INACTIVE && outInfo.state == VIR_DOMAIN_RUNNING) {
             continue;
         }
         virtVmMap.emplace(virtVmUuid, outInfo);
