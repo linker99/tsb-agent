@@ -81,7 +81,7 @@ VirtrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter, virtrust::V
     measureSummary.shim.content_ = std::string(reinterpret_cast<const char *>(shimSm3.data()), shimSm3.size());
 
     std::vector<uint8_t> grubSm3(Sm3::DigestSize(), 0);
-    rc = mounter.DoSm3OnVmFile(config.GetGrubPath(), shimSm3);
+    rc = mounter.DoSm3OnVmFile(config.GetGrubPath(), grubSm3);
     if (rc != ForeignMounterRc::OK && rc != ForeignMounterRc::FILE_NOT_EXIST) {
         VIRTRUST_LOG_ERROR("|GetVirshMeasureSummary|END|returnF||do sm3 by file failed: {}", config.GetGrubPath());
         return VirtrustRc::ERROR;
