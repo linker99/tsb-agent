@@ -910,16 +910,18 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
     }
 
     std::string uuid = GetUUIDStr(domain->Get());
-    VIRTRUST_LOG_INFO("Perform checking on: {} before start", domainName);
-    if (!CheckGuestBeforeStart(domainName, uuid)) {
-        VIRTRUST_LOG_ERROR("Check domain failed,domainName: {}", domainName);
-        return VirtrustRc::ERROR;
-    }
     auto tsbRc = StartVRoot(uuid.data());
     if (tsbRc != 0) {
         VIRTRUST_LOG_ERROR("start vRoot failed: {}", domainName);
         return VirtrustRc::ERROR;
     }
+
+    VIRTRUST_LOG_INFO("Perform checking on: {} before start", domainName);
+    if (!CheckGuestBeforeStart(domainName, uuid)) {
+        VIRTRUST_LOG_ERROR("Check domain failed,domainName: {}", domainName);
+        return VirtrustRc::ERROR;
+    }
+
     if (Libvirt::GetInstance().virDomainCreateWithFlags(domain->Get(), flags) < 0) {
         VIRTRUST_LOG_ERROR("failed to start domain: {}", domainName);
         if (StopVRoot(uuid.data()) != 0) {
