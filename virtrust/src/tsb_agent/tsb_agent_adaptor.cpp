@@ -127,7 +127,8 @@ int MigrationCheckPeerPk(char *vUuid, // 虚拟机的uuid
     return virtrust::TsbAgent::GetInstance().MigrationCheckPeerPk(vUuid, pk1, pk2);
 }
 
-int MigrationGetVrootCipher(char *vUuid,   // 虚拟机的uuid
+int MigrationGetVrootCipher(char *pUuid,
+                            char *vUuid,   // 虚拟机的uuid
                             char **cipher, // 输出：加密后的密码资源
                             int *cipherLen // 输出：密文长度
 )
@@ -135,17 +136,19 @@ int MigrationGetVrootCipher(char *vUuid,   // 虚拟机的uuid
     if (!CheckTsbAgentDlopen()) {
         return -1;
     }
-    return virtrust::TsbAgent::GetInstance().MigrationGetVrootCipher(vUuid, cipher, cipherLen);
+    return virtrust::TsbAgent::GetInstance().MigrationGetVrootCipher(pUuid, vUuid, cipher, cipherLen);
 }
 
-int MigrationImportVrootCipher(char *vUuid, // 虚拟机的uuid
-                               char *cipher // 加密后的密码资源
+int MigrationImportVrootCipher(char *pUuid,
+                               char *vUuid, // 虚拟机的uuid
+                               char *cipher, // 加密后的密码资源
+                               int cipherLen // 密文长度
 )
 {
     if (!CheckTsbAgentDlopen()) {
         return -1;
     }
-    return virtrust::TsbAgent::GetInstance().MigrationImportVrootCipher(vUuid, cipher);
+    return virtrust::TsbAgent::GetInstance().MigrationImportVrootCipher(pUuid, vUuid, cipher, cipherLen);
 }
 
 int MigrationNotify(char *vUuid, // 虚拟机的uuid

@@ -66,8 +66,8 @@ public:
 
     DlFun<int, char *, char **, int *, char **, int *> MigrationGetCert;
     DlFun<int, char *, char *, char *> MigrationCheckPeerPk;
-    DlFun<int, char *, char **, int *> MigrationGetVrootCipher;
-    DlFun<int, char *, char *> MigrationImportVrootCipher;
+    DlFun<int, char *, char *, char **, int *> MigrationGetVrootCipher;
+    DlFun<int, char *, char *, char *, int> MigrationImportVrootCipher;
     DlFun<int, char *, int> MigrationNotify;
 
 private:

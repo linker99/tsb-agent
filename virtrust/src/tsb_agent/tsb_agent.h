@@ -182,13 +182,16 @@ int MigrationCheckPeerPk(char *vUuid, // 虚拟机的uuid
                          char *pk2    // peer 临时生成的随机密钥对的公钥, a.k.a. pubkey
 );
 
-int MigrationGetVrootCipher(char *vUuid,   // 虚拟机的uuid
+int MigrationGetVrootCipher(char *pUuid,
+                            char *vUuid,   // 虚拟机的uuid
                             char **cipher, // 输出：加密后的密码资源
                             int *cipherLen // 输出：密文长度
 );
 
-int MigrationImportVrootCipher(char *vUuid, // 虚拟机的uuid
-                               char *cipher // 加密后的密码资源
+int MigrationImportVrootCipher(char *pUuid,
+                               char *vUuid, // 虚拟机的uuid
+                               char *cipher, // 加密后的密码资源
+                               int cipherLen // 密文长度
 );
 
 int MigrationNotify(char *vUuid, // 虚拟机的uuid

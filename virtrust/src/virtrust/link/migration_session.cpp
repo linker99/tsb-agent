@@ -192,7 +192,7 @@ MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
     char *cipher = nullptr;
     int cipherLen = 0;
     // 收集密码资源
-    auto ret = MigrationGetVrootCipher(const_cast<char *>(sessionId_.c_str()), &cipher, &cipherLen);
+    auto ret = MigrationGetVrootCipher(sessionId_.data(), sessionId_.data(), &cipher, &cipherLen);
     if (ret != 0 || cipher == nullptr) {
         VIRTRUST_LOG_ERROR(
             "|OnStartMigrationResponseReceived|END|returnF|domain name: {}|MigrationGetVRootCipher failed.",
@@ -274,7 +274,7 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool transferRet)
     // 所有动作执行完后，判断是否删除本地虚机
     if (flags_ & MIGRATE_UNDEFINE_SOURCE) {
         (void)UndefineVirtDomainBaseUri(localUri_);
-        int tsbRet = RemoveVRoot(const_cast<char *>(sessionId_.c_str()));
+        int tsbRet = RemoveVRoot(sessionId_.data());
         if (tsbRet != 0) {
             VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF||tsb resource remove "
                                "failed, maybe not exist tsb resource uuid: "
@@ -489,7 +489,7 @@ MigrateSessionRc MigrationSession::NotifyVRMigration(bool success)
 {
     VIRTRUST_LOG_DEBUG("|NotifyVRMigration|START|");
     auto status = success ? 0 : -1;
-    auto ret = MigrationNotify(const_cast<char *>(sessionId_.c_str()), status);
+    auto ret = MigrationNotify(sessionId_.data(), status);
     if (ret != 0) {
         VIRTRUST_LOG_INFO("|NotifyVRMigration|END|returnF|domainName:{}, migration statu: {}|Notify TSB failed.",
                           domainName_, success);
@@ -673,9 +673,14 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
             "|OnTransferDataRequestReceived|END|returnF|domain name: {}|Waiting for transfering timeout.", domainName_);
         return MigrateSessionRc::ERROR;
     }
+
     // 导入服务端校验客户端发来的虚拟机资源信息
-    auto ret = MigrationImportVrootCipher(const_cast<char *>(request->uuid().c_str()),
-                                          const_cast<char *>(request->cipherdata().c_str()));
+    auto uuid = request->uuid();
+    auto cipherData = request->cipherdata();
+    auto ret = MigrationImportVrootCipher(uuid.data(),
+                                          uuid.data(),
+                                          cipherData.data(),
+                                          cipherData.size());
     if (ret != 0) {
         EnterState(State::Failed);
         VIRTRUST_LOG_ERROR(
