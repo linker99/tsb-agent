@@ -17,6 +17,9 @@ virtrust 是一个为 openEuler 24.03 LTS SP3 平台设计的可信安全启动�
 - openEuler 24.03 SP1
 - openEuler 24.03 SP2
 
+### 用户权限
+命令行工具`virtrust-sh`和守护进程`libvirtrustd`都需以`root`权限运行。
+
 ### 编译依赖
 
 ```bash
