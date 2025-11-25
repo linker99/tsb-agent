@@ -919,6 +919,9 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
     VIRTRUST_LOG_INFO("Perform checking on: {} before start", domainName);
     if (!CheckGuestBeforeStart(domainName, uuid)) {
         VIRTRUST_LOG_ERROR("Check domain failed,domainName: {}", domainName);
+        if (StopVRoot(uuid.data()) != 0) {
+            VIRTRUST_LOG_ERROR("stop vRoot failed domain: {}", domainName);
+        }
         return VirtrustRc::ERROR;
     }
 
