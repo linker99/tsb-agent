@@ -321,7 +321,7 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
     int pubKeyLen = 0;
 
     int ret = MigrationGetCert(uuid.data(), &cert, &certLen, &pubKey, &pubKeyLen);
-    if (ret != 0) {
+    if (ret != 0 || cert == nullptr || pubKey == nullptr) {
         VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|domain name: {}|Get local cert failed.", domainName_);
         return MigrateSessionRc::ERROR;
     }
