@@ -67,6 +67,7 @@ message EXchangePkAndReportReply{
     bytes publicKey = 5;  //公钥
     TrustReportNew hostReport = 6; // struct
     TrustReportNew vmReport = 7; // struct
+    bytes tcm2Key = 8;
 }
 
 message StartMigRequest {

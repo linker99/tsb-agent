@@ -120,6 +120,10 @@ private:
 
     MigrateSessionRc NotifyVRMigration(bool success);
 
+    MigrateSessionRc ExportTcm2Key(std::string &tcm2Key);
+
+    MigrateSessionRc ImportTcm2Key(std::string_view tcm2Key);
+
 private:
     Role role_;
     State state_;

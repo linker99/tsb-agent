@@ -54,6 +54,25 @@ enum ErrorCode {
     ERR_VUUID_MISMATCH,
 };
 
+enum EnDirection {
+    EN_IMPORT = 0,
+    EN_EXPORT,
+    EN_DIRECTION_MAX,
+};
+
+enum EN_STATE {
+    VM_SHUTUP = 0,      // 虚机停止状态，Description.state状态码
+    VM_RUNNING,         // 虚机运行状态
+    VM_MIGRATION,       // 虚机迁移状态
+
+    IMPORT_BM_SUCCESS,  // 基线值设置成功，CheckMeasure返回值
+    CHECK_BM_SUCCESS,   // 基线值校验成功，CheckMeasure返回值
+    IMPORT_BM_FAILURE,  // 基线值设置失败，CheckMeasure返回值
+    CHECK_BM_FAILURE,   // 基线值校验失败，CheckMeasure返回值
+
+    ERR_VM_NOT_STARTED, // 虚机未启动错误，MigrationGetVrootCipher 返回值
+};
+
 struct Description {
     int state = 0;  // 启动，挂起等状态
     char name[255]; // 名称，创建时有hw设置
@@ -196,6 +215,15 @@ int MigrationImportVrootCipher(char *pUuid,
 
 int MigrationNotify(char *vUuid, // 虚拟机的uuid
                     int status);
+
+// 迁移时目的端调用以导出tcm2密钥，再在源端导入该密钥
+int TransDupPub(int type,         // 输入/输入，对应EnDirection中的枚举
+                char *vUuid,      // 虚拟机的uuid，仅type=EN_IMPORT时需要
+                char **tcm2bOut,  // 导出tcm2秘钥，仅type=EN_EXPORT时需要
+                int *tcm2bLenOut, // 导出tcm2秘钥长度，仅type=EN_EXPORT时需要
+                char *tcm2bIn,    // 导入tcm2秘钥，仅type=EN_IMPORT时需要
+                int tcm2bLenIn    // 导入tcm2秘钥长度，仅type=EN_IMPORT时需要
+);
 
 #ifdef __cplusplus
 }

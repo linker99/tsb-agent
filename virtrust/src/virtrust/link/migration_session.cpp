@@ -159,6 +159,15 @@ MigrateSessionRc MigrationSession::OnExchangeKeyResponseReceived(protos::EXchang
         return MigrateSessionRc::ERROR;
     }
 
+    // 3.导入tcm2 key
+    rc = ImportTcm2Key(res.tcm2key());
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyResponseReceived|END|returnF|domain name: {}|Import tcm2 key failed.",
+                           domainName_);
+        OnFail();
+        return MigrateSessionRc::ERROR;
+    }
+
     return SendStartMigration();
 }
 
@@ -197,6 +206,9 @@ MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
         VIRTRUST_LOG_ERROR(
             "|OnStartMigrationResponseReceived|END|returnF|domain name: {}|MigrationGetVRootCipher failed.",
             domainName_);
+        if (ret == ERR_VM_NOT_STARTED) {
+            VIRTRUST_LOG_ERROR("call MigrationGetVRootCipher failed: the VM has not been started yet.");
+        }
         OnFail();
         return MigrateSessionRc::ERROR;
     }
@@ -527,6 +539,34 @@ MigrateSessionRc MigrationSession::GetVmInfo(Description &vmInfo)
     return MigrateSessionRc::ERROR;
 }
 
+MigrateSessionRc MigrationSession::ExportTcm2Key(std::string &tcm2Key)
+{
+    char *key = nullptr;
+    int keyLen = 0;
+
+    auto ret = TransDupPub(EN_EXPORT, nullptr, &key, &keyLen, nullptr, 0);
+    if (ret != 0 || key == nullptr || keyLen <= 0) {
+        VIRTRUST_LOG_ERROR("|ExportTcm2Key|END|returnF|uuid: {}|TransDupPub: export tcm2 key failed.", sessionId_);
+        return MigrateSessionRc::ERROR;
+    }
+
+    tcm2Key = std::string(key, keyLen);
+    free(key);
+    return MigrateSessionRc::OK;
+}
+
+MigrateSessionRc MigrationSession::ImportTcm2Key(std::string_view tcm2Key)
+{
+    auto ret = TransDupPub(EN_IMPORT, sessionId_.data(), nullptr, nullptr,
+                        std::string(tcm2Key).data(), tcm2Key.size());
+    if (ret != 0) {
+        VIRTRUST_LOG_ERROR("|ImportTcm2Key|END|returnF|uuid: {}|TransDupPub: import tcm2 key failed.", sessionId_);
+        return MigrateSessionRc::ERROR;
+    }
+
+    return MigrateSessionRc::OK;
+}
+
 void MigrationSession::EnterState(State s)
 {
     state_ = s;
@@ -644,6 +684,16 @@ MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const protos::EX
         return MigrateSessionRc::ERROR;
     }
 
+    // 4. 导出tcm2密钥，返回给源
+    std::string tcm2Key;
+    rc = ExportTcm2Key(tcm2Key);
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|domain name: {}|Export tcm2 key failed.",
+                           domainName_);
+        return MigrateSessionRc::ERROR;
+    }
+    response->set_tcm2key(tcm2Key);
+
     // 等待对端校验证书后的进一步信号：开始迁移信号
     EnterState(State::CertVerify);
     return MigrateSessionRc::OK;
@@ -692,6 +742,7 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
     // 导入服务端发来的虚拟机描述信息 校验秘钥成功才导入
     auto protosDesc = request->vtpcminfo();
     auto vmInfo = DescriptionFromProto(protosDesc);
+    vmInfo.state = VM_SHUTUP;
     ret = CreateVRoot(&vmInfo);
     if (ret != 0) {
         result = ret;
