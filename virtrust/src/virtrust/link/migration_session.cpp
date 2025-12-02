@@ -18,6 +18,10 @@
 namespace virtrust {
 
 namespace {
+// RPC timeout unit: seconds
+constexpr uint32_t RPC_SIGNAL_TIMEOUT   = 5;
+constexpr uint32_t RPC_TRANSFER_TIMEOUT = 10;
+
 unsigned int GetFlagCleard(const unsigned int &flags, const unsigned int &clear)
 {
     return flags & ~clear;
@@ -94,7 +98,7 @@ MigrateSessionRc MigrationSession::SendMigrateRequest()
 
     protos::PrepareMigReply reply;
 
-    int32_t rc = rpcClient_->PrepareMigration(5, req, &reply);
+    int32_t rc = rpcClient_->PrepareMigration(RPC_SIGNAL_TIMEOUT, req, &reply);
     bool ok = (rc == 0 && reply.result() == 0);
 
     if (!ok) {
@@ -125,7 +129,7 @@ MigrateSessionRc MigrationSession::SendExchangeKey()
     }
 
     protos::EXchangePkAndReportReply res;
-    int32_t ret = rpcClient_->ExchangePkAndReport(5, req, &res);
+    int32_t ret = rpcClient_->ExchangePkAndReport(RPC_TRANSFER_TIMEOUT, req, &res);
     if (ret != 0 || res.result() != 0) {
         VIRTRUST_LOG_ERROR("|SendExchangeKey|END|returnF|domain name: {}|Exchange cert and report failed.",
                            domainName_);
@@ -159,6 +163,15 @@ MigrateSessionRc MigrationSession::OnExchangeKeyResponseReceived(protos::EXchang
         return MigrateSessionRc::ERROR;
     }
 
+    // 3.导入tcm2 key
+    rc = ImportTcm2Key(res.tcm2key());
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyResponseReceived|END|returnF|domain name: {}|Import tcm2 key failed.",
+                           domainName_);
+        OnFail();
+        return MigrateSessionRc::ERROR;
+    }
+
     return SendStartMigration();
 }
 
@@ -170,7 +183,7 @@ MigrateSessionRc MigrationSession::SendStartMigration()
     req.set_uuid(sessionId_);
 
     protos::StartMigReply res;
-    int32_t ret = rpcClient_->StartMigration(5, req, &res);
+    int32_t ret = rpcClient_->StartMigration(RPC_SIGNAL_TIMEOUT, req, &res);
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|SendStartMigration|END|returnF|domain name: {}|Send start migration signal failed.",
                            domainName_);
@@ -197,6 +210,9 @@ MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
         VIRTRUST_LOG_ERROR(
             "|OnStartMigrationResponseReceived|END|returnF|domain name: {}|MigrationGetVRootCipher failed.",
             domainName_);
+        if (ret == ERR_VM_NOT_STARTED) {
+            VIRTRUST_LOG_ERROR("call MigrationGetVRootCipher failed: the VM has not been started yet.");
+        }
         OnFail();
         return MigrateSessionRc::ERROR;
     }
@@ -237,7 +253,7 @@ MigrateSessionRc MigrationSession::SendTransferOnce(const std::string &cipher, c
     DescriptionToProto(vmInfo, protosDesc);
 
     protos::VRsourceInfoReply res;
-    int32_t ret = rpcClient_->SendVRsourceData(5, req, &res);
+    int32_t ret = rpcClient_->SendVRsourceData(RPC_TRANSFER_TIMEOUT, req, &res);
     // 传输数据失败
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|SendTransferOnce|END|returnF||failed to tansfer data for: {}, ret {}.", domainName_, ret);
@@ -296,7 +312,7 @@ MigrateSessionRc MigrationSession::SendFinishedNotify(bool success)
     req.set_result(success ? 0 : 1);
     req.set_uuid(sessionId_);
     protos::MigrateResultReply res;
-    auto ret = rpcClient_->NotifyVRMigrateResult(5, req, &res);
+    auto ret = rpcClient_->NotifyVRMigrateResult(RPC_SIGNAL_TIMEOUT, req, &res);
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|SendFinishedNotify|END|returnF|domain name: {}|Send notify failed.", domainName_);
         return MigrateSessionRc::ERROR;
@@ -527,6 +543,34 @@ MigrateSessionRc MigrationSession::GetVmInfo(Description &vmInfo)
     return MigrateSessionRc::ERROR;
 }
 
+MigrateSessionRc MigrationSession::ExportTcm2Key(std::string &tcm2Key)
+{
+    char *key = nullptr;
+    int keyLen = 0;
+
+    auto ret = TransDupPub(EN_EXPORT, nullptr, &key, &keyLen, nullptr, 0);
+    if (ret != 0 || key == nullptr || keyLen <= 0) {
+        VIRTRUST_LOG_ERROR("|ExportTcm2Key|END|returnF|uuid: {}|TransDupPub: export tcm2 key failed.", sessionId_);
+        return MigrateSessionRc::ERROR;
+    }
+
+    tcm2Key = std::string(key, keyLen);
+    free(key);
+    return MigrateSessionRc::OK;
+}
+
+MigrateSessionRc MigrationSession::ImportTcm2Key(std::string_view tcm2Key)
+{
+    auto ret = TransDupPub(EN_IMPORT, sessionId_.data(), nullptr, nullptr,
+                        std::string(tcm2Key).data(), tcm2Key.size());
+    if (ret != 0) {
+        VIRTRUST_LOG_ERROR("|ImportTcm2Key|END|returnF|uuid: {}|TransDupPub: import tcm2 key failed.", sessionId_);
+        return MigrateSessionRc::ERROR;
+    }
+
+    return MigrateSessionRc::OK;
+}
+
 void MigrationSession::EnterState(State s)
 {
     state_ = s;
@@ -644,6 +688,16 @@ MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const protos::EX
         return MigrateSessionRc::ERROR;
     }
 
+    // 4. 导出tcm2密钥，返回给源
+    std::string tcm2Key;
+    rc = ExportTcm2Key(tcm2Key);
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|domain name: {}|Export tcm2 key failed.",
+                           domainName_);
+        return MigrateSessionRc::ERROR;
+    }
+    response->set_tcm2key(tcm2Key);
+
     // 等待对端校验证书后的进一步信号：开始迁移信号
     EnterState(State::CertVerify);
     return MigrateSessionRc::OK;
@@ -692,6 +746,7 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
     // 导入服务端发来的虚拟机描述信息 校验秘钥成功才导入
     auto protosDesc = request->vtpcminfo();
     auto vmInfo = DescriptionFromProto(protosDesc);
+    vmInfo.state = VM_SHUTUP;
     ret = CreateVRoot(&vmInfo);
     if (ret != 0) {
         result = ret;

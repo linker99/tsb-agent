@@ -159,3 +159,17 @@ int MigrationNotify(char *vUuid, // 虚拟机的uuid
     }
     return virtrust::TsbAgent::GetInstance().MigrationNotify(vUuid, status);
 }
+
+int TransDupPub(int type,         // 输入/输入，对应EnDirection中的枚举
+                char *vUuid,      // 虚拟机的uuid，仅type=EN_IMPORT时需要
+                char **tcm2bOut,  // 导出tcm2秘钥，仅type=EN_EXPORT时需要
+                int *tcm2bLenOut, // 导出tcm2秘钥长度，仅type=EN_EXPORT时需要
+                char *tcm2bIn,    // 导入tcm2秘钥，仅type=EN_IMPORT时需要
+                int tcm2bLenIn    // 导入tcm2秘钥长度，仅type=EN_IMPORT时需要
+)
+{
+    if (!CheckTsbAgentDlopen()) {
+        return -1;
+    }
+    return virtrust::TsbAgent::GetInstance().TransDupPub(type, vUuid, tcm2bOut, tcm2bLenOut, tcm2bIn, tcm2bLenIn);
+}

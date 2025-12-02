@@ -69,6 +69,7 @@ public:
     DlFun<int, char *, char *, char **, int *> MigrationGetVrootCipher;
     DlFun<int, char *, char *, char *, int> MigrationImportVrootCipher;
     DlFun<int, char *, int> MigrationNotify;
+    DlFun<int, int, char *, char **, int *, char *, int> TransDupPub;
 
 private:
     void LoadAll()
@@ -97,6 +98,7 @@ private:
         DLLIB_SELF_DLSYM(MigrationGetVrootCipher);
         DLLIB_SELF_DLSYM(MigrationImportVrootCipher);
         DLLIB_SELF_DLSYM(MigrationNotify);
+        DLLIB_SELF_DLSYM(TransDupPub);
     }
 
     TsbAgent() : DlLibBase(LIB_NAME)

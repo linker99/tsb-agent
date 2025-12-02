@@ -61,6 +61,7 @@ VirtrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter, virtrust::V
         return VirtrustRc::ERROR;
     }
 
+    measureSummary.bios.version_ = config.GetBiosVersion();
     measureSummary.bios.content_ = std::string(reinterpret_cast<const char *>(loaderSm3.data()), loaderSm3.size());
     // grubcfg需要提供文件内容 而不是摘要
     std::string grubCfgContent;
@@ -74,7 +75,6 @@ VirtrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter, virtrust::V
     std::vector<uint8_t> shimSm3(Sm3::DigestSize(), 0);
     rc = mounter.DoSm3OnVmFile(config.GetShimPath(), shimSm3);
     if (rc != ForeignMounterRc::OK && rc != ForeignMounterRc::FILE_NOT_EXIST) {
-
         VIRTRUST_LOG_ERROR("|GetVirshMeasureSummary|END|returnF||do sm3 failed: {}", config.GetShimPath());
         return VirtrustRc::ERROR;
     }
@@ -86,6 +86,7 @@ VirtrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter, virtrust::V
         VIRTRUST_LOG_ERROR("|GetVirshMeasureSummary|END|returnF||do sm3 by file failed: {}", config.GetGrubPath());
         return VirtrustRc::ERROR;
     }
+    measureSummary.grub.version_ = config.GetGrubVersion(mounter);
     measureSummary.grub.content_ = std::string(reinterpret_cast<const char *>(grubSm3.data()), grubSm3.size());
 
     std::vector<uint8_t> initrdSm3(Sm3::DigestSize(), 0);
@@ -94,6 +95,7 @@ VirtrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter, virtrust::V
         VIRTRUST_LOG_ERROR("|GetVirshMeasureSummary|END|returnF||do sm3 by file failed: {}", config.GetInitrdPath());
         return VirtrustRc::ERROR;
     }
+    measureSummary.initrd.version_ = config.GetInitrdVersion();
     measureSummary.initrd.content_ = std::string(reinterpret_cast<const char *>(initrdSm3.data()), initrdSm3.size());
 
     std::vector<uint8_t> kernelSm3(Sm3::DigestSize(), 0);
@@ -102,6 +104,7 @@ VirtrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter, virtrust::V
         VIRTRUST_LOG_ERROR("|GetVirshMeasureSummary|END|returnF||do sm3 by file failed: {}", config.GetLinuzPath());
         return VirtrustRc::ERROR;
     }
+    measureSummary.kernel.version_ = config.GetLinuzVersion();
     measureSummary.kernel.content_ = std::string(reinterpret_cast<const char *>(kernelSm3.data()), kernelSm3.size());
     return VirtrustRc::OK;
 }
@@ -151,21 +154,24 @@ bool ConvertTsbStruct(const VirshMeasureInfo &src, struct MeasureInfo *&target)
         VIRTRUST_LOG_ERROR("malloc failed:{},size:{}", src.name_, totalSize);
         return false;
     }
-    if (memcpy_s(target->uuid, sizeof(target->uuid) - 1, src.uuid_.data(), src.uuid_.size()) != EOK) {
+    // must ensure char array ends with '\0'
+    if (memcpy_s(target->uuid, sizeof(target->uuid), src.uuid_.c_str(), src.uuid_.size() + 1) != EOK) {
         VIRTRUST_LOG_ERROR("memcpy uuid to tsb struct failed:{},uuidSize:{}", src.name_, sizeof(target->uuid));
         return false;
     }
+    // content has its size filed
     target->size = contentSize;
-
-    if (memcpy_s(target->content, contentSize, src.content_.data(), contentSize) != EOK) {
+    if (memcpy_s(target->content, contentSize, src.content_.c_str(), contentSize) != EOK) {
         VIRTRUST_LOG_ERROR("memcpy content to tsb struct failed:{},contentSize:{}", src.name_, contentSize);
         return false;
     }
-    if (memcpy_s(target->name, sizeof(target->name) - 1, src.name_.data(), src.name_.size()) != EOK) {
+    // must ensure char array ends with '\0'
+    if (memcpy_s(target->name, sizeof(target->name), src.name_.c_str(), src.name_.size() + 1) != EOK) {
         VIRTRUST_LOG_ERROR("memcpy name to tsb struct failed:{}", src.name_);
         return false;
     }
-    if (memcpy_s(target->version, sizeof(target->version) - 1, src.version_.data(), src.version_.size()) != EOK) {
+    // must ensure char array ends with '\0'
+    if (memcpy_s(target->version, sizeof(target->version), src.version_.c_str(), src.version_.size() + 1) != EOK) {
         VIRTRUST_LOG_ERROR("memcpy version to tsb struct failed:{},version:{}", src.name_, src.version_);
         return false;
     }
@@ -221,10 +227,16 @@ bool CheckGuestBeforeStart(std::string_view domainName, std::string &uuid)
     // 检查度量值是否通过
     auto tsbRc = CheckMeasure(uuid.data(), bios, shim, grub, grubCfg, kernel, initrd);
     FreeMeasureInfo(bios, shim, grub, grubCfg, kernel, initrd);
-    if (tsbRc != 0) {
-        VIRTRUST_LOG_ERROR("CheckMeasure failed:{}", domainName);
+
+    if (tsbRc == IMPORT_BM_FAILURE) {
+        VIRTRUST_LOG_ERROR("|CheckGuestBeforeStart|End|returnF|domainName:{}|CheckMeasure: import failed", domainName);
         return false;
     }
+    if (tsbRc == CHECK_BM_FAILURE) {
+        VIRTRUST_LOG_ERROR("|CheckGuestBeforeStart|End|returnF|domainName:{}|CheckMeasure: verify failed", domainName);
+        return false;
+    }
+
     return true;
 }
 

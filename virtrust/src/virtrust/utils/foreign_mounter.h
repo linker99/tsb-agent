@@ -105,6 +105,7 @@ public:
     std::string GetLinuzPath();
 
     std::string GetBiosVersion(ForeignMounter &mounter);
+    std::string GetBiosVersion();
     std::string GetGrubVersion(ForeignMounter &mounter);
     std::string GetInitrdVersion();
     std::string GetLinuzVersion();

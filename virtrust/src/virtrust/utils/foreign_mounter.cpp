@@ -8,6 +8,7 @@
 #include <string>
 #include <string_view>
 #include <filesystem>
+#include <regex>
 
 #include "spdlog/fmt/fmt.h"
 
@@ -15,6 +16,7 @@
 #include "virtrust/base/str_utils.h"
 #include "virtrust/crypto/sm3.h"
 #include "virtrust/dllib/common.h"
+#include "virtrust/utils/file_io.h"
 
 namespace virtrust {
 
@@ -28,7 +30,7 @@ constexpr std::string_view DEFAULT_LINUZ_PREFIX = "linux";
 constexpr char PATH_SEPARATOR = '/';
 constexpr std::string_view BACKEND_VALUE = "direct";
 constexpr std::string_view BIOS_VERSION_FILE_PATH = "/sys/class/dmi/id/bios_version";
-constexpr std::string_view TARGET_GRUB_VERSION = "GRUB version";
+const std::regex GRUB_VERSION_REGEX(R"(GRUB\s+version)");
 
 inline ForeignMounterRc ParseRc(DllibRc rc)
 {
@@ -190,7 +192,7 @@ std::string VerifyConfig::ParseGrubCfgLine(const std::string &line)
     return fmt::format("{}/{}", DEFAULT_BOOT_PATH, StrTrim(filename, PATH_SEPARATOR));
 }
 
-
+// read from vm
 std::string VerifyConfig::GetBiosVersion(ForeignMounter &mounter)
 {
     if (!mounter.CheckMount()) {
@@ -205,6 +207,19 @@ std::string VerifyConfig::GetBiosVersion(ForeignMounter &mounter)
         return "";
     }
 
+    return StrTrimWhitespace(biosVersion);
+}
+
+// read from host
+std::string VerifyConfig::GetBiosVersion()
+{
+    std::string filePath(BIOS_VERSION_FILE_PATH);
+    FileInputStream fis(filePath);
+    auto biosVersion = fis.ReadAll();
+    if (biosVersion.empty()) {
+        VIRTRUST_LOG_ERROR("|GetBiosVersion|END|||Read BIOS version from {} failed.", BIOS_VERSION_FILE_PATH);
+        return "";
+    }
     return StrTrimWhitespace(biosVersion);
 }
 
@@ -225,7 +240,7 @@ std::string VerifyConfig::GetGrubVersion(ForeignMounter &mounter) {
     auto lines = ExtractStringsFromBinary(content);
     std::string grubVersion;
     for (size_t i = 0; i < lines.size(); ++i) {
-        if (lines[i].find(TARGET_GRUB_VERSION) != std::string::npos) {
+        if (std::regex_search(lines[i], GRUB_VERSION_REGEX)) {
             if (i + 1 < lines.size()) {
                 grubVersion = lines[i + 1];  // 下一行即版本号
                 break;
@@ -236,8 +251,8 @@ std::string VerifyConfig::GetGrubVersion(ForeignMounter &mounter) {
     // 未找到
     if (grubVersion.empty()) {
         VIRTRUST_LOG_ERROR(
-            "|GetGrubVersion|END|||Failed to extract version: '{}', not found or has no following line in {}.",
-            TARGET_GRUB_VERSION, GetGrubPath());
+            "|GetGrubVersion|END|||Failed to extract grub version, not found or has no following line in {}.",
+            GetGrubPath());
         return "";
     }
 
