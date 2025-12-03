@@ -34,6 +34,10 @@ constexpr uint32_t VIR_UUID_STRING_BUFLEN = 200;
 constexpr int LIST_DOMAINS_MASK = DomainListFlags::LIST_DOMAINS_ACTIVE | DomainListFlags::LIST_DOMAINS_INACTIVE;
 namespace {
 
+constexpr std::string_view VIRT_INSTALL_ARG_NO_AUTO_CONSOLE = "--noautoconsole";
+constexpr std::string_view VIRT_INSTALL_ARG_NO_REBOOT       = "--noreboot";
+constexpr std::string_view VIRT_INSTALL_ARG_CONNECT         = "--connect";
+
 inline std::string GetNameStr(const virDomainPtr domian)
 {
     auto &libvirt = Libvirt::GetInstance();
@@ -331,12 +335,10 @@ void GetConnectArgs(const std::string &arg, std::string &value, size_t i, const 
     }
 }
 
-VirtrustRc ValidateAndPrepareArgs(const std::vector<std::string> &args, std::vector<char *> &execArgs,
+VirtrustRc ValidateAndPrepareArgs(const std::vector<std::string> &args, std::vector<std::string> &execArgs,
                                   std::string &domainName, bool &allowStoreMeasurements,
                                   const std::unique_ptr<ConnCtx> &conn)
 {
-
-    execArgs.reserve(args.size() + 3);
     std::string connectArgs;
     for (size_t i = 0; i < args.size(); ++i) {
         const auto &arg = args[i];
@@ -356,22 +358,20 @@ VirtrustRc ValidateAndPrepareArgs(const std::vector<std::string> &args, std::vec
             return VirtrustRc::ERROR;
         }
         (void)GetConnectArgs(arg, connectArgs, i, args);
-        execArgs.push_back(const_cast<char *>(arg.data()));
+        execArgs.push_back(arg.data());
     }
-    execArgs.push_back(const_cast<char *>("--noautoconsole"));
-    execArgs.push_back(const_cast<char *>("--noreboot"));
+    execArgs.push_back(std::string(VIRT_INSTALL_ARG_NO_AUTO_CONSOLE));
+    execArgs.push_back(std::string(VIRT_INSTALL_ARG_NO_REBOOT));
     if (domainName.empty()) {
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||domain name must be given.");
         return VirtrustRc::ERROR;
     }
     if (connectArgs.empty()) {
-        execArgs.reserve(args.size() + 5);
-        execArgs.push_back(const_cast<char *>("--connect"));
-        execArgs.push_back(strdup(conn->GetUri().data()));
+        execArgs.push_back(std::string(VIRT_INSTALL_ARG_CONNECT));
+        execArgs.push_back(conn->GetUri());
     } else {
         conn->SetUri(connectArgs);
     }
-    execArgs.push_back(nullptr);
 
     return VirtrustRc::OK;
 }
@@ -540,11 +540,11 @@ bool ConsistencyCheck(const std::unordered_map<std::string, Description> &tsbVmM
             errMap.emplace(
                 tsb.first,
                 std::make_pair(LogLevel::ERROR,
-                               fmt::format("Inconsistent vm (tsb uuid:{}, name {}) "
-                                           "its data is inconsistent with tsb, consider update this "
-                                           "instance by \"virsh start/destroy DOMAIN_NAME\", or \"virtrust-sh "
+                               fmt::format("Inconsistent vm (tsb uuid:{}, name {}), "
+                                           "its state in the TSB is {}, but its actual state is {}. Consider update "
+                                           "this instance by \"virsh start/destroy DOMAIN_NAME\", or \"virtrust-sh "
                                            "start/destroy --only-tsb DOMAIN_UUID\".",
-                                           tsb.first, tsb.second.name)));
+                                           tsb.first, tsb.second.name, tsb.second.state, virtIter->second.state)));
             out = false;
             continue;
         }
@@ -643,13 +643,23 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
     if (CheckMaxDomainCount() != VirtrustRc::OK) {
         return VirtrustRc::ERROR;
     }
-    std::vector<char *> execArgs;
+
+    std::vector<std::string> execArgsStr;
+    execArgsStr.reserve(args.size() + 2); // +2 for --noautoconsole, --noreboot
     std::string domainName;
     bool allowStoreMeasurements = false;
-    execArgs.reserve(args.size() + 3); // +3 for --noautoconsole, --noreboot and nullptr
-    if (ValidateAndPrepareArgs(args, execArgs, domainName, allowStoreMeasurements, conn) != VirtrustRc::OK) {
+    if (ValidateAndPrepareArgs(args, execArgsStr, domainName, allowStoreMeasurements, conn) != VirtrustRc::OK) {
         return VirtrustRc::ERROR;
     }
+
+    // string to char* for execv
+    std::vector<char*> execArgs;
+    execArgs.reserve(execArgsStr.size() + 1); // +1 for nullptr
+    for (auto &s : execArgsStr) {
+        execArgs.push_back(s.data());
+    }
+    execArgs.push_back(nullptr);  // end with nullptr
+
     std::string argStr = MakeString(execArgs);
     // run virt-install in a child progress
     VIRTRUST_LOG_INFO("|DomainCreate|RUNNING|||Execute cmd: {},allowStoreMeasurements:{}", argStr,
@@ -658,9 +668,7 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
     if (pid == -1) {
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||Failed to create fork, msg:{}", strerror(errno));
         return VirtrustRc::ERROR;
-
     } else if (pid == 0) {
-
         if (execv(execArgs[0], execArgs.data()) == -1) {
 
             VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||Failed to execute cmd:{}, msg: {}", argStr, strerror(errno));
