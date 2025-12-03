@@ -205,10 +205,11 @@ MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
     char *cipher = nullptr;
     int cipherLen = 0;
     // 收集密码资源
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationGetVrootCipher start.", domainName_);
     auto ret = MigrationGetVrootCipher(sessionId_.data(), sessionId_.data(), &cipher, &cipherLen);
     if (ret != 0 || cipher == nullptr) {
         VIRTRUST_LOG_ERROR(
-            "|OnStartMigrationResponseReceived|END|returnF|domain name: {}|MigrationGetVRootCipher failed.",
+            "|OnStartMigrationResponseReceived|END|returnF|domain name: {}|TSB: MigrationGetVRootCipher failed.",
             domainName_);
         if (ret == ERR_VM_NOT_STARTED) {
             VIRTRUST_LOG_ERROR("call MigrationGetVRootCipher failed: the VM has not been started yet.");
@@ -216,6 +217,8 @@ MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
         OnFail();
         return MigrateSessionRc::ERROR;
     }
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationGetVrootCipher success.", domainName_);
+
     std::string cipherStr(cipher, cipherLen);
     free(cipher);
 
@@ -336,17 +339,21 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
     char *pubKey = nullptr;
     int pubKeyLen = 0;
 
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationGetCert start.", domainName_);
     int ret = MigrationGetCert(uuid.data(), &cert, &certLen, &pubKey, &pubKeyLen);
     if (ret != 0 || cert == nullptr || pubKey == nullptr) {
-        VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|domain name: {}|Get local cert failed.", domainName_);
+        VIRTRUST_LOG_ERROR(
+            "|GetExchangePkAndReport|END|returnF|domain name: {}|TSB: MigrationGetCert failed.", domainName_);
         return MigrateSessionRc::ERROR;
     }
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationGetCert success.", domainName_);
 
     std::string certStr(cert, certLen);
     std::string pubKeyStr(pubKey, pubKeyLen);
     free(cert);
     free(pubKey);
 
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: GetReport start.", domainName_);
     trust_report_new hostReport;
     trust_report_new vmReport;
     ret = GetReport(uuid.data(), uuid.data(), &hostReport, &vmReport);
@@ -354,6 +361,7 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
         VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|domain name: {}|Get local report failed.", domainName_);
         return MigrateSessionRc::ERROR;
     }
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: GetReport success.", domainName_);
 
     if (role_ == Role::Initiator) {
         req->set_domainname(domainName_);
@@ -379,9 +387,15 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
 
 MigrateSessionRc MigrationSession::VerifyCertificate(std::string uuid, std::string cert, std::string pubkey)
 {
-    VIRTRUST_LOG_DEBUG("|VerifyCertificate|START|");
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationCheckPeerPk start.", domainName_);
     int ret = MigrationCheckPeerPk(uuid.data(), cert.data(), pubkey.data());
-    return ret == 0 ? MigrateSessionRc::OK : MigrateSessionRc::ERROR;
+    if (ret != 0) {
+        VIRTRUST_LOG_DEBUG(
+            "|VerifyCertificate|END|returnF|domain name: {}|TSB: MigrationCheckPeerPk failed.", domainName_);
+        return MigrateSessionRc::ERROR;
+    }
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationCheckPeerPk success.", domainName_);
+    return MigrateSessionRc::OK;
 }
 
 MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustReportNew &hostProtoReport,
@@ -390,10 +404,15 @@ MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustRepo
     VIRTRUST_LOG_DEBUG("|VerifyHostAndVmReport|START|");
     trust_report_new hostReport = ReportFromProto(hostProtoReport);
     trust_report_new vmReport = ReportFromProto(vmProtoReport);
-
-    // 调用TSB API进行报告校验, 目前不对UUID进行校验
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: VerifyTrustReport start.", domainName_);
     auto ret = VerifyTrustReport(sessionId_.data(), sessionId_.data(), &hostReport, &vmReport);
-    return ret == 0 ? MigrateSessionRc::OK : MigrateSessionRc::ERROR;
+    if (ret != 0) {
+        VIRTRUST_LOG_DEBUG(
+            "|VerifyHostAndVmReport|END|returnF|domain name: {}|TSB: VerifyTrustReport failed.", domainName_);
+        return MigrateSessionRc::ERROR;
+    }
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: VerifyTrustReport success.", domainName_);
+    return MigrateSessionRc::OK;
 }
 
 // 调用libvirt接口迁移
@@ -548,11 +567,14 @@ MigrateSessionRc MigrationSession::ExportTcm2Key(std::string &tcm2Key)
     char *key = nullptr;
     int keyLen = 0;
 
+    VIRTRUST_LOG_DEBUG("|domain name: {} |TSB: TransDupPub export start.", domainName_);
     auto ret = TransDupPub(EN_EXPORT, nullptr, &key, &keyLen, nullptr, 0);
     if (ret != 0 || key == nullptr || keyLen <= 0) {
-        VIRTRUST_LOG_ERROR("|ExportTcm2Key|END|returnF|uuid: {}|TransDupPub: export tcm2 key failed.", sessionId_);
+        VIRTRUST_LOG_ERROR(
+            "|ExportTcm2Key|END|returnF|domain name: {} |TSB: TransDupPub export failed.", domainName_);
         return MigrateSessionRc::ERROR;
     }
+    VIRTRUST_LOG_DEBUG("|domain name: {} |TSB: TransDupPub export success.", domainName_);
 
     tcm2Key = std::string(key, keyLen);
     free(key);
@@ -561,12 +583,14 @@ MigrateSessionRc MigrationSession::ExportTcm2Key(std::string &tcm2Key)
 
 MigrateSessionRc MigrationSession::ImportTcm2Key(std::string_view tcm2Key)
 {
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: TransDupPub import start.", domainName_);
     auto ret = TransDupPub(EN_IMPORT, sessionId_.data(), nullptr, nullptr,
                         std::string(tcm2Key).data(), tcm2Key.size());
     if (ret != 0) {
-        VIRTRUST_LOG_ERROR("|ImportTcm2Key|END|returnF|uuid: {}|TransDupPub: import tcm2 key failed.", sessionId_);
+        VIRTRUST_LOG_ERROR("|ImportTcm2Key|END|returnF|domain name: {}|TSB: TransDupPub import failed.", domainName_);
         return MigrateSessionRc::ERROR;
     }
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: TransDupPub import success.", domainName_);
 
     return MigrateSessionRc::OK;
 }
@@ -731,6 +755,8 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
     // 导入服务端校验客户端发来的虚拟机资源信息
     auto uuid = request->uuid();
     auto cipherData = request->cipherdata();
+
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationImportVrootCipher start", domainName_);
     auto ret = MigrationImportVrootCipher(uuid.data(),
                                           uuid.data(),
                                           cipherData.data(),
@@ -738,23 +764,26 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
     if (ret != 0) {
         EnterState(State::Failed);
         VIRTRUST_LOG_ERROR(
-            "|OnTransferDataRequestReceived|END|returnF|domain name: {}|MigrationImportVrootCipher failed.",
+            "|OnTransferDataRequestReceived|END|returnF|domain name: {}|TSB: MigrationImportVrootCipher failed.",
             domainName_);
         return MigrateSessionRc::ERROR;
     }
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationImportVrootCipher success.", domainName_);
 
     // 导入服务端发来的虚拟机描述信息 校验秘钥成功才导入
     auto protosDesc = request->vtpcminfo();
     auto vmInfo = DescriptionFromProto(protosDesc);
     vmInfo.state = VM_SHUTUP;
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: CreateVRoot start", domainName_);
     ret = CreateVRoot(&vmInfo);
     if (ret != 0) {
         result = ret;
         EnterState(State::Failed);
-        VIRTRUST_LOG_ERROR("|OnTransferDataRequestReceived|END|returnF|domain name: {}|CreateVRoot failed.",
+        VIRTRUST_LOG_ERROR("|OnTransferDataRequestReceived|END|returnF|domain name: {}|TSB: CreateVRoot failed.",
                            domainName_);
         return MigrateSessionRc::ERROR;
     }
+    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: CreateVRoot success", domainName_);
 
     // 刷新定时器
     EnterState(State::Transferring);
