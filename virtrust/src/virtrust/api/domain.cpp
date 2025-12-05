@@ -185,22 +185,22 @@ bool ConvertTsbStruct(const VirshMeasureInfo &src, struct MeasureInfo *&target)
 void FreeMeasureInfo(struct MeasureInfo *bios, struct MeasureInfo *shim, struct MeasureInfo *grub,
                      struct MeasureInfo *grubCfg, struct MeasureInfo *kernel, struct MeasureInfo *initrd)
 {
-    if (bios == nullptr) {
+    if (bios != nullptr) {
         free(bios);
     }
-    if (shim == nullptr) {
+    if (shim != nullptr) {
         free(shim);
     }
-    if (grub == nullptr) {
+    if (grub != nullptr) {
         free(grub);
     }
-    if (grubCfg == nullptr) {
+    if (grubCfg != nullptr) {
         free(grubCfg);
     }
-    if (kernel == nullptr) {
+    if (kernel != nullptr) {
         free(kernel);
     }
-    if (initrd == nullptr) {
+    if (initrd != nullptr) {
         free(initrd);
     }
 }
