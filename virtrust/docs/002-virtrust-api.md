@@ -71,8 +71,6 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
 
 ### 3. DomainMigrate - 迁移虚拟机
 
-将虚拟机迁移到其他主机。当前仅支持离线迁移，虚拟机在 running/shut-off 状态下，非共享存储需要用户手动复制磁盘文件，例如 qcow2 到目的端口，目标存在同名运行的虚拟机情况下不能迁移，可配置源虚拟机是否删除，重复迁移会覆盖目标端虚拟机。
-
 ```cpp
 VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName,
                          const std::string &destUri, unsigned int flags = 0);
@@ -88,7 +86,7 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
   - `MIGRATE_UNDEFINE_SOURCE`：迁移成功后删除源端虚拟机
 
 **功能描述**：
-将虚拟机从当前主机迁移到目标主机。支持安全的迁移过程，包括 TSB 资源的同步。
+将虚拟机从当前主机迁移到目标主机。支持安全的迁移过程，包括 TSB 资源的同步。当前仅支持离线迁移，并且需要确保虚拟机在 shut-off 状态下。如待迁移虚拟机配置了非共享存储，则用户需要手动复制磁盘文件（例如 qcow2）到目的节点。如果目标存在同名运行的虚拟机情况下不能迁移。当前支持可配置源虚拟机是否删除，重复迁移会覆盖目标端虚拟机。
 
 **返回值**：
 - 成功返回 `VirtrustRc::OK`

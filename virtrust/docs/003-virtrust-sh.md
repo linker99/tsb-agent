@@ -4,7 +4,7 @@
 
 Virtrust Shell (virtrust-sh) 是 virtrust 项目的命令行界面工具，为用户提供了交互式的虚拟机管理功能。它基于 virtrust API 库构建，支持虚拟机的完整生命周期管理操作。
 
-- **虚拟机生命周期管理**：创建、启动、停止、迁移、查询和删除虚拟机
+- **虚拟机生命周期管理**：创建、启动、停止、迁移、查询和删除虚拟机定义
 
 ## 安装和使用
 
@@ -29,11 +29,11 @@ virtrust-sh [options]... <command> [args...]
 | 命令 | 描述 |
 |------|------|
 | `create` | 创建虚拟机实例 |
-| `destroy` | 销毁（停止）虚拟机域 |
+| `destroy` | 强制关闭（停止）虚拟机域 |
 | `list` | 列出虚拟机信息 |
 | `migrate` | 迁移虚拟机到其他主机 |
 | `start` | 启动（先前定义的）非活动虚拟机域 |
-| `undefine` | 取消定义虚拟机域 |
+| `undefine` | 删除虚拟机定义 |
 
 ## 详细命令说明
 
@@ -101,9 +101,9 @@ virtrust-sh -d start test-vm
 virtrust-sh start --only-tsb <vm-uuid>
 ```
 
-### 3. destroy - 停止虚拟机
+### 3. destroy - 强制关闭（停止）虚拟机
 
-强制停止运行中的虚拟机。
+强制关闭（停止）运行中的虚拟机。
 
 **基本语法**：
 ```bash
@@ -115,11 +115,11 @@ virtrust-sh destroy [options] <domain_name>
 - `--only-tsb`：仅更新 TSB 资源，需要提供虚拟机的 UUID 作为 domain_name
 
 **参数说明**：
-- `domain_name`：要停止的虚拟机名称或 UUID（使用 `--only-tsb` 选项时必须使用 UUID）
+- `domain_name`：要强制关闭（停止）的虚拟机名称或 UUID（使用 `--only-tsb` 选项时必须使用 UUID）
 
 **示例**：
 ```bash
-# 停止虚拟机
+# 强制关闭（停止）虚拟机
 virtrust-sh destroy test-vm
 
 # 仅更新 TSB 资源
@@ -128,7 +128,7 @@ virtrust-sh destroy --only-tsb <vm-uuid>
 
 ### 4. undefine - 删除虚拟机定义
 
-删除虚拟机的配置定义，但不会删除磁盘镜像文件。
+删除虚拟机定义，但不会删除磁盘镜像文件。
 
 **基本语法**：
 ```bash
