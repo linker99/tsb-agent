@@ -498,7 +498,7 @@ bool CompareTsbVirtState(int tsb, int virt)
 {
     switch (virt) {
         case VIR_DOMAIN_RUNNING:
-            return tsb == 1;
+            return tsb == VM_RUNNING;
         case VIR_DOMAIN_NOSTATE:
         case VIR_DOMAIN_BLOCKED:
         case VIR_DOMAIN_PAUSED:
@@ -506,7 +506,7 @@ bool CompareTsbVirtState(int tsb, int virt)
         case VIR_DOMAIN_SHUTOFF:
         case VIR_DOMAIN_CRASHED:
         case VIR_DOMAIN_PMSUSPENDED:
-            return tsb == 0;
+            return tsb == VM_SHUTUP;
         default:
             return false;
     }

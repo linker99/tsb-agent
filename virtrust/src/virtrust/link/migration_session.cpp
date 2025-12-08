@@ -773,7 +773,7 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
     // 导入服务端发来的虚拟机描述信息
     auto protosDesc = request->vtpcminfo();
     auto vmInfo = DescriptionFromProto(protosDesc);
-    vmInfo.state = VIR_DOMAIN_SHUTOFF;
+    vmInfo.state = VM_SHUTUP;
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: CreateVRoot start", domainName_);
     ret = CreateVRoot(&vmInfo);
     if (ret != 0) {

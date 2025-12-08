@@ -250,7 +250,7 @@ std::string VerifyConfig::GetGrubVersion(ForeignMounter &mounter) {
 
     // 未找到
     if (grubVersion.empty()) {
-        VIRTRUST_LOG_ERROR(
+        VIRTRUST_LOG_WARN(
             "|GetGrubVersion|END|||Failed to extract grub version, not found or has no following line in {}.",
             GetGrubPath());
         return "";
@@ -344,6 +344,7 @@ ForeignMounterRc ForeignMounter::Mount(std::string_view imgPath, size_t osIndex)
     size_t osCnt = CountStrings(roots);
     if (osIndex >= osCnt) {
         VIRTRUST_LOG_ERROR("|Mount|END|returnF||There are {} os in image, index out of range: {}.", osCnt, osIndex);
+        GuestfsFreeStringList(roots);
         return ForeignMounterRc::ERROR;
     }
 
@@ -384,6 +385,7 @@ ForeignMounterRc ForeignMounter::MountFilesystems(const std::string &root)
         int ret = libguestfs_.guestfs_mount_ro(handle_, device.c_str(), mountpoint.c_str());
         if (ret == -1) {
             VIRTRUST_LOG_ERROR("|MountFilesystems|END|returnF||Mount {} to {} failed.", device, mountpoint);
+            GuestfsFreeStringList(mountpoints);
             return ForeignMounterRc::ERROR;
         }
     }
