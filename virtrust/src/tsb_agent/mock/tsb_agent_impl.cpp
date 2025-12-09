@@ -114,6 +114,10 @@ std::unordered_map<std::string, std::unique_ptr<VRoot>> LoadVRootsFromFile(const
             // decode line format
             std::vector<std::string> lineVec;
             StrSplit(line, TSB_AGENT_FILE_SEP, lineVec);
+            if (lineVec.size() < 10) {
+                SPDLOG_ERROR("[MOCK-TSB-AGENT] Invalid line format in file: {}, line: {}", file, line);
+                continue;
+            }
             // decode descriptions
             VRootData data;
             data.uuid = FromStr<VROOT_VM_UUID_MAX_LEN>(lineVec[0]);                // uuid
@@ -163,6 +167,10 @@ TsbAgentRc TsbAgentImpl::CreateVRoot(const std::string &uuid, const std::string 
     }
 
     VRootData desc;
+    if (uuid.size() >= desc.uuid.size() || name.size() >= desc.name.size()) {
+        SPDLOG_ERROR("[MOCK-TSB-AGENT] uuid or name is too long.");
+        return TsbAgentRc::ERROR;
+    }
     if (memcpy_s(desc.uuid.data(), desc.uuid.size(), uuid.data(), uuid.size()) != EOK) {
         SPDLOG_ERROR("[MOCK-TSB-AGENT] copy uuid failed");
 

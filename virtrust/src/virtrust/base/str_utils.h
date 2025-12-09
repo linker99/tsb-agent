@@ -113,7 +113,7 @@ inline std::string StrTrimWhitespace(const std::string &str)
 
 inline size_t StrCountChar(const std::string &str, char target)
 {
-    int cnt = 0;
+    size_t cnt = 0;
     for (const char ch : str) {
         if (ch == target) {
             cnt++;

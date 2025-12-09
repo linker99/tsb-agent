@@ -35,7 +35,9 @@ int GetVRoots(int *vtpcmNums, struct Description **vtpcmInfo)
     // 分配内存
     if (*vtpcmNums > 0) {
         *vtpcmInfo = static_cast<Description *>(malloc(*vtpcmNums * sizeof(Description)));
-
+        if (vtpcmInfo == nullptr) {
+            return -1;
+        }
         // 将 instances 中的数据复制到 *vtpcmInfo中
         for (int i = 0; i < *vtpcmNums; i++) {
             (*vtpcmInfo)[i] = instances[i];
@@ -124,14 +126,20 @@ int MigrationGetCert(char *vUuid,   // 虚拟机的uuid
     if (cert == nullptr || pubkey == nullptr || rc != TsbAgentRc::OK || *cert != nullptr || *pubkey != nullptr) {
         return ParseTsbAgentRc(TsbAgentRc::ERROR);
     }
-
-    *certLen = out_cert.size();
+    if (out_cert.size() > static_cast<size_t>(INT_MAX)) {
+        return ParseTsbAgentRc(TsbAgentRc::ERROR);
+    }
+    *certLen = static_cast<int>(out_cert.size());
     *cert = static_cast<char *>(malloc(*certLen));
-    memcpy(cert, out_cert.data(), out_cert.size());
-
+    memcpy(*cert, out_cert.data(), out_cert.size());
+    if (out_pubkey.size() > static_cast<size_t>(INT_MAX)) {
+        free(*cert);
+        *cert = nullptr;
+        return ParseTsbAgentRc(TsbAgentRc::ERROR);
+    }
     *pubkeyLen = out_pubkey.size();
     *pubkey = static_cast<char *>(malloc(out_pubkey.size()));
-    memcpy(pubkey, out_pubkey.data(), out_pubkey.size());
+    memcpy(*pubkey, out_pubkey.data(), out_pubkey.size());
 
     return ParseTsbAgentRc(rc);
 }

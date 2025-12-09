@@ -364,6 +364,10 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: GetReport success.", domainName_);
 
     if (role_ == Role::Initiator) {
+        if (req == nullptr) {
+            VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|domain name: {}|req is null.", domainName_);
+            return MigrateSessionRc::ERROR;
+        }
         req->set_domainname(domainName_);
         req->set_uuid(uuid);
         req->set_cert(certStr);
@@ -373,6 +377,10 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
         auto vmReportProto = req->mutable_vmreport();
         ReportToProto(vmReport, vmReportProto);
     } else {
+        if (res == nullptr) {
+            VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|domain name: {}|res is null.", domainName_);
+            return MigrateSessionRc::ERROR;
+        }
         res->set_domainname(domainName_);
         res->set_uuid(uuid);
         res->set_cert(certStr);
