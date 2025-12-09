@@ -41,7 +41,7 @@ OpRc OpMigrate::ParseArgv(int argc, char **argv)
     optind = 1; // reset
 
     std::vector<option> opt = {
-        {"help", no_argument, nullptr, 'h'}, {"undefinesource", no_argument, nullptr, 0}, {nullptr, 0, nullptr, 0}};
+        {"help", no_argument, nullptr, 'h'}, {nullptr, 0, nullptr, 0}};
 
     // The leading + means no re-ordering, see man page of getopt_long
     while ((arg = getopt_long(argc, argv, "+h", opt.data(), &longindex)) != -1) {
@@ -51,13 +51,6 @@ OpRc OpMigrate::ParseArgv(int argc, char **argv)
                 PrintUsage();
                 optind = argc; // stop parsing
                 return OpRc::OK;
-            case 0:
-                if (flags_ & MIGRATE_UNDEFINE_SOURCE) {
-                    fmt::print("\nOption --undefinesource is already set.\n");
-                    return OpRc::ERROR;
-                }
-                flags_ |= MIGRATE_UNDEFINE_SOURCE;
-                break;
             default:
                 config_.enableExec = false;
                 PrintUsage();
@@ -65,6 +58,9 @@ OpRc OpMigrate::ParseArgv(int argc, char **argv)
                 return OpRc::ERROR;
         }
     }
+
+    // 迁移成功后删除源端虚机
+    flags_ |= MIGRATE_UNDEFINE_SOURCE;
 
     if (argc - optind != OP_MIGRATE_EXTRA_CMD_NUM) {
         fmt::print("\nInvalid number of arguments, expect: {}, got: {}\n", OP_MIGRATE_EXTRA_CMD_NUM, argc - optind);
@@ -96,11 +92,10 @@ void OpMigrate::PrintUsage()
                "    migrate - migrate domain to another host\n"
                "\n"
                "  SYNOPSIS:\n"
-               "    migrate [options] <domain> <desturi>\n"
+               "    migrate <domain> <desturi>\n"
                "\n"
                "  OPTIONS:\n"
                "    -h | --help                    this help\n"
-               "    --undefinesource               undefine VM on source\n"
                "\n");
 }
 

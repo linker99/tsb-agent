@@ -281,7 +281,7 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool transferRet)
         return MigrateSessionRc::ERROR;
     }
 
-    // 通知TSB迁移成功
+    // 通知TSB迁移成功，如果调用失败，TSB虚机状态会保持 VM_MIGRATION
     auto rc = NotifyVRMigration(true);
     if (rc != MigrateSessionRc::OK) {
         VIRTRUST_LOG_WARN("|OnTransferResponseReceived|END|returnF|domain name: {}|Migrate libvirt and tsb resource "
@@ -811,7 +811,7 @@ MigrateSessionRc MigrationSession::OnFinishedRequestReceived(bool finished)
     }
     VIRTRUST_LOG_DEBUG("|OnFinishedRequestReceived|END|returnS|domain name: {}|Migrate success.", domainName_);
 
-    // 通知TSB迁移成功
+    // 通知TSB迁移成功，如果调用失败，TSB虚机状态会保持 VM_MIGRATION
     auto rc = NotifyVRMigration(true);
     if (rc != MigrateSessionRc::OK) {
         VIRTRUST_LOG_WARN("|OnFinishedRequestReceived|END|returnF|domain name: {}|Migrate libvirt and tsb resource "

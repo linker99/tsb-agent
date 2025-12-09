@@ -35,13 +35,13 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
 /**
  * 迁移虚拟机
  * @param conn 连接参数
- * @param flags 默认0，不删除源端虚拟机，要删除源端虚拟机见DomainMigrateFlags中的选项
+ * @param flags 目前仅支持MIGRATE_UNDEFINE_SOURCE，删除源端虚拟机
  * @param domainName 虚拟机名称
  * @param destUri 目的端地址 格式为<protocol>://<hostip>:<port>/<path> 如qemu+tls://7.7.7.7:8080/system
  * @return VirtrustRc
  */
 VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName,
-                         const std::string &destUri, unsigned int flags = 0);
+                         const std::string &destUri, unsigned int flags = MIGRATE_UNDEFINE_SOURCE);
 
 /**
  * 启动虚拟机

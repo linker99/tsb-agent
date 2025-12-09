@@ -384,7 +384,6 @@ ForeignMounterRc ForeignMounter::MountFilesystems(const std::string &root)
         // mount device to mountpoint
         int ret = libguestfs_.guestfs_mount_ro(handle_, device.c_str(), mountpoint.c_str());
         if (ret == -1) {
-            GuestfsFreeStringList(mountpoints);
             VIRTRUST_LOG_ERROR("|MountFilesystems|END|returnF||Mount {} to {} failed.", device, mountpoint);
             GuestfsFreeStringList(mountpoints);
             return ForeignMounterRc::ERROR;
