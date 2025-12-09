@@ -802,6 +802,16 @@ MigrateSessionRc MigrationSession::OnFinishedRequestReceived(bool finished)
         return MigrateSessionRc::OK;
     }
     VIRTRUST_LOG_DEBUG("|OnFinishedRequestReceived|END|returnS|domain name: {}|Migrate success.", domainName_);
+
+    // 通知TSB迁移成功
+    auto rc = NotifyVRMigration(true);
+    if (rc != MigrateSessionRc::OK) {
+        VIRTRUST_LOG_WARN("|OnFinishedRequestReceived|END|returnF|domain name: {}|Migrate libvirt and tsb resource "
+                          "success but MigrationNotify(success) failed, please resolve tsb status.",
+                          domainName_);
+        return MigrateSessionRc::OK;
+    }
+
     EnterState(State::Finished);
     Cleanup();
     return MigrateSessionRc::OK;

@@ -30,7 +30,6 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
 - `args`：参数向量，参考 `virt-install --help` 的参数格式
   - `args[0]`：必须为 virt-install 的路径，如 `/usr/bin/virt-install`
   - 必须指定虚拟机名称字段
-  - `--allow-store-measurements`：可选参数，允许更新 TSB 的度量值
 
 **功能描述**：
 创建一个新的虚拟机实例。该函数内部调用 virt-install 工具来创建虚拟机，并处理相关的 TSB 资源初始化。

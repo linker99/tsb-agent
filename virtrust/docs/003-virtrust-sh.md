@@ -48,7 +48,6 @@ virtrust-sh create [options] [virt-install 支持的参数...]
 
 **选项说明**：
 - `-h | --help`：显示帮助信息
-- `--allow-store-measurements`：允许存储测量数据（使用此选项时必须提供 `--name` 参数）
 
 **参数说明**：
 - 必须包含虚拟机名称参数（使用 `--name` 指定）

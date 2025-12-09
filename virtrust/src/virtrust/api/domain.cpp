@@ -536,7 +536,7 @@ bool ConsistencyCheck(const std::unordered_map<std::string, Description> &tsbVmM
             continue;
         }
 
-        if (!(CompareTsbVirtState(tsb.second.state, virtIter->second.state))) {
+        if (!CompareTsbVirtState(tsb.second.state, virtIter->second.state)) {
             errMap.emplace(
                 tsb.first,
                 std::make_pair(LogLevel::ERROR,
@@ -616,7 +616,7 @@ VirtrustRc CheckMaxDomainCount()
         VIRTRUST_LOG_ERROR("|CheckMaxDomainCount|END|returnF||Failed to get tsb domains");
         return VirtrustRc::ERROR;
     }
-    if (tsbVmNum == MAX_DOMAIN_COUNT) {
+    if (tsbVmNum >= MAX_DOMAIN_COUNT) {
         FreeDescription(&tsbVmInfo);
         VIRTRUST_LOG_ERROR("|CheckMaxDomainCount|END|returnF||support max domain count is: {}", MAX_DOMAIN_COUNT);
         return VirtrustRc::ERROR;
