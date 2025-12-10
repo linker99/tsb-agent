@@ -163,11 +163,25 @@ std::string VirtXmlParser::GetVmName()
     return MakeString(node->children->content);
 }
 
-VerifyConfig VirtXmlParser::Parse(const std::string &filePath)
+bool VirtXmlParser::Parse(VerifyConfig &config, const std::string &filePath)
 {
-    LoadFile(filePath);
-    VerifyConfig config(GetVmName(), GetDiskPath(), GetLoaderPath());
-    return config;
+    if (!LoadFile(filePath)) {
+        return false;
+    }
+    std::string vmName = GetVmName();
+    if (vmName.empty()) {
+        return false;
+    }
+    std::string diskPath = GetDiskPath();
+    if (diskPath.empty()) {
+        return false;
+    }
+    std::string loaderPath = GetLoaderPath();
+    if (loaderPath.empty()) {
+        return false;
+    }
+    config = VerifyConfig(vmName, diskPath, loaderPath);
+    return true;
 }
 
 } // namespace virtrust

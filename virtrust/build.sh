@@ -78,8 +78,8 @@ function build_output() {
     cmake .. -DCMAKE_BUILD_TYPE=${build_type} \
         -DBUILD_TEST=${enable_test}\
         -DUSE_MOCK_TSB_AGENT=Off \
-        -DCMAKE_INSTALL_PREFIX=${OUTPUT_DIR}/virtrust \
-    make
+        -DCMAKE_INSTALL_PREFIX=${OUTPUT_DIR}/virtrust
+    make -j$(nproc)
     make install
     popd
 }

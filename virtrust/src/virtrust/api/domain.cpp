@@ -31,6 +31,8 @@ constexpr const char *LOCK_FILE = "/tmp/virtrust-start.lock";
 constexpr uint32_t MAX_DOMAIN_COUNT = 32;
 constexpr uint32_t MAX_NAME_LENGTH = 200;
 constexpr uint32_t VIR_UUID_STRING_BUFLEN = 200;
+constexpr uint32_t CREATE_ARGS_MAX_STRING_LENGTH = 1024;
+constexpr uint32_t CREATE_ARGS_MAX_SIZE = 150;
 constexpr int LIST_DOMAINS_MASK = DomainListFlags::LIST_DOMAINS_ACTIVE | DomainListFlags::LIST_DOMAINS_INACTIVE;
 namespace {
 
@@ -117,7 +119,12 @@ bool CalcVirshMeasure(std::string_view guestName, VirshMeasureSummary &measureSu
 {
     const std::string guestXmlPah = fmt::format(VIRTRUST_XML_REGEX_PATH, guestName);
     virtrust::VirtXmlParser xmlParser;
-    virtrust::VerifyConfig verifyConfig = xmlParser.Parse(guestXmlPah);
+    virtrust::VerifyConfig verifyConfig;
+    if (!xmlParser.Parse(verifyConfig, guestXmlPah)) {
+        VIRTRUST_LOG_ERROR("|main|END|returnF|file: {}|parse xml file failed.", guestXmlPah);
+        return false;
+    }
+
     if (verifyConfig.GetGuestName() != guestName) {
         VIRTRUST_LOG_ERROR("|main|END|returnF||guest name mismatch: the designated "
                            "name is:{}, while the one in the xml is: {}",
@@ -448,6 +455,18 @@ void FreeDescription(Description **description)
     }
 }
 
+VirtrustRc SafeGetVRoots(int *tsbVmNum, Description **vtpcmInfos)
+{
+    int ret = GetVRoots(tsbVmNum, vtpcmInfos);
+    if (ret != 0 || *tsbVmNum < 0) {
+        return VirtrustRc::ERROR;
+    }
+    if (*tsbVmNum != 0 && *vtpcmInfos == nullptr) {
+        return VirtrustRc::ERROR;
+    }
+    return VirtrustRc::OK;
+}
+
 VirtrustRc UndefineTsbResource(const std::string &domainName)
 {
     if (domainName.size() != 36) { // UUID长度为36
@@ -460,10 +479,9 @@ VirtrustRc UndefineTsbResource(const std::string &domainName)
     int tsbVmNum = 0;
     Description *tsbVmInfo = nullptr;
 
-    int result = GetVRoots(&tsbVmNum, &tsbVmInfo);
-    if (result != 0 || tsbVmNum < 0) {
-        VIRTRUST_LOG_ERROR("|DomainUndefine UndefineTsbResource|END|returnF||failed to get tsb "
-                           "domains");
+    auto rc = SafeGetVRoots(&tsbVmNum, &tsbVmInfo);
+    if (rc != VirtrustRc::OK) {
+        VIRTRUST_LOG_ERROR("|DomainUndefine UndefineTsbResource|END|returnF||failed to get tsb domains");
         return VirtrustRc::ERROR;
     }
     bool isMatch = false;
@@ -602,14 +620,39 @@ auto ToMaps(int tsbVmNum, Description *tsbVmInfo, int virtVmNum, virDomainPtr *v
     }
     return std::make_pair(tsbVmMap, virtVmMap);
 }
+
+// Check whether the number and length of parameters exceed the threshold
+VirtrustRc CheckCreateArgs(const std::vector<std::string> &args)
+{
+    if (args.empty()) {
+        VIRTRUST_LOG_ERROR("|CheckCreateArgs|END|returnF||Args is empty.");
+        return VirtrustRc::ERROR;
+    }
+
+    if (args.size() > CREATE_ARGS_MAX_SIZE) {
+        VIRTRUST_LOG_ERROR("|CheckCreateArgs|END|returnF||Args size exceed {}.", CREATE_ARGS_MAX_SIZE);
+        return VirtrustRc::ERROR;
+    }
+
+    for (size_t pos = 0; pos < args.size(); pos++) {
+        auto &arg = args[pos];
+        if (arg.empty() || arg.size() > CREATE_ARGS_MAX_STRING_LENGTH) {
+            VIRTRUST_LOG_ERROR("|CheckCreateArgs|END|returnF||Arg with index {} not valid, "
+                               "length needs to be between {} and {}.", pos, 1, CREATE_ARGS_MAX_STRING_LENGTH);
+            return VirtrustRc::ERROR;
+        }
+    }
+    return VirtrustRc::OK;
+}
+
 } // namespace
 
 VirtrustRc CheckMaxDomainCount()
 {
     int tsbVmNum = 0;
     Description *tsbVmInfo = nullptr;
-    int ret = GetVRoots(&tsbVmNum, &tsbVmInfo);
-    if (ret != 0 || tsbVmNum < 0) {
+    auto rc = SafeGetVRoots(&tsbVmNum, &tsbVmInfo);
+    if (rc != VirtrustRc::OK) {
         VIRTRUST_LOG_ERROR("|CheckMaxDomainCount|END|returnF||Failed to get tsb domains");
         return VirtrustRc::ERROR;
     }
@@ -629,6 +672,12 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF|| ConnCtx is nullptr.");
         return VirtrustRc::ERROR;
     }
+
+    // Check whether the number and length of parameters exceed the threshold
+    if (CheckCreateArgs(args) != VirtrustRc::OK) {
+        return VirtrustRc::ERROR;
+    }
+
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
@@ -644,6 +693,8 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
     if (ValidateAndPrepareArgs(args, execArgsStr, domainName, allowStoreMeasurements, conn) != VirtrustRc::OK) {
         return VirtrustRc::ERROR;
     }
+    // 为了可拓展性，保留allowStoreMeasurements选项; 当前固定为false，创建虚机时不采集基线值
+    allowStoreMeasurements = false;
 
     // string to char* for execv
     std::vector<char *> execArgs;
@@ -759,15 +810,15 @@ VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
 
     int tsbVmNum = 0;
     Description *tsbVmInfo = nullptr;
-    int ret = GetVRoots(&tsbVmNum, &tsbVmInfo);
-    if (ret != 0 || tsbVmNum < 0) {
+    auto ret = SafeGetVRoots(&tsbVmNum, &tsbVmInfo);
+    if (ret != VirtrustRc::OK) {
         VIRTRUST_LOG_ERROR("|DomainList|END|returnF||failed to get tsb domains");
         return VirtrustRc::ERROR;
     }
 
     virDomainPtr *virtVmInfo = nullptr;
     int virtVmNum = Libvirt::GetInstance().virConnectListAllDomains(conn->Get(), &virtVmInfo, flags);
-    if (virtVmNum < 0) {
+    if (virtVmNum < 0 || (virtVmNum > 0 && virtVmInfo == nullptr)) {
         VIRTRUST_LOG_ERROR("|DomainList|END|returnF||failed to get virsh domains");
         FreeDescription(&tsbVmInfo);
         return VirtrustRc::ERROR;
@@ -911,7 +962,7 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
         return VirtrustRc::OK;
     }
     if (flags != DOMAIN_START_NONE) {
-        VIRTRUST_LOG_ERROR("flags only support: {}", static_cast<int>(DOMAIN_START_NONE));
+        VIRTRUST_LOG_ERROR("flags only support: {}", static_cast<unsigned int>(DOMAIN_START_NONE));
         return VirtrustRc::ERROR;
     }
     auto domain = std::make_unique<DomainCtx>(conn, domainName);

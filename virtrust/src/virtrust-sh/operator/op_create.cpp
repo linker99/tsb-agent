@@ -40,7 +40,6 @@ OpRc OpCreate::ParseArgv(int argc, char **argv)
 
     std::vector<option> opt = {{"help", no_argument, nullptr, 'h'},
                                {"name", required_argument, nullptr, 'n'},
-                               {"allow-store-measurements", no_argument, nullptr, 1},
                                {nullptr, 0, nullptr, 0}};
 
     opterr = 0;
@@ -84,13 +83,10 @@ void OpCreate::PrintUsage()
                "    create - create a new virtual machine\n"
                "\n"
                "  SYNOPSIS:\n"
-               "    create [options] <args>\n"
+               "    create <args>\n"
                "\n"
                "  OPTIONS:\n"
                "    -h | --help                    this help\n"
-               "    --allow-store-measurements     allow store measurements\n"
-               "                                   (NOTE when using this option, "
-               "--name must be provided)\n"
                "\n"
                "  ARGS:\n"
                "    virt-install args, see all supported args with `virt-install "

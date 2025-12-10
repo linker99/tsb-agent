@@ -43,7 +43,7 @@ virtrust-sh [options]... <command> [args...]
 
 **基本语法**：
 ```bash
-virtrust-sh create [options] [virt-install 支持的参数...]
+virtrust-sh create [virt-install 支持的参数...]
 ```
 
 **选项说明**：
@@ -63,13 +63,6 @@ virtrust-sh create \
   --disk path=/var/lib/libvirt/images/test-vm.qcow2,size=10 \
   --cdrom /path/to/install.iso f
   --network network=default
-
-# 使用自定义连接 URI
-virtrust-sh -c qemu+tcp://host/system create \
-  --name test-vm \
-  --memory 1024 \
-  --vcpus 1 \
-  --disk path=/tmp/test.img,size=5
 ```
 
 ### 2. start - 启动虚拟机

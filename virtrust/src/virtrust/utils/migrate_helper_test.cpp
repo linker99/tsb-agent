@@ -91,7 +91,7 @@ TEST(UtilsTest, FileIoSeekgAndTellg)
 
     // Read part of the file
     std::string content;
-    fis.GetLine(&content, '\n');
+    fis.GetLine(content, '\n');
 
     // Get current position
     size_t currentPos = fis.Tellg();
@@ -120,7 +120,7 @@ TEST(UtilsTest, FileIoGetLine)
     FileInputStream fis = FileInputStream(path);
 
     std::string line;
-    fis.GetLine(&line, '\n');
+    fis.GetLine(line, '\n');
 
     EXPECT_FALSE(line.empty());
 }
@@ -141,7 +141,7 @@ TEST(UtilsTest, FileIoGetSpawn)
 
     // Original stream should still work
     std::string line;
-    fis.GetLine(&line, '\n');
+    fis.GetLine(line, '\n');
     EXPECT_FALSE(line.empty());
 }
 

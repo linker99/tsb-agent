@@ -21,7 +21,7 @@ public:
 
     bool Eof() const;
 
-    FileInputStream &GetLine(std::string *ret, char delim);
+    FileInputStream &GetLine(std::string &ret, char delim);
 
     FileInputStream &Read(void *buf, size_t length);
 

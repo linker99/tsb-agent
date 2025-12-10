@@ -15,7 +15,6 @@ namespace virtrust {
  * @param conn 连接参数
  * @param args 参数 参考virt-install --help
  * 名称字段必须指定。arg[0]为virt-install的路径 如：、usr/bin/virt-install
- * --allow-store-measurements可选 是否鞥新tsb的度量值
  * @return VirtrustRc
  */
 VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<std::string> &args);

@@ -13,6 +13,7 @@ or other application using the libvirt API.
   <os>
     <type arch='x86_64' machine='pc-i440fx-8.2'>hvm</type>
     <boot dev='hd'/>
+    <loader readonly='yes' type="'pflash">/usr/share/edk2/x86_64/QEMU_EFI-pflash.raw</loader>
   </os>
   <features>
     <acpi/>

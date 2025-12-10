@@ -20,7 +20,7 @@ std::string GetTestXml()
 
 constexpr std::string_view TEST_GUEST_NAME = "open-euler-vm";
 constexpr std::string_view TEST_DISK_PATH = "/data/images/openEuler-24.03-LTS-SP1-x86_64.qcow2";
-constexpr std::string_view TEST_LOADER_PATH = "";
+constexpr std::string_view TEST_LOADER_PATH = "/usr/share/edk2/x86_64/QEMU_EFI-pflash.raw";
 constexpr std::string_view TEST_SHIM_PATH = "/boot/efi/EFI/openEuler/shimaa64.efi";
 constexpr std::string_view TEST_GRUB_PATH = "/boot/efi/EFI/openEuler/grubaa64.efi";
 constexpr std::string_view TEST_GRUB_CFG_PATH = "/boot/efi/EFI/openEuler/grub.cfg";
@@ -29,8 +29,9 @@ constexpr std::string_view TEST_GRUB_CFG_PATH = "/boot/efi/EFI/openEuler/grub.cf
 TEST(VirtXmlParserTest, ParseTest)
 {
     auto parse = VirtXmlParser();
-    auto config = parse.Parse(GetTestXml());
-
+    VerifyConfig config;
+    auto ok = parse.Parse(config, GetTestXml());
+    EXPECT_TRUE(ok);
     EXPECT_EQ(config.GetGuestName(), TEST_GUEST_NAME);
     EXPECT_EQ(config.GetDiskPath(), TEST_DISK_PATH);
     EXPECT_EQ(config.GetLoaderPath(), TEST_LOADER_PATH);

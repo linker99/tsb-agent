@@ -103,6 +103,7 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
   - 当 `isOnlyTsb` 为 true 时，使用 UUID 时将忽略 flags 入参
 - `flags`：启动标志，参考 `DomainStartFlags`（当前仅定义 `DOMAIN_START_NONE = 0`）
 - `isOnlyTsb`：是否只更新 TSB 资源的标志
+- 
   - `true`：仅更新 TSB 资源
   - `false`：执行完整的虚拟机启动操作
 
@@ -112,8 +113,6 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
 **注意事项**：
 - 当使用 `--only-tsb/isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
 - `domainName` 长度为 [1, 200]
-- `desturi` 为目标端 uri，格式为 `<protocol>://<hostip>:<port>/<path>`，如 `qemu+tls://<destip>/system`
-
 
 ### 5. DomainUndefine - 删除虚拟机
 

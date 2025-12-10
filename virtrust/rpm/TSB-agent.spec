@@ -71,6 +71,7 @@ export CFLAGS="%{optflags}"
 export CXXFLAGS="%{optflags}"
 
 cmake -S . -B build \
+    -DBUILD_TEST=Off \
     -DCMAKE_BUILD_TYPE=RelWithDebInfo  \
     -DCMAKE_CXX_STANDARD=17 \
     -DCMAKE_CXX_STANDARD_REQUIRED=ON \

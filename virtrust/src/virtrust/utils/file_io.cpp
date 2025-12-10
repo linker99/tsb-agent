@@ -52,10 +52,10 @@ bool FileInputStream::Eof() const
     return in_.eof();
 }
 
-FileInputStream &FileInputStream::GetLine(std::string *ret, char delim)
+FileInputStream &FileInputStream::GetLine(std::string &ret, char delim)
 {
     try {
-        std::getline(in_, *ret, delim);
+        std::getline(in_, ret, delim);
     } catch (const std::ifstream::failure &e) {
         if (!in_.eof() || in_.bad()) {
             FILE_IO_THROW("GetLine");

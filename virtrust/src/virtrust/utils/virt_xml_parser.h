@@ -36,7 +36,7 @@ public:
 
     std::string GetLoaderPath();
 
-    VerifyConfig Parse(const std::string &filePath);
+    bool Parse(VerifyConfig &config, const std::string &filePath);
 
 private:
     Libxml2 &libxml2_ = Libxml2::GetInstance();
