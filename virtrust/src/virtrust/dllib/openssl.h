@@ -71,23 +71,44 @@ public:
     DlFun<void, EVP_MD_CTX *> EVP_MD_CTX_free;
 
 private:
-    void LoadAll()
+    DllibRc LoadAll()
     {
         // NOTE explicitly dlopen shared library
         auto ret = SelfDlOpen();
         if (ret != DllibRc::OK) {
-            return;
+            return ret;
         }
-        DLLIB_SELF_DLSYM(EVP_MD_fetch);
-        DLLIB_SELF_DLSYM(EVP_MD_get_size);
-        DLLIB_SELF_DLSYM(EVP_MD_CTX_new);
-        DLLIB_SELF_DLSYM(EVP_MD_CTX_reset);
-        DLLIB_SELF_DLSYM(EVP_MD_CTX_copy_ex);
-        DLLIB_SELF_DLSYM(EVP_DigestInit);
-        DLLIB_SELF_DLSYM(EVP_DigestUpdate);
-        DLLIB_SELF_DLSYM(EVP_DigestFinal_ex);
-        DLLIB_SELF_DLSYM(EVP_MD_free);
-        DLLIB_SELF_DLSYM(EVP_MD_CTX_free);
+        if (DLLIB_SELF_DLSYM(EVP_MD_fetch) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(EVP_MD_get_size) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(EVP_MD_CTX_new) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(EVP_MD_CTX_reset) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(EVP_MD_CTX_copy_ex) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(EVP_DigestInit) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(EVP_DigestUpdate) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(EVP_DigestFinal_ex) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(EVP_MD_free) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(EVP_MD_CTX_free) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        return DllibRc::OK;
     }
 
     Openssl() : DlLibBase(LIB_NAME)

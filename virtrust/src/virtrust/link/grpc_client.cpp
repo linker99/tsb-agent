@@ -35,6 +35,10 @@ int32_t UdsClient::DomainMigrate(const MigrationConfig &config)
         grpc::CreateChannel("unix:" + config_.udsPath, grpc::InsecureChannelCredentials());
 
     std::unique_ptr<protos::MigrationService::Stub> stub = protos::MigrationService::NewStub(channel);
+    if (stub == nullptr) {
+        VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|new stub failed");
+        return -1;
+    }
     grpc::Status status = stub->DomainMigrate(&context, request, &reply);
 
     if (!status.ok()) {

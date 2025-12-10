@@ -5,6 +5,7 @@
 // 适配器：对外保持 C 接口不变，内部通过 TsbAgent 封装进行 dlopen 调用
 
 #include "tsb_agent/tsb_agent.h"
+
 #include "virtrust/dllib/tsb_agent.h"
 
 namespace {
@@ -13,7 +14,7 @@ bool CheckTsbAgentDlopen()
     auto &ta = virtrust::TsbAgent::GetInstance();
     return ta.CheckOk() == virtrust::DllibRc::OK;
 }
-}
+} // namespace
 
 // NOTE ALL memories are allocated inside APIs by using "malloc", remember to free after use.
 
@@ -140,7 +141,7 @@ int MigrationGetVrootCipher(char *pUuid,
 }
 
 int MigrationImportVrootCipher(char *pUuid,
-                               char *vUuid, // 虚拟机的uuid
+                               char *vUuid,  // 虚拟机的uuid
                                char *cipher, // 加密后的密码资源
                                int cipherLen // 密文长度
 )

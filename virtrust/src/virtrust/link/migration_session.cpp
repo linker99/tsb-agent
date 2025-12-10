@@ -19,7 +19,7 @@ namespace virtrust {
 
 namespace {
 // RPC timeout unit: seconds
-constexpr uint32_t RPC_SIGNAL_TIMEOUT   = 5;
+constexpr uint32_t RPC_SIGNAL_TIMEOUT = 5;
 constexpr uint32_t RPC_TRANSFER_TIMEOUT = 20;
 
 unsigned int GetFlagCleard(const unsigned int &flags, const unsigned int &clear)
@@ -208,6 +208,9 @@ MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationGetVrootCipher start.", domainName_);
     auto ret = MigrationGetVrootCipher(sessionId_.data(), sessionId_.data(), &cipher, &cipherLen);
     if (ret != 0 || cipher == nullptr) {
+        if (cipher != nullptr) {
+            free(cipher);
+        }
         VIRTRUST_LOG_ERROR(
             "|OnStartMigrationResponseReceived|END|returnF|domain name: {}|TSB: MigrationGetVRootCipher failed.",
             domainName_);
@@ -333,6 +336,10 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
                                                           protos::EXchangePkAndReportReply *res)
 {
     VIRTRUST_LOG_DEBUG("|GetExchangePkAndReport|START|");
+    if (req == nullptr || res == nullptr) {
+        VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|req is nullptr or res is nullptr.");
+        return MigrateSessionRc::ERROR;
+    }
     auto uuid = sessionId_;
     char *cert = nullptr;
     int certLen = 0;
@@ -342,8 +349,14 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationGetCert start.", domainName_);
     int ret = MigrationGetCert(uuid.data(), &cert, &certLen, &pubKey, &pubKeyLen);
     if (ret != 0 || cert == nullptr || pubKey == nullptr) {
-        VIRTRUST_LOG_ERROR(
-            "|GetExchangePkAndReport|END|returnF|domain name: {}|TSB: MigrationGetCert failed.", domainName_);
+        if (cert != nullptr) {
+            free(cert);
+        }
+        if (pubKey != nullptr) {
+            free(pubKey);
+        }
+        VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|domain name: {}|TSB: MigrationGetCert failed.",
+                           domainName_);
         return MigrateSessionRc::ERROR;
     }
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationGetCert success.", domainName_);
@@ -398,8 +411,8 @@ MigrateSessionRc MigrationSession::VerifyCertificate(std::string uuid, std::stri
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationCheckPeerPk start.", domainName_);
     int ret = MigrationCheckPeerPk(uuid.data(), cert.data(), pubkey.data());
     if (ret != 0) {
-        VIRTRUST_LOG_DEBUG(
-            "|VerifyCertificate|END|returnF|domain name: {}|TSB: MigrationCheckPeerPk failed.", domainName_);
+        VIRTRUST_LOG_DEBUG("|VerifyCertificate|END|returnF|domain name: {}|TSB: MigrationCheckPeerPk failed.",
+                           domainName_);
         return MigrateSessionRc::ERROR;
     }
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationCheckPeerPk success.", domainName_);
@@ -410,13 +423,25 @@ MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustRepo
                                                          const protos::TrustReportNew &vmProtoReport)
 {
     VIRTRUST_LOG_DEBUG("|VerifyHostAndVmReport|START|");
-    trust_report_new hostReport = ReportFromProto(hostProtoReport);
-    trust_report_new vmReport = ReportFromProto(vmProtoReport);
+    trust_report_new hostReport;
+    bool success = ReportFromProto(hostProtoReport, hostReport);
+    if (!success) {
+        VIRTRUST_LOG_DEBUG("|VerifyHostAndVmReport|END|returnF|domain name: {}|TSB: report from proto failed.",
+                           domainName_);
+        return MigrateSessionRc::ERROR;
+    }
+    trust_report_new vmReport;
+    success = ReportFromProto(vmProtoReport, vmReport);
+    if (!success) {
+        VIRTRUST_LOG_DEBUG("|VerifyHostAndVmReport|END|returnF|domain name: {}|TSB: report from proto failed.",
+                           domainName_);
+        return MigrateSessionRc::ERROR;
+    }
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: VerifyTrustReport start.", domainName_);
     auto ret = VerifyTrustReport(sessionId_.data(), sessionId_.data(), &hostReport, &vmReport);
     if (ret != 0) {
-        VIRTRUST_LOG_DEBUG(
-            "|VerifyHostAndVmReport|END|returnF|domain name: {}|TSB: VerifyTrustReport failed.", domainName_);
+        VIRTRUST_LOG_DEBUG("|VerifyHostAndVmReport|END|returnF|domain name: {}|TSB: VerifyTrustReport failed.",
+                           domainName_);
         return MigrateSessionRc::ERROR;
     }
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: VerifyTrustReport success.", domainName_);
@@ -446,6 +471,10 @@ MigrateSessionRc MigrationSession::MigrateByLibvirt()
     auto domain = std::make_unique<DomainCtx>(localConn, domainName_);
     if (domain->Get() == nullptr) {
         VIRTRUST_LOG_ERROR("|MigrateByLibvirt|END|returnF||failed to find domain: {}", domainName_);
+        return MigrateSessionRc::ERROR;
+    }
+    if (destConn->Get() == nullptr) {
+        VIRTRUST_LOG_ERROR("|MigrateByLibvirt|END|returnF||failed to find desturl: {}", destUri_);
         return MigrateSessionRc::ERROR;
     }
     auto *domainPtr = libvirt.virDomainMigrate3(domain->Get(), destConn->Get(), nullptr, 0,
@@ -578,8 +607,10 @@ MigrateSessionRc MigrationSession::ExportTcm2Key(std::string &tcm2Key)
     VIRTRUST_LOG_DEBUG("|domain name: {} |TSB: TransDupPub export start.", domainName_);
     auto ret = TransDupPub(EN_EXPORT, nullptr, &key, &keyLen, nullptr, 0);
     if (ret != 0 || key == nullptr || keyLen <= 0) {
-        VIRTRUST_LOG_ERROR(
-            "|ExportTcm2Key|END|returnF|domain name: {} |TSB: TransDupPub export failed.", domainName_);
+        if (key != nullptr) {
+            free(key);
+        }
+        VIRTRUST_LOG_ERROR("|ExportTcm2Key|END|returnF|domain name: {} |TSB: TransDupPub export failed.", domainName_);
         return MigrateSessionRc::ERROR;
     }
     VIRTRUST_LOG_DEBUG("|domain name: {} |TSB: TransDupPub export success.", domainName_);
@@ -592,8 +623,7 @@ MigrateSessionRc MigrationSession::ExportTcm2Key(std::string &tcm2Key)
 MigrateSessionRc MigrationSession::ImportTcm2Key(std::string_view tcm2Key)
 {
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: TransDupPub import start.", domainName_);
-    auto ret = TransDupPub(EN_IMPORT, sessionId_.data(), nullptr, nullptr,
-                        std::string(tcm2Key).data(), tcm2Key.size());
+    auto ret = TransDupPub(EN_IMPORT, sessionId_.data(), nullptr, nullptr, std::string(tcm2Key).data(), tcm2Key.size());
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|ImportTcm2Key|END|returnF|domain name: {}|TSB: TransDupPub import failed.", domainName_);
         return MigrateSessionRc::ERROR;
@@ -765,10 +795,7 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
     auto cipherData = request->cipherdata();
 
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationImportVrootCipher start", domainName_);
-    auto ret = MigrationImportVrootCipher(uuid.data(),
-                                          uuid.data(),
-                                          cipherData.data(),
-                                          cipherData.size());
+    auto ret = MigrationImportVrootCipher(uuid.data(), uuid.data(), cipherData.data(), cipherData.size());
     if (ret != 0) {
         EnterState(State::Failed);
         VIRTRUST_LOG_ERROR(
@@ -780,7 +807,15 @@ MigrateSessionRc MigrationSession::OnTransferDataRequestReceived(const protos::V
 
     // 导入服务端发来的虚拟机描述信息
     auto protosDesc = request->vtpcminfo();
-    auto vmInfo = DescriptionFromProto(protosDesc);
+    Description vmInfo;
+    bool success = DescriptionFromProto(protosDesc, vmInfo);
+    if (!success) {
+        EnterState(State::Failed);
+        VIRTRUST_LOG_ERROR(
+            "|OnTransferDataRequestReceived|END|returnF|domain name: {}|TSB: description from proto failed.",
+            domainName_);
+        return MigrateSessionRc::ERROR;
+    }
     vmInfo.state = VM_SHUTUP;
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: CreateVRoot start", domainName_);
     ret = CreateVRoot(&vmInfo);

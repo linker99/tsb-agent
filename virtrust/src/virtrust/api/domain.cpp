@@ -35,8 +35,8 @@ constexpr int LIST_DOMAINS_MASK = DomainListFlags::LIST_DOMAINS_ACTIVE | DomainL
 namespace {
 
 constexpr std::string_view VIRT_INSTALL_ARG_NO_AUTO_CONSOLE = "--noautoconsole";
-constexpr std::string_view VIRT_INSTALL_ARG_NO_REBOOT       = "--noreboot";
-constexpr std::string_view VIRT_INSTALL_ARG_CONNECT         = "--connect";
+constexpr std::string_view VIRT_INSTALL_ARG_NO_REBOOT = "--noreboot";
+constexpr std::string_view VIRT_INSTALL_ARG_CONNECT = "--connect";
 
 inline std::string GetNameStr(const virDomainPtr domian)
 {
@@ -410,8 +410,7 @@ VirtrustRc CreateDomainAndVRoot(const std::unique_ptr<ConnCtx> &conn, const std:
     }
     Description description{};
     description.state = 0;
-    if (strncpy_s(description.name, sizeof(description.name), domainName.data(), sizeof(description.name) - 1) !=
-        EOK) {
+    if (strncpy_s(description.name, sizeof(description.name), domainName.data(), sizeof(description.name) - 1) != EOK) {
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||strncpy_s domainName failed.");
 
         return VirtrustRc::ERROR;
@@ -461,7 +460,6 @@ VirtrustRc UndefineTsbResource(const std::string &domainName)
     int tsbVmNum = 0;
     Description *tsbVmInfo = nullptr;
 
-    std::unordered_set<std::string> tsbVmNames; // 存放tsb查询到的虚机名称
     int result = GetVRoots(&tsbVmNum, &tsbVmInfo);
     if (result != 0 || tsbVmNum < 0) {
         VIRTRUST_LOG_ERROR("|DomainUndefine UndefineTsbResource|END|returnF||failed to get tsb "
@@ -571,7 +569,7 @@ auto ToMaps(int tsbVmNum, Description *tsbVmInfo, int virtVmNum, virDomainPtr *v
             !CompareTsbVirtState((tsbVmInfo + i)->state, VIR_DOMAIN_RUNNING)) {
             continue;
         }
-         // 如果查INACTIVE 过滤running态的
+        // 如果查INACTIVE 过滤running态的
         if (flags == DomainListFlags::LIST_DOMAINS_INACTIVE &&
             CompareTsbVirtState((tsbVmInfo + i)->state, VIR_DOMAIN_RUNNING)) {
             continue;
@@ -635,10 +633,6 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
     }
-    if (conn == nullptr) {
-        VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||conn is nullptr");
-        return VirtrustRc::ERROR;
-    }
     if (CheckMaxDomainCount() != VirtrustRc::OK) {
         return VirtrustRc::ERROR;
     }
@@ -652,12 +646,12 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
     }
 
     // string to char* for execv
-    std::vector<char*> execArgs;
+    std::vector<char *> execArgs;
     execArgs.reserve(execArgsStr.size() + 1); // +1 for nullptr
     for (auto &s : execArgsStr) {
         execArgs.push_back(s.data());
     }
-    execArgs.push_back(nullptr);  // end with nullptr
+    execArgs.push_back(nullptr); // end with nullptr
 
     std::string argStr = MakeString(execArgs);
     // run virt-install in a child progress
@@ -706,10 +700,6 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
     }
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
-        return VirtrustRc::ERROR;
-    }
-    if (conn == nullptr) {
-        VIRTRUST_LOG_ERROR("|DomainDestroy|END|returnF||conn is nullptr");
         return VirtrustRc::ERROR;
     }
 
@@ -765,10 +755,6 @@ VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
                            "see DomainListFlags.");
         return VirtrustRc::ERROR;
     }
-    if (conn == nullptr) {
-        VIRTRUST_LOG_ERROR("|DomainList|END|returnF||conn is nullptr");
-        return VirtrustRc::ERROR;
-    }
     domainInfos.clear();
 
     int tsbVmNum = 0;
@@ -779,7 +765,7 @@ VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
         return VirtrustRc::ERROR;
     }
 
-    virDomainPtr *virtVmInfo;
+    virDomainPtr *virtVmInfo = nullptr;
     int virtVmNum = Libvirt::GetInstance().virConnectListAllDomains(conn->Get(), &virtVmInfo, flags);
     if (virtVmNum < 0) {
         VIRTRUST_LOG_ERROR("|DomainList|END|returnF||failed to get virsh domains");
@@ -812,6 +798,12 @@ VirtrustRc DomainList(const std::unique_ptr<ConnCtx> &conn, unsigned int flags,
     }
     FreeDescription(&tsbVmInfo);
     if (virtVmInfo != nullptr) {
+        for (int i = 0; i < virtVmNum; i++) {
+            if (virtVmInfo[i] != nullptr) {
+                Libvirt::GetInstance().virDomainFree(virtVmInfo[i]);
+                virtVmInfo[i] = nullptr;
+            }
+        }
         free(virtVmInfo);
     }
     VIRTRUST_LOG_DEBUG("|DomainList|END|returnS||list domain success");
@@ -830,9 +822,9 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
     }
-    // 默认离线迁移且删除源端虚机
-    flags |= VIR_MIGRATE_OFFLINE | VIR_MIGRATE_PERSIST_DEST;
-    if (flags != (VIR_MIGRATE_OFFLINE | VIR_MIGRATE_PERSIST_DEST | MIGRATE_UNDEFINE_SOURCE)) {
+    flags |= VIR_MIGRATE_OFFLINE | VIR_MIGRATE_PERSIST_DEST; // 默认离线迁移 离线迁移必须指定VIR_MIGRATE_PERSIST_DEST
+    if (flags != (VIR_MIGRATE_OFFLINE | VIR_MIGRATE_PERSIST_DEST) &&
+        flags != (VIR_MIGRATE_OFFLINE | VIR_MIGRATE_PERSIST_DEST | MIGRATE_UNDEFINE_SOURCE)) {
         VIRTRUST_LOG_ERROR("|DomainMigrate|END|returnF|invalid flags, only support 0 and {}",
                            static_cast<unsigned int>(MIGRATE_UNDEFINE_SOURCE));
         return VirtrustRc::ERROR;
@@ -919,7 +911,7 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
         return VirtrustRc::OK;
     }
     if (flags != DOMAIN_START_NONE) {
-        VIRTRUST_LOG_ERROR("flags only support: {}", static_cast<unsigned int>(flags));
+        VIRTRUST_LOG_ERROR("flags only support: {}", static_cast<int>(DOMAIN_START_NONE));
         return VirtrustRc::ERROR;
     }
     auto domain = std::make_unique<DomainCtx>(conn, domainName);
@@ -965,10 +957,6 @@ VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::strin
     }
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
-        return VirtrustRc::ERROR;
-    }
-    if (conn == nullptr) {
-        VIRTRUST_LOG_ERROR("|DomainUndefine|END|returnF||conn is nullptr");
         return VirtrustRc::ERROR;
     }
     if (isOnlyTsb) {

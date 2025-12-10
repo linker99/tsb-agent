@@ -29,7 +29,9 @@ LinkRc GrpcServer::Start()
     if (running_) {
         return LinkRc::ERROR;
     }
-    std::filesystem::remove(config_.udsPath.c_str());
+    if (!std::filesystem::remove(config_.udsPath.c_str())) {
+        return LinkRc::ERROR;
+    }
     server_thread_ = std::make_unique<std::thread>([this]() { RunServer(); });
 
     // 等待服务器启动

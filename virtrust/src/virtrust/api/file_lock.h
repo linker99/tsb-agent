@@ -22,8 +22,8 @@ public:
             VIRTRUST_LOG_ERROR("Failed to open file {}, msg {}", fileName, strerror(errno));
         } else {
 
-            // Force permissions to 666 regardless of umask
-            if (fchmod(fd_, 0666) == -1) {
+            // Force permissions to 600 regardless of umask
+            if (fchmod(fd_, 0600) == -1) {
                 VIRTRUST_LOG_ERROR("Failed to set permissions for file {}, msg {}", fileName, strerror(errno));
             }
 
@@ -41,6 +41,7 @@ public:
         if (fd_ != -1) {
             flock(fd_, LOCK_UN);
             close(fd_);
+            fd_ = -1;
         }
     }
 

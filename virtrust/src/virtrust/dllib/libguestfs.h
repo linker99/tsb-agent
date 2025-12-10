@@ -70,26 +70,53 @@ public:
     DlFun<char *, guestfs_h *, const char *, size_t *> guestfs_read_file;
 
 private:
-    void LoadAll()
+    DllibRc LoadAll()
     {
         // NOTE explicitly dlopen shared library
         auto ret = SelfDlOpen();
         if (ret != DllibRc::OK) {
-            return;
+            return ret;
         }
-        DLLIB_SELF_DLSYM(guestfs_create);
-        DLLIB_SELF_DLSYM(guestfs_set_backend);
-        DLLIB_SELF_DLSYM(guestfs_add_drive_opts_argv);
-        DLLIB_SELF_DLSYM(guestfs_launch);
-        DLLIB_SELF_DLSYM(guestfs_inspect_os);
-        DLLIB_SELF_DLSYM(guestfs_inspect_get_mountpoints);
-        DLLIB_SELF_DLSYM(guestfs_mount_ro);
-        DLLIB_SELF_DLSYM(guestfs_umount_all);
-        DLLIB_SELF_DLSYM(guestfs_close);
-        DLLIB_SELF_DLSYM(guestfs_set_trace);
-        DLLIB_SELF_DLSYM(guestfs_exists);
-        DLLIB_SELF_DLSYM(guestfs_is_file);
-        DLLIB_SELF_DLSYM(guestfs_read_file);
+        if (DLLIB_SELF_DLSYM(guestfs_create) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_set_backend) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_add_drive_opts_argv) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_launch) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_inspect_os) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_inspect_get_mountpoints) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_mount_ro) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_umount_all) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_close) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_set_trace) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_exists) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_is_file) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(guestfs_read_file) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        return DllibRc::OK;
     }
 
     Libguestfs() : DlLibBase(LIB_NAME)

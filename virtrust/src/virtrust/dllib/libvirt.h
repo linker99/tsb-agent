@@ -68,29 +68,62 @@ public:
         virDomainMigrate3;
 
 private:
-    void LoadAll()
+    DllibRc LoadAll()
     {
         // NOTE explicitly dlopen shared library
         auto ret = SelfDlOpen();
         if (ret != DllibRc::OK) {
-            return;
+            return ret;
         }
-        DLLIB_SELF_DLSYM(virConnectOpen);
-        DLLIB_SELF_DLSYM(virDomainLookupByName);
-        DLLIB_SELF_DLSYM(virDomainCreateWithFlags);
-        DLLIB_SELF_DLSYM(virConnectClose);
-        DLLIB_SELF_DLSYM(virDomainFree);
-        DLLIB_SELF_DLSYM(virDomainShutdownFlags);
-        DLLIB_SELF_DLSYM(virConnectNumOfDomains);
-        DLLIB_SELF_DLSYM(virConnectListAllDomains);
-        DLLIB_SELF_DLSYM(virDomainGetID);
-        DLLIB_SELF_DLSYM(virDomainGetName);
-        DLLIB_SELF_DLSYM(virDomainGetInfo);
-        DLLIB_SELF_DLSYM(virDomainDestroyFlags);
-        DLLIB_SELF_DLSYM(virDomainUndefineFlags);
-        DLLIB_SELF_DLSYM(virSetErrorFunc);
-        DLLIB_SELF_DLSYM(virDomainGetUUIDString);
-        DLLIB_SELF_DLSYM(virDomainMigrate3);
+        if (DLLIB_SELF_DLSYM(virConnectOpen) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virDomainLookupByName) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virDomainCreateWithFlags) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virConnectClose) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virDomainFree) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virDomainShutdownFlags) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virConnectNumOfDomains) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virConnectListAllDomains) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virDomainGetID) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virDomainGetName) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virDomainGetInfo) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virDomainDestroyFlags) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virDomainUndefineFlags) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virSetErrorFunc) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virDomainGetUUIDString) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(virDomainMigrate3) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        return DllibRc::OK;
     }
 
     Libvirt() : DlLibBase(LIB_NAME)

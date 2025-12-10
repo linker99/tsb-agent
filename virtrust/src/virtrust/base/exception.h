@@ -76,7 +76,9 @@ public:
         } else {
             r = ::virtrust::MakeString(*msg_, ". ", extra);
         }
-        delete msg_;
+        if (msg_ != nullptr) {
+            delete msg_;
+        }
         return r;
     }
 

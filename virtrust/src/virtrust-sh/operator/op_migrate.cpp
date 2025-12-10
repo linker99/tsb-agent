@@ -40,8 +40,7 @@ OpRc OpMigrate::ParseArgv(int argc, char **argv)
     int longindex = -1;
     optind = 1; // reset
 
-    std::vector<option> opt = {
-        {"help", no_argument, nullptr, 'h'}, {nullptr, 0, nullptr, 0}};
+    std::vector<option> opt = {{"help", no_argument, nullptr, 'h'}, {nullptr, 0, nullptr, 0}};
 
     // The leading + means no re-ordering, see man page of getopt_long
     while ((arg = getopt_long(argc, argv, "+h", opt.data(), &longindex)) != -1) {

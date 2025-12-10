@@ -131,7 +131,11 @@ int MigrationGetCert(char *vUuid,   // 虚拟机的uuid
     }
     *certLen = static_cast<int>(out_cert.size());
     *cert = static_cast<char *>(malloc(*certLen));
-    memcpy(*cert, out_cert.data(), out_cert.size());
+    if (memcpy_s(*cert, *certLen, out_cert.data(), out_cert.size()) != EOK) {
+        free(*cert);
+        *cert = nullptr;
+        return ParseTsbAgentRc(TsbAgentRc::ERROR);
+    }
     if (out_pubkey.size() > static_cast<size_t>(INT_MAX)) {
         free(*cert);
         *cert = nullptr;

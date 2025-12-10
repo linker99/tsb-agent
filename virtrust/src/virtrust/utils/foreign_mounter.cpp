@@ -5,10 +5,10 @@
 #include "virtrust/utils/foreign_mounter.h"
 
 #include <cstring>
-#include <string>
-#include <string_view>
 #include <filesystem>
 #include <regex>
+#include <string>
+#include <string_view>
 
 #include "spdlog/fmt/fmt.h"
 
@@ -224,7 +224,8 @@ std::string VerifyConfig::GetBiosVersion()
 }
 
 // 从grubaa64.efi文件中获取 GRUB 版本号
-std::string VerifyConfig::GetGrubVersion(ForeignMounter &mounter) {
+std::string VerifyConfig::GetGrubVersion(ForeignMounter &mounter)
+{
     if (!mounter.CheckMount()) {
         VIRTRUST_LOG_ERROR("|GetGrubVersion|END|||Mounter should be mounted firstly.");
         return "";
@@ -242,7 +243,7 @@ std::string VerifyConfig::GetGrubVersion(ForeignMounter &mounter) {
     for (size_t i = 0; i < lines.size(); ++i) {
         if (std::regex_search(lines[i], GRUB_VERSION_REGEX)) {
             if (i + 1 < lines.size()) {
-                grubVersion = lines[i + 1];  // 下一行即版本号
+                grubVersion = lines[i + 1]; // 下一行即版本号
                 break;
             }
         }
@@ -271,7 +272,6 @@ std::string VerifyConfig::GetInitrdVersion()
     std::filesystem::path p(initrdPath);
     return p.stem().string();
 }
-
 
 std::string VerifyConfig::GetLinuzVersion()
 {

@@ -112,7 +112,7 @@ std::array<uint8_t, Sm3::DigestSize()> DoSm3(std::string_view data)
     }
 
     auto buf = sm3.CumulativeHash();
-    if (buf.size() < Sm3::DigestSize()) {
+    if (buf.size() != Sm3::DigestSize()) {
         VIRTRUST_LOG_ERROR("DoSm3() Failed, CumulativeHash output len incorrent:{}", buf.size());
         return {};
     }

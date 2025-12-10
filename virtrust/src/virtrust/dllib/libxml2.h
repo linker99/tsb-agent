@@ -45,18 +45,29 @@ public:
     DlFun<void, void *> xmlFree;
 
 private:
-    void LoadAll()
+    DllibRc LoadAll()
     {
         // NOTE explicitly dlopen shared library
         auto ret = SelfDlOpen();
         if (ret != DllibRc::OK) {
-            return;
+            return ret;
         }
-        DLLIB_SELF_DLSYM(xmlParseFile);
-        DLLIB_SELF_DLSYM(xmlFreeDoc);
-        DLLIB_SELF_DLSYM(xmlDocGetRootElement);
-        DLLIB_SELF_DLSYM(xmlGetProp);
-        DLLIB_SELF_DLSYM(xmlFree);
+        if (DLLIB_SELF_DLSYM(xmlParseFile) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(xmlFreeDoc) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(xmlDocGetRootElement) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(xmlGetProp) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        if (DLLIB_SELF_DLSYM(xmlFree) != DllibRc::OK) {
+            return DllibRc::ERROR;
+        }
+        return DllibRc::OK;
     }
 
     Libxml2() : DlLibBase(LIB_NAME)
