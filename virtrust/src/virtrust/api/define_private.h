@@ -35,7 +35,7 @@ public:
         : bios("bios", uuid),
           shim("shim", uuid),
           grub("grub", uuid),
-          grubCfg("grub_cfg", uuid),
+          grubCfg("grub.cfg", uuid),
           kernel("kernel", uuid),
           initrd("initrd", uuid)
     {}

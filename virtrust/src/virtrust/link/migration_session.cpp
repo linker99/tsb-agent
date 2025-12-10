@@ -336,10 +336,6 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
                                                           protos::EXchangePkAndReportReply *res)
 {
     VIRTRUST_LOG_DEBUG("|GetExchangePkAndReport|START|");
-    if (req == nullptr || res == nullptr) {
-        VIRTRUST_LOG_ERROR("|GetExchangePkAndReport|END|returnF|req is nullptr or res is nullptr.");
-        return MigrateSessionRc::ERROR;
-    }
     auto uuid = sessionId_;
     char *cert = nullptr;
     int certLen = 0;
