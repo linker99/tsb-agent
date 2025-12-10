@@ -29,8 +29,10 @@ LinkRc GrpcServer::Start()
     if (running_) {
         return LinkRc::ERROR;
     }
-    if (!std::filesystem::remove(config_.udsPath.c_str())) {
-        return LinkRc::ERROR;
+    if (std::filesystem::exists(config_.udsPath.c_str())) {
+        if (!std::filesystem::remove(config_.udsPath.c_str())) {
+            return LinkRc::ERROR;
+        }
     }
     server_thread_ = std::make_unique<std::thread>([this]() { RunServer(); });
 
