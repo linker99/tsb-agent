@@ -836,7 +836,7 @@ MigrateSessionRc MigrationSession::OnFinishedRequestReceived(bool finished)
         return MigrateSessionRc::ERROR;
     }
     if (!finished) {
-        VIRTRUST_LOG_ERROR("|OnFinishedRequestReceived|END|returnS|domain name: {}|Migrate failed.", domainName_);
+        VIRTRUST_LOG_ERROR("|OnFinishedRequestReceived|END|returnF|domain name: {}|Migrate failed.", domainName_);
         Cleanup();
         return MigrateSessionRc::OK;
     }
