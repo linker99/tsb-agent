@@ -310,7 +310,7 @@ VirtrustRc CheckCreateDomainName(const std::string &arg, std::string &domainName
     }
     // 处理--name=***或-n=***或-n*****
     bool isLongContainsName = arg.length() > 7 && arg.substr(0, 7) == "--name="; // 7是--name=的长度
-    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n"; // 这里大于3是处理-n并且紧跟字符的情况
+    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n";     // 这里大于3是处理-n并且紧跟字符的情况
     if (isLongContainsName || isShortContainsName) {
         if (isLongContainsName || (isLongContainsName && arg.find('=') != std::string::npos)) {
             domainName = arg.substr(arg.find('=') + 1);
@@ -638,7 +638,8 @@ VirtrustRc CheckCreateArgs(const std::vector<std::string> &args)
         auto &arg = args[pos];
         if (arg.empty() || arg.size() > CREATE_ARGS_MAX_STRING_LENGTH) {
             VIRTRUST_LOG_ERROR("|CheckCreateArgs|END|returnF||Arg with index {} not valid, "
-                               "length needs to be between {} and {}.", pos, 1, CREATE_ARGS_MAX_STRING_LENGTH);
+                               "length needs to be between {} and {}.",
+                               pos, 1, CREATE_ARGS_MAX_STRING_LENGTH);
             return VirtrustRc::ERROR;
         }
     }
@@ -933,50 +934,61 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
                        bool isOnlyTsb)
 {
     VIRTRUST_LOG_DEBUG("|DomainStart||START||start domainName: {}, isonlyTsb:{}", domainName, isOnlyTsb);
+
+    // First, check conn is not null pointer
     if (conn == nullptr) {
         VIRTRUST_LOG_ERROR("|DomainStart|END|returnF|| ConnCtx is nullptr.");
         return VirtrustRc::ERROR;
     }
+
+    // Perform file lock
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
     }
-    if (conn == nullptr) {
-        VIRTRUST_LOG_ERROR("|DomainStart|END|returnF||conn is nullptr");
-        return VirtrustRc::ERROR;
-    }
-    // 如果带--only-tsb仅更新tsb资源
-    if (isOnlyTsb) {
-        std::string uuidStr = domainName;
-        VIRTRUST_LOG_INFO("only update tsb resource");
-        if (domainName.size() != 36) { // UUIDchang长度为36
-            VIRTRUST_LOG_DEBUG("|DomainStart|END|returnF||invalid domain UUID: {}", domainName);
-            return VirtrustRc::ERROR;
-        }
-        if (StartVRoot(uuidStr.data()) != 0) {
-            VIRTRUST_LOG_DEBUG("|DomainStart|END|returnF||start vRoot failed,UUID: {}", domainName);
-            return VirtrustRc::ERROR;
-        }
-        VIRTRUST_LOG_DEBUG("|DomainStart||END|returnS|start domainName: {} success", domainName);
-        return VirtrustRc::OK;
-    }
+
+    // NOTE check for flags, currenty we only support: DOMAIN_START_NONE
+    // Libvirt does no checking and it is up to the hypervisor to refuse to start the domain if it cannot provide the
+    // requested CPU. With QEMU this means no checking is done at all since the default behavior of QEMU is to emit
+    // warnings, but start the domain anyway.
     if (flags != DOMAIN_START_NONE) {
         VIRTRUST_LOG_ERROR("flags only support: {}", static_cast<unsigned int>(DOMAIN_START_NONE));
         return VirtrustRc::ERROR;
     }
-    auto domain = std::make_unique<DomainCtx>(conn, domainName);
-    if (domain->Get() == nullptr) {
-        VIRTRUST_LOG_ERROR("failed to find domain: {}", domainName);
-        return VirtrustRc::ERROR;
+
+    std::string uuid;
+
+    if (isOnlyTsb) {
+        // HACK if --only-tsb enabled, the input domainName is actually the uuid (very hacky)
+        uuid = domainName;
+        VIRTRUST_LOG_INFO("only start tsb resource");
+        // Check if the input uuid is valid
+        if (uuid.size() != 36) { // UUIDchang长度为36
+            VIRTRUST_LOG_DEBUG("|DomainStart|END|returnF||invalid domain UUID: {}", uuid);
+            return VirtrustRc::ERROR;
+        }
+        if (StartVRoot(uuid.data()) != 0) {
+            VIRTRUST_LOG_DEBUG("|DomainStart|END|returnF||start vRoot failed,UUID: {}", uuid);
+            return VirtrustRc::ERROR;
+        }
+        VIRTRUST_LOG_DEBUG("|DomainStart||END|returnS|start domainName (only-tsb mode): {} success", uuid);
+        return VirtrustRc::OK; // unconditionally exit
+    } else {
+        // Get domain instance
+        auto domain = std::make_unique<DomainCtx>(conn, domainName);
+        if (domain->Get() == nullptr) {
+            VIRTRUST_LOG_ERROR("failed to find domain: {}", domainName);
+            return VirtrustRc::ERROR;
+        }
+
+        // Get actual UUID from
+        uuid = GetUUIDStr(domain->Get());
     }
 
-    std::string uuid = GetUUIDStr(domain->Get());
-    auto tsbRc = StartVRoot(uuid.data());
-    if (tsbRc != 0) {
-        VIRTRUST_LOG_ERROR("start vRoot failed: {}", domainName);
-        return VirtrustRc::ERROR;
-    }
+    // Since Starting VRoot and check guest can run in parallel, use std::async
+    auto asyncStartVRoot = std::async(&StartVRoot, uuid.data());
 
+    // Secure Start Check (include mounting, hashing, and sending measures to tsb)
     VIRTRUST_LOG_INFO("Perform checking on: {} before start", domainName);
     if (!CheckGuestBeforeStart(domainName, uuid)) {
         VIRTRUST_LOG_ERROR("Check domain failed,domainName: {}", domainName);
@@ -986,6 +998,14 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
         return VirtrustRc::ERROR;
     }
 
+    // Make async join the main thread
+    auto startVRootRc = asyncStartVRoot.join();
+    if (startVRootRc != 0) {
+        VIRTRUST_LOG_ERROR("Start vRoot failed: {}", uuid);
+        return VirtrustRc::ERROR;
+    }
+
+    // Start Domain with libvirt api
     if (Libvirt::GetInstance().virDomainCreateWithFlags(domain->Get(), flags) < 0) {
         VIRTRUST_LOG_ERROR("failed to start domain: {}", domainName);
         if (StopVRoot(uuid.data()) != 0) {
