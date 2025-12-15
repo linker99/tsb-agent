@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <future>
 #include <unordered_set>
 
 #include "spdlog/fmt/fmt.h"
@@ -973,17 +974,17 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
         }
         VIRTRUST_LOG_DEBUG("|DomainStart||END|returnS|start domainName (only-tsb mode): {} success", uuid);
         return VirtrustRc::OK; // unconditionally exit
-    } else {
-        // Get domain instance
-        auto domain = std::make_unique<DomainCtx>(conn, domainName);
-        if (domain->Get() == nullptr) {
-            VIRTRUST_LOG_ERROR("failed to find domain: {}", domainName);
-            return VirtrustRc::ERROR;
-        }
-
-        // Get actual UUID from
-        uuid = GetUUIDStr(domain->Get());
     }
+
+    // Get domain instance
+    auto domain = std::make_unique<DomainCtx>(conn, domainName);
+    if (domain->Get() == nullptr) {
+        VIRTRUST_LOG_ERROR("failed to find domain: {}", domainName);
+        return VirtrustRc::ERROR;
+    }
+
+    // Get actual UUID from
+    uuid = GetUUIDStr(domain->Get());
 
     // Since Starting VRoot and check guest can run in parallel, use std::async
     auto asyncStartVRoot = std::async(&StartVRoot, uuid.data());
@@ -999,7 +1000,7 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
     }
 
     // Make async join the main thread
-    auto startVRootRc = asyncStartVRoot.join();
+    auto startVRootRc = asyncStartVRoot.get();
     if (startVRootRc != 0) {
         VIRTRUST_LOG_ERROR("Start vRoot failed: {}", uuid);
         return VirtrustRc::ERROR;
