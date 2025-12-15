@@ -63,7 +63,7 @@ sudo cp test/data/config.json /etc/virtrust/config.json
 ```bash
 sudo mkdir -p /var/log
 sudo touch /var/log/virtrustd.log
-sudo chmod 644 /var/log/virtrustd.log
+sudo chmod 640 /var/log/virtrustd.log
 ```
 
 ### RPM 部署
@@ -122,10 +122,10 @@ rpm -e TSB-agent
 
 ```bash
 # 基础启动
-sudo virtrustd --config /etc/virtrust/virtrustd.json
+sudo libvirtrustd --config /etc/virtrust/config.json
 
 # 调试模式启动
-sudo virtrustd --config /etc/virtrust/virtrustd.json --debug
+sudo libvirtrustd -d --config /etc/virtrust/config.json
 ```
 
 ### 命令行选项

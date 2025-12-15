@@ -23,9 +23,9 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
  * 停止虚拟机
  * @param conn 连接参数
  * @param flags 见DomainDestroyFlags中的选项
- * @param domainName 虚拟机名称，isOnlyTsb为true时只更新tsb相关资源
+ * @param domainName 虚拟机名称，isOnlyTsb为true时只停止tsb相关资源
  * 为虚拟机UUID，当isOnlyTsb为true时将忽略flags入参
- * @param isOnlyTsb 是否只更新tsb资源，为true时只更新tsb资源
+ * @param isOnlyTsb 是否只停止tsb资源，为true时只停止tsb资源
  * @return VirtrustRc
  */
 VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags,
@@ -36,7 +36,7 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
  * @param conn 连接参数
  * @param flags 目前仅支持MIGRATE_UNDEFINE_SOURCE，删除源端虚拟机
  * @param domainName 虚拟机名称
- * @param destUri 目的端地址 格式为<protocol>://<hostip>:<port>/<path> 如qemu+tls://7.7.7.7:8080/system
+ * @param destUri 目的端地址 格式为<protocol>://<hostip>/<path> 如qemu+tls://7.7.7.7/system
  * @return VirtrustRc
  */
 VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName,
@@ -46,9 +46,9 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
  * 启动虚拟机
  * @param conn 连接参数
  * @param flags 见DomainStartFlags中的选项
- * @param domainName 虚拟机名称，isOnlyTsb为true时只更新tsb相关资源
+ * @param domainName 虚拟机名称，isOnlyTsb为true时只启动tsb相关资源
  * 为虚拟机UUID，当isOnlyTsb为true时将忽略flags入参
- * @param isOnlyTsb 是否只更新tsb资源，为true时只更新tsb资源
+ * @param isOnlyTsb 是否只启动tsb资源，为true时只启动tsb资源
  * @return VirtrustRc
  */
 VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags,

@@ -67,7 +67,7 @@ virtrust-sh create \
 
 ### 2. start - 启动虚拟机
 
-启动之前定义的虚拟机实例。
+启动虚拟机实例。
 
 **基本语法**：
 ```bash
@@ -76,7 +76,7 @@ virtrust-sh start [options] <domain_name>
 
 **选项说明**：
 - `-h | --help`：显示帮助信息
-- `--only-tsb`：仅更新 TSB 资源，需要提供虚拟机的 UUID 作为 domain_name
+- `--only-tsb`：仅启动 TSB 资源，需要提供虚拟机的 UUID 作为 domain_name
 
 **参数说明**：
 - `domain_name`：要启动的虚拟机名称或 UUID（使用 `--only-tsb` 选项时必须使用 UUID）
@@ -89,7 +89,7 @@ virtrust-sh start test-vm
 # 使用调试模式启动
 virtrust-sh -d start test-vm
 
-# 仅更新 TSB 资源
+# 仅启动 TSB 资源
 virtrust-sh start --only-tsb <vm-uuid>
 ```
 
@@ -104,7 +104,7 @@ virtrust-sh destroy [options] <domain_name>
 
 **选项说明**：
 - `-h | --help`：显示帮助信息
-- `--only-tsb`：仅更新 TSB 资源，需要提供虚拟机的 UUID 作为 domain_name
+- `--only-tsb`：仅停止 TSB 资源，需要提供虚拟机的 UUID 作为 domain_name
 
 **参数说明**：
 - `domain_name`：要强制关闭（停止）的虚拟机名称或 UUID（使用 `--only-tsb` 选项时必须使用 UUID）
@@ -114,7 +114,7 @@ virtrust-sh destroy [options] <domain_name>
 # 强制关闭（停止）虚拟机
 virtrust-sh destroy test-vm
 
-# 仅更新 TSB 资源
+# 仅停止 TSB 资源
 virtrust-sh destroy --only-tsb <vm-uuid>
 ```
 
@@ -157,24 +157,23 @@ virtrust-sh undefine --only-tsb <vm-uuid>
 
 **基本语法**：
 ```bash
-virtrust-sh migrate [options] <domain_name> <dest_uri>
+virtrust-sh migrate <domain_name> <dest_uri>
 ```
 
 **选项说明**：
 - `-h | --help`：显示帮助信息
-- `--undefinesource`：迁移完成后删除源主机的虚拟机定义，当前仅支持且默认为该选项。
 
 **参数说明**：
 - `domain_name`：要迁移的虚拟机名称，长度为 [1, 200]
-- `dest_uri`：目标主机 URI，格式为 `<protocol>://<host>:<port>/<path>`，如 `qemu+tls://<destip>/system`
+- `dest_uri`：目标主机 URI，格式为 `<protocol>://<host>/<path>`，如 `qemu+tls://7.7.7.7/system`
 
 **示例**：
 ```bash
 # 迁移到远程主机
-virtrust-sh migrate test-vm qemu+tls://192.168.1.100:16509/system
+virtrust-sh migrate test-vm qemu+ssl://192.168.1.100/system
 
 # 使用 TLS 加密迁移
-virtrust-sh migrate test-vm qemu+tls://dest-host/system
+virtrust-sh migrate test-vm qemu+tls://192.168.1.100/system
 ```
 
 ### 6. list - 列出虚拟机信息
@@ -193,7 +192,7 @@ virtrust-sh list [options]
 **输出列说明**：
 - `Id`：虚拟机 ID（非活动虚拟机显示 "-"）
 - `Name`：虚拟机名称
-- `State`：虚拟机状态（running、paused、shut down、shut off、crashed、unknown）
+- `State`：虚拟机状态（running、shut off）
 
 **示例**：
 ```bash
@@ -216,7 +215,6 @@ virtrust-sh list --help
 -------------------------------
     1   test-vm-1           running
     2   test-vm-2           shut off
-    -   test-vm-3           paused
 ```
 
 ## 日志管理
@@ -244,7 +242,7 @@ virtrust-sh start demo-vm
 # 3. 查看虚拟机状态
 virtrust-sh list
 
-# 4. 停止虚拟机
+# 4. 强制关闭虚拟机
 virtrust-sh destroy demo-vm
 
 # 5. 删除虚拟机定义

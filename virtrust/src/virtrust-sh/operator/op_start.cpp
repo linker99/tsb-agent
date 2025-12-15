@@ -91,7 +91,7 @@ void OpStart::PrintUsage()
                "\n"
                "  OPTIONS:\n"
                "    -h | --help                    this help\n"
-               "    --only-tsb                     only update tsb resource, <domain> need uuid\n"
+               "    --only-tsb                     only start tsb resource, <domain> need uuid\n"
                "\n");
 }
 } // namespace virtrust

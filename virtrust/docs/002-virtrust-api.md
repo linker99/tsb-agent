@@ -44,7 +44,7 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
 - 确保 virt-install 路径正确且可执行，默认的 virt-install 二进制路径为 /usr/bin/virt-install
 - 支持所有 virt-install 的标准参数，args 中每个 string 最大长度为 1024，vector 支持最大 size 为 150
 
-### 2. DomainDestroy - 停止虚拟机
+### 2. DomainDestroy - 强制关闭（停止）虚拟机
 
 ```cpp
 VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, 
@@ -65,7 +65,7 @@ VirtrustRc DomainDestroy(const std::unique_ptr<ConnCtx> &conn, const std::string
 停止指定的虚拟机。可选择是否只处理 TSB 资源或执行完整的强制停止操作。
 
 **注意事项**：
-- 当使用 `--only-tsb/isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
+- 当使用 `isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
 - domainName 长度为 [1, 200]
 
 ### 3. DomainMigrate - 迁移虚拟机
@@ -78,12 +78,12 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
 **参数说明**：
 - `conn`：连接上下文
 - `domainName`：虚拟机名称
-- `destUri`：目标端地址，格式为 `<protocol>://<hostip>:<port>/<path>`
-  - 示例：`qemu+tls://7.7.7.7:8080/system`
+- `destUri`：目标端地址，格式为 `<protocol>://<hostip>/<path>`
+  - 示例：`qemu+tls://7.7.7.7/system`
 - `flags`：迁移标志，目前仅支持MIGRATE_UNDEFINE_SOURCE（迁移成功后删除源端虚机）
 
 **功能描述**：
-将虚拟机从当前主机迁移到目标主机。支持安全的迁移过程，包括 TSB 资源的同步。当前仅支持离线迁移，并且需要确保虚拟机在 shut-off 状态下。如待迁移虚拟机配置了非共享存储，则用户需要手动复制磁盘文件（例如 qcow2）到目的节点。如果目标存在同名运行的虚拟机情况下不能迁移。当前仅支持迁移成功后删除源虚拟机。重复迁移会覆盖目标端虚拟机。
+将虚拟机从当前主机迁移到目标主机。支持安全的迁移过程，包括 TSB 资源的同步。当前仅支持离线迁移，并且需要确保虚拟机在 shut-off 状态下。如待迁移虚拟机配置了非共享存储，则用户需要手动复制磁盘文件（例如 qcow2）到目的节点。如果目标存在同名运行的虚拟机情况下不能迁移。当前仅支持迁移成功后删除源虚拟机。
 
 **返回值**：
 - 成功返回 `VirtrustRc::OK`
@@ -111,7 +111,7 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
 启动指定的虚拟机。可以选择仅处理 TSB 资源或执行完整的启动流程。
 
 **注意事项**：
-- 当使用 `--only-tsb/isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
+- 当使用 `isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
 - `domainName` 长度为 [1, 200]
 
 ### 5. DomainUndefine - 删除虚拟机
@@ -140,7 +140,7 @@ VirtrustRc DomainUndefine(const std::unique_ptr<ConnCtx> &conn, const std::strin
 
 **注意事项**：
 - domainName 长度为 [1, 200]
-- 当使用 `--only-tsb/isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
+- 当使用 `isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
 
 ### 6. DomainList - 展示虚拟机
 
@@ -180,7 +180,7 @@ struct DomainInfo {
 
 **注意事项**：
 - `ConnCtx` 类中 `uri` 的长度为 [1, 1024]
-- 当使用 `--only-tsb/isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
+- 当使用 `isOnlyTsb` 选项时，入参 `domainName` 应传入对应虚拟机的 `uuid`
 
 ## 使用示例
 
@@ -202,7 +202,6 @@ std::vector<std::string> args = {
     "--disk", "path=/var/lib/libvirt/images/test-vm.qcow2,size=10",
     "--cdrom", "/path/to/install.iso",
     "--network", "network=default",
-    "--allow-store-measurements"
 };
 
 auto result = DomainCreate(conn, args);
