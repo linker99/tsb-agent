@@ -8,6 +8,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <future>
 #include <unordered_set>
 
 #include "spdlog/fmt/fmt.h"
@@ -133,11 +134,17 @@ bool CalcVirshMeasure(std::string_view guestName, VirshMeasureSummary &measureSu
     }
     auto mounter = virtrust::ForeignMounter();
     mounter.TryInit();
+    auto start = std::chrono::high_resolution_clock::now();
     mounter.Mount(verifyConfig.GetDiskPath());
     if (!mounter.CheckMount()) {
         VIRTRUST_LOG_ERROR("|main|END|returnF||disk path is: {}|mount failed", verifyConfig.GetDiskPath());
         return false;
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    VIRTRUST_LOG_DEBUG("|main||calc time-consuming, target: func_mount, duration:{} ms", verifyConfig.GetDiskPath(),
+                       duration.count());
+
     std::string grubCfgContent;
     ForeignMounterRc rc = mounter.ReadFile(verifyConfig.GetGrubCfgPath(), grubCfgContent);
     if (rc != ForeignMounterRc::OK) {
@@ -236,7 +243,12 @@ bool CheckGuestBeforeStart(std::string_view domainName, std::string &uuid)
         return false;
     }
     // 检查度量值是否通过
+    auto start = std::chrono::high_resolution_clock::now();
     auto tsbRc = CheckMeasure(uuid.data(), bios, shim, grub, grubCfg, kernel, initrd);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    VIRTRUST_LOG_DEBUG("|CheckGuestBeforeStart||calc time-consuming, target: func_checkMeasure, duration:{} ms",
+                       duration.count());
     FreeMeasureInfo(bios, shim, grub, grubCfg, kernel, initrd);
 
     if (tsbRc == IMPORT_BM_FAILURE) {
@@ -638,7 +650,8 @@ VirtrustRc CheckCreateArgs(const std::vector<std::string> &args)
         auto &arg = args[pos];
         if (arg.empty() || arg.size() > CREATE_ARGS_MAX_STRING_LENGTH) {
             VIRTRUST_LOG_ERROR("|CheckCreateArgs|END|returnF||Arg with index {} not valid, "
-                               "length needs to be between {} and {}.", pos, 1, CREATE_ARGS_MAX_STRING_LENGTH);
+                               "length needs to be between {} and {}.",
+                               pos, 1, CREATE_ARGS_MAX_STRING_LENGTH);
             return VirtrustRc::ERROR;
         }
     }
@@ -932,6 +945,7 @@ VirtrustRc DomainMigrate(const std::unique_ptr<ConnCtx> &conn, const std::string
 VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &domainName, unsigned int flags,
                        bool isOnlyTsb)
 {
+    auto start = std::chrono::high_resolution_clock::now();
     VIRTRUST_LOG_DEBUG("|DomainStart||START||start domainName: {}, isonlyTsb:{}", domainName, isOnlyTsb);
     if (conn == nullptr) {
         VIRTRUST_LOG_ERROR("|DomainStart|END|returnF|| ConnCtx is nullptr.");
@@ -971,18 +985,19 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
     }
 
     std::string uuid = GetUUIDStr(domain->Get());
-    auto tsbRc = StartVRoot(uuid.data());
-    if (tsbRc != 0) {
-        VIRTRUST_LOG_ERROR("start vRoot failed: {}", domainName);
-        return VirtrustRc::ERROR;
-    }
-
+    auto asyncStartVRoot = std::async(&StartVRoot, uuid.data());
     VIRTRUST_LOG_INFO("Perform checking on: {} before start", domainName);
-    if (!CheckGuestBeforeStart(domainName, uuid)) {
+    auto checkOk = CheckGuestBeforeStart(domainName, uuid);
+    auto startVRootRc = asyncStartVRoot.get();
+    if (!checkOk && startVRootRc == 0) {
         VIRTRUST_LOG_ERROR("Check domain failed,domainName: {}", domainName);
         if (StopVRoot(uuid.data()) != 0) {
             VIRTRUST_LOG_ERROR("stop vRoot failed domain: {}", domainName);
         }
+        return VirtrustRc::ERROR;
+    }
+    if (startVRootRc != 0) {
+        VIRTRUST_LOG_ERROR("stop vRoot failed uuid: {}", uuid);
         return VirtrustRc::ERROR;
     }
 
@@ -993,7 +1008,10 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
         }
         return VirtrustRc::ERROR;
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     VIRTRUST_LOG_DEBUG("|DomainStart||END|returnS|start domainName: {} success", domainName);
+    VIRTRUST_LOG_DEBUG("|DomainStart||calc time-consuming, target: func_DomainStart, duration:{} ms", duration.count());
     return VirtrustRc::OK;
 }
 

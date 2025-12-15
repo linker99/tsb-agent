@@ -440,9 +440,13 @@ ForeignMounterRc ForeignMounter::DoSm3OnVmFile(std::string_view filePath, std::v
         VIRTRUST_LOG_ERROR("|DoSm3OnVmFile|END|returnF||Read file failed: {}.", filePath);
         return ForeignMounterRc::ERROR;
     }
+    auto start = std::chrono::high_resolution_clock::now();
     if (virtrust::DoSm3(fileContent, sm3Data) != Sm3Rc::OK) {
         return ForeignMounterRc::ERROR;
     }
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    VIRTRUST_LOG_DEBUG("|DoSm3OnVmFile||calc time-consuming, target: func_DoSm3, duration:{} ms", duration.count());
     return ForeignMounterRc::OK;
 }
 

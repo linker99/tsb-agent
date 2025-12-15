@@ -2,6 +2,8 @@
  * Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
  */
 
+#include <climits>
+
 #include "tsb_agent/mock/tsb_agent_impl.h"
 #include "tsb_agent/tsb_agent.h"
 
@@ -156,23 +158,37 @@ int MigrationCheckPeerPk(char *vUuid, // 虚拟机的uuid
     return 0;
 }
 
-int MigrationGetVrootCipher(char *vUuid,   // 虚拟机的uuid
+int MigrationNotify(char *vUuid, // 虚拟机的uuid
+                    int status)
+{
+    return 0;
+}
+
+int MigrationImportVrootCipher(char *pUuid,
+                               char *vUuid,  // 虚拟机的uuid
+                               char *cipher, // 加密后的密码资源
+                               int cipherLen // 密文长度
+)
+{
+    return 0;
+}
+
+int TransDupPub(int type,         // 输入/输入，对应EnDirection中的枚举
+                char *vUuid,      // 虚拟机的uuid，仅type=EN_IMPORT时需要
+                char **tcm2bOut,  // 导出tcm2秘钥，仅type=EN_EXPORT时需要
+                int *tcm2bLenOut, // 导出tcm2秘钥长度，仅type=EN_EXPORT时需要
+                char *tcm2bIn,    // 导入tcm2秘钥，仅type=EN_IMPORT时需要
+                int tcm2bLenIn    // 导入tcm2秘钥长度，仅type=EN_IMPORT时需要
+)
+{
+    return 0;
+}
+
+int MigrationGetVrootCipher(char *pUuid,
+                            char *vUuid,   // 虚拟机的uuid
                             char **cipher, // 输出：加密后的密码资源
                             int *cipherLen // 输出：密文长度
 )
-{
-    return 0;
-}
-
-int MigrationImportVrootCipher(char *vUuid, // 虚拟机的uuid
-                               char *cipher // 加密后的密码资源
-)
-{
-    return 0;
-}
-
-int MigrationNotify(char *vUuid, // 虚拟机的uuid
-                    int status)
 {
     return 0;
 }
