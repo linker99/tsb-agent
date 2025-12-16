@@ -10,6 +10,7 @@
 
 #include "virtrust/base/logger.h"
 #include "virtrust/dllib/openssl.h"
+#include "virtrust/utils/file_io.h"
 
 namespace virtrust {
 
@@ -147,6 +148,23 @@ Sm3Rc DoSm3(std::string_view data, std::vector<uint8_t> &out)
         return Sm3Rc::ERROR;
     }
 
+    return Sm3Rc::OK;
+}
+
+Sm3Rc DoSm3File(const std::string &filePath, std::vector<uint8_t> &out)
+{
+    std::string fileContent;
+    try {
+        FileInputStream fis(filePath);
+        fileContent = fis.ReadAll();
+    } catch (std::exception &e) {
+        VIRTRUST_LOG_ERROR("ERROR while reading file: {}", filePath);
+        return Sm3Rc::ERROR;
+    }
+
+    if (virtrust::DoSm3(fileContent, out) != Sm3Rc::OK) {
+        return Sm3Rc::ERROR;
+    }
     return Sm3Rc::OK;
 }
 

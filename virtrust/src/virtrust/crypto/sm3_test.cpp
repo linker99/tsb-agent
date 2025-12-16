@@ -2,6 +2,7 @@
  * Copyright (C) Huawei Technologies Co., Ltd. 2025-2025.All rights reserved.
  */
 
+#include <filesystem>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -11,6 +12,7 @@
 
 #include "virtrust/crypto/sm3.h"
 #include "virtrust/dllib/openssl.h"
+#include "virtrust/utils/file_io.h"
 
 namespace virtrust::test {
 namespace {
@@ -35,6 +37,232 @@ inline std::string BytesToHexString(const std::vector<uint8_t> &bytes)
 }
 
 } // namespace
+
+// Helper function to create temporary test files
+std::string CreateTempTestFile(const std::string &content, const std::string &suffix = "")
+{
+    // Get the project root path
+    auto filePath = std::filesystem::path(__FILE__).parent_path();
+    std::string tempPath = (filePath / ".." / ".." / ".." / "test" / "data" / ("sm3_test_temp" + suffix + ".txt"))
+                               .lexically_normal()
+                               .string();
+
+    // Create temporary file with test content
+    FileOutputStream fos(tempPath);
+    fos.Write(content);
+    return tempPath;
+}
+
+// Helper function to clean up temporary test files
+void CleanupTempTestFile(const std::string &filePath)
+{
+    std::filesystem::remove(filePath);
+}
+
+// Test DoSm3File function with various scenarios
+TEST(Sm3Test, DoSm3FileBasic)
+{
+    const std::string testContent = "Hello, World!";
+    std::string tempFile = CreateTempTestFile(testContent);
+
+    std::vector<uint8_t> hashResult(Sm3::DigestSize());
+    auto result = DoSm3File(tempFile, hashResult);
+
+    EXPECT_EQ(result, Sm3Rc::OK);
+    EXPECT_EQ(hashResult.size(), Sm3::DigestSize());
+
+    // Verify hash is not all zeros
+    bool allZero = true;
+    for (uint8_t byte : hashResult) {
+        if (byte != 0) {
+            allZero = false;
+            break;
+        }
+    }
+    EXPECT_FALSE(allZero);
+
+    // Compare with direct string hash
+    auto directHash = DoSm3(testContent);
+    EXPECT_EQ(hashResult.size(), directHash.size());
+    EXPECT_EQ(memcmp(hashResult.data(), directHash.data(), hashResult.size()), 0);
+
+    CleanupTempTestFile(tempFile);
+}
+
+// Test DoSm3File with empty file
+TEST(Sm3Test, DoSm3FileEmpty)
+{
+    const std::string testContent = "";
+    std::string tempFile = CreateTempTestFile(testContent, "_empty");
+
+    std::vector<uint8_t> hashResult(Sm3::DigestSize());
+    auto result = DoSm3File(tempFile, hashResult);
+
+    EXPECT_EQ(result, Sm3Rc::OK);
+    EXPECT_EQ(hashResult.size(), Sm3::DigestSize());
+
+    // Compare with direct empty string hash
+    auto directHash = DoSm3(testContent);
+    EXPECT_EQ(hashResult.size(), directHash.size());
+    EXPECT_EQ(memcmp(hashResult.data(), directHash.data(), hashResult.size()), 0);
+
+    CleanupTempTestFile(tempFile);
+}
+
+// Test DoSm3File with large file content
+TEST(Sm3Test, DoSm3FileLarge)
+{
+    // Create a large test content (but within the 1GB limit)
+    std::string largeContent(10000, 'A'); // 10KB of 'A's
+    std::string tempFile = CreateTempTestFile(largeContent, "_large");
+
+    std::vector<uint8_t> hashResult(Sm3::DigestSize());
+    auto result = DoSm3File(tempFile, hashResult);
+
+    EXPECT_EQ(result, Sm3Rc::OK);
+    EXPECT_EQ(hashResult.size(), Sm3::DigestSize());
+
+    // Compare with direct string hash
+    auto directHash = DoSm3(largeContent);
+    EXPECT_EQ(hashResult.size(), directHash.size());
+    EXPECT_EQ(memcmp(hashResult.data(), directHash.data(), hashResult.size()), 0);
+
+    CleanupTempTestFile(tempFile);
+}
+
+// Test DoSm3File with binary content
+TEST(Sm3Test, DoSm3FileBinary)
+{
+    // Create binary content with null bytes and other special characters
+    std::string binaryContent = "Binary\x00\xFF\xFE\x01Content";
+    std::string tempFile = CreateTempTestFile(binaryContent, "_binary");
+
+    std::vector<uint8_t> hashResult(Sm3::DigestSize());
+    auto result = DoSm3File(tempFile, hashResult);
+
+    EXPECT_EQ(result, Sm3Rc::OK);
+    EXPECT_EQ(hashResult.size(), Sm3::DigestSize());
+
+    // Compare with direct string hash
+    auto directHash = DoSm3(binaryContent);
+    EXPECT_EQ(hashResult.size(), directHash.size());
+    EXPECT_EQ(memcmp(hashResult.data(), directHash.data(), hashResult.size()), 0);
+
+    CleanupTempTestFile(tempFile);
+}
+
+// Test DoSm3File with multibyte characters (UTF-8)
+TEST(Sm3Test, DoSm3FileUtf8)
+{
+    const std::string utf8Content = "测试中文内容🚀 UTF-8 ñáéíóú";
+    std::string tempFile = CreateTempTestFile(utf8Content, "_utf8");
+
+    std::vector<uint8_t> hashResult(Sm3::DigestSize());
+    auto result = DoSm3File(tempFile, hashResult);
+
+    EXPECT_EQ(result, Sm3Rc::OK);
+    EXPECT_EQ(hashResult.size(), Sm3::DigestSize());
+
+    // Compare with direct string hash
+    auto directHash = DoSm3(utf8Content);
+    EXPECT_EQ(hashResult.size(), directHash.size());
+    EXPECT_EQ(memcmp(hashResult.data(), directHash.data(), hashResult.size()), 0);
+
+    CleanupTempTestFile(tempFile);
+}
+
+// Test DoSm3File with nonexistent file
+TEST(Sm3Test, DoSm3FileNonexistent)
+{
+    std::string nonexistentFile = "/nonexistent/path/file.txt";
+
+    std::vector<uint8_t> hashResult(Sm3::DigestSize());
+    auto result = DoSm3File(nonexistentFile, hashResult);
+
+    EXPECT_EQ(result, Sm3Rc::ERROR);
+}
+
+// Test DoSm3File with insufficient output buffer
+TEST(Sm3Test, DoSm3FileInsufficientBuffer)
+{
+    const std::string testContent = "Test content";
+    std::string tempFile = CreateTempTestFile(testContent, "_insufficient");
+
+    // Create output vector with insufficient size
+    std::vector<uint8_t> smallBuffer(Sm3::DigestSize() - 1);
+    auto result = DoSm3File(tempFile, smallBuffer);
+
+    // The function should still return OK, but the underlying memcpy_s should fail
+    // This tests the robustness of the implementation
+    EXPECT_EQ(result, Sm3Rc::ERROR);
+
+    CleanupTempTestFile(tempFile);
+}
+
+// Test DoSm3File consistency across multiple calls
+TEST(Sm3Test, DoSm3FileConsistency)
+{
+    const std::string testContent = "Consistency test content";
+    std::string tempFile = CreateTempTestFile(testContent, "_consistency");
+
+    std::vector<uint8_t> hashResult1(Sm3::DigestSize());
+    std::vector<uint8_t> hashResult2(Sm3::DigestSize());
+
+    auto result1 = DoSm3File(tempFile, hashResult1);
+    auto result2 = DoSm3File(tempFile, hashResult2);
+
+    EXPECT_EQ(result1, Sm3Rc::OK);
+    EXPECT_EQ(result2, Sm3Rc::OK);
+    EXPECT_EQ(hashResult1.size(), hashResult2.size());
+    EXPECT_EQ(memcmp(hashResult1.data(), hashResult2.data(), hashResult1.size()), 0);
+
+    CleanupTempTestFile(tempFile);
+}
+
+// Test DoSm3File with different file sizes
+TEST(Sm3Test, DoSm3FileVariousSizes)
+{
+    std::vector<size_t> testSizes = {1, 10, 100, 1000, 5000};
+
+    for (size_t size : testSizes) {
+        std::string content(size, 'X');
+        std::string suffix = "_size_" + std::to_string(size);
+        std::string tempFile = CreateTempTestFile(content, suffix);
+
+        std::vector<uint8_t> hashResult(Sm3::DigestSize());
+        auto result = DoSm3File(tempFile, hashResult);
+
+        EXPECT_EQ(result, Sm3Rc::OK);
+        EXPECT_EQ(hashResult.size(), Sm3::DigestSize());
+
+        // Compare with direct string hash
+        auto directHash = DoSm3(content);
+        EXPECT_EQ(hashResult.size(), directHash.size());
+        EXPECT_EQ(memcmp(hashResult.data(), directHash.data(), hashResult.size()), 0);
+
+        CleanupTempTestFile(tempFile);
+    }
+}
+
+// Test DoSm3File with lines and special characters
+TEST(Sm3Test, DoSm3FileLinesAndSpecialChars)
+{
+    const std::string lineContent = "Line 1\nLine 2\r\nLine 3\tTabbed\tContent\"Quotes\"'Apostrophes'";
+    std::string tempFile = CreateTempTestFile(lineContent, "_lines");
+
+    std::vector<uint8_t> hashResult(Sm3::DigestSize());
+    auto result = DoSm3File(tempFile, hashResult);
+
+    EXPECT_EQ(result, Sm3Rc::OK);
+    EXPECT_EQ(hashResult.size(), Sm3::DigestSize());
+
+    // Compare with direct string hash
+    auto directHash = DoSm3(lineContent);
+    EXPECT_EQ(hashResult.size(), directHash.size());
+    EXPECT_EQ(memcmp(hashResult.data(), directHash.data(), hashResult.size()), 0);
+
+    CleanupTempTestFile(tempFile);
+}
 
 TEST(Sm3Test, Works)
 {

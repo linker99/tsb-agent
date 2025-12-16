@@ -116,13 +116,22 @@ VirtrustRc GetVirshMeasureSummary(virtrust::ForeignMounter &mounter, virtrust::V
     return VirtrustRc::OK;
 }
 
-bool CalcVirshMeasure(std::string_view guestName, VirshMeasureSummary &measureSummary)
+// REVIEW: DomainStart needs the hash digest of vm's disk image, so we pass the diskDigest and diskPath to upper level
+bool CalcVirshMeasure(std::string_view guestName, VirshMeasureSummary &measureSummary, std::string &diskPath,
+                      std::vector<uint8_t> &diskDigest)
 {
-    const std::string guestXmlPah = fmt::format(VIRTRUST_XML_REGEX_PATH, guestName);
+    const std::string guestXmlPath = fmt::format(VIRTRUST_XML_REGEX_PATH, guestName);
     virtrust::VirtXmlParser xmlParser;
     virtrust::VerifyConfig verifyConfig;
-    if (!xmlParser.Parse(verifyConfig, guestXmlPah)) {
-        VIRTRUST_LOG_ERROR("|main|END|returnF|file: {}|parse xml file failed.", guestXmlPah);
+    if (!xmlParser.Parse(verifyConfig, guestXmlPath)) {
+        VIRTRUST_LOG_ERROR("|main|END|returnF|file: {}|parse xml file failed.", guestXmlPath);
+        return false;
+    }
+
+    // SM3 on disk image
+    diskPath = verifyConfig.GetDiskPath();
+    if (DoSm3File(diskPath, diskDigest) != Sm3Rc::OK) {
+        VIRTRUST_LOG_ERROR("|main|END|returnF||digest failed.");
         return false;
     }
 
@@ -160,6 +169,7 @@ bool CalcVirshMeasure(std::string_view guestName, VirshMeasureSummary &measureSu
     }
     VIRTRUST_LOG_INFO("|main|END|returnS||grubContentLength:{}", measureSummary.grub.content_.size());
     mounter.Unmount();
+    diskPath = verifyConfig.GetDiskPath();
     return true;
 }
 
@@ -219,11 +229,12 @@ void FreeMeasureInfo(struct MeasureInfo *bios, struct MeasureInfo *shim, struct 
     }
 }
 
-bool CheckGuestBeforeStart(std::string_view domainName, std::string &uuid)
+bool CheckGuestBeforeStart(std::string_view domainName, std::string &uuid, std::string &diskPath,
+                           std::vector<uint8_t> &diskDigest)
 {
     // 收集需要度量文件的摘要值
     VirshMeasureSummary measureSummary(uuid);
-    if (!CalcVirshMeasure(domainName, measureSummary)) {
+    if (!CalcVirshMeasure(domainName, measureSummary, diskPath, diskDigest)) {
         return false;
     }
     // 转换为tsb-agent需要的结构体
@@ -267,7 +278,9 @@ bool UpdateMeasure(std::string_view domainName, std::string &uuid)
 {
     VIRTRUST_LOG_INFO("|UpdateMeasure|START|||domainName:{}", domainName);
     VirshMeasureSummary measureSummary(uuid);
-    if (!CalcVirshMeasure(domainName, measureSummary)) {
+    std::string tmpDiskPath;            // HACK: we don't use this tmpDiskPath
+    std::vector<uint8_t> tmpDiskDigest; // HACK: we don't use this tmpDiskDigest
+    if (!CalcVirshMeasure(domainName, measureSummary, tmpDiskPath, tmpDiskDigest)) {
         return false;
     }
     struct MeasureInfo *bios = nullptr;
@@ -322,7 +335,7 @@ VirtrustRc CheckCreateDomainName(const std::string &arg, std::string &domainName
     }
     // 处理--name=***或-n=***或-n*****
     bool isLongContainsName = arg.length() > 7 && arg.substr(0, 7) == "--name="; // 7是--name=的长度
-    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n"; // 这里大于3是处理-n并且紧跟字符的情况
+    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n";     // 这里大于3是处理-n并且紧跟字符的情况
     if (isLongContainsName || isShortContainsName) {
         if (isLongContainsName || (isLongContainsName && arg.find('=') != std::string::npos)) {
             domainName = arg.substr(arg.find('=') + 1);
@@ -431,7 +444,6 @@ VirtrustRc CreateDomainAndVRoot(const std::unique_ptr<ConnCtx> &conn, const std:
     description.state = 0;
     if (strncpy_s(description.name, sizeof(description.name), domainName.data(), sizeof(description.name) - 1) != EOK) {
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||strncpy_s domainName failed.");
-
         return VirtrustRc::ERROR;
     }
     if (strncpy_s(description.uuid, sizeof(description.uuid), uuid, sizeof(description.uuid) - 1) != EOK) {
@@ -445,15 +457,15 @@ VirtrustRc CreateDomainAndVRoot(const std::unique_ptr<ConnCtx> &conn, const std:
         (void)UndefineDomainWithRetry(domain, domainName, VIR_DOMAIN_UNDEFINE_NVRAM, libvirt);
         return VirtrustRc::ERROR;
     }
-    if (!allowStoreMeasurements) {
-        VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||create domainName : {} success", domainName);
-        return VirtrustRc::OK;
-    }
-    std::string uuidStr(uuid);
-    if (!UpdateMeasure(domainName, uuidStr)) {
-        VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||UpdateMeasure failed");
-        (void)UndefineDomainWithRetry(domain, domainName, VIR_DOMAIN_UNDEFINE_NVRAM, libvirt);
-        return VirtrustRc::ERROR;
+
+    // if allow store measurements, we additionally calls the update measure of tsb agent api
+    if (allowStoreMeasurements) {
+        std::string uuidStr(uuid);
+        if (!UpdateMeasure(domainName, uuidStr)) {
+            VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||UpdateMeasure failed");
+            (void)UndefineDomainWithRetry(domain, domainName, VIR_DOMAIN_UNDEFINE_NVRAM, libvirt);
+            return VirtrustRc::ERROR;
+        }
     }
     VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||create domainName: {} success", domainName);
     return VirtrustRc::OK;
@@ -947,18 +959,23 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
 {
     auto start = std::chrono::high_resolution_clock::now();
     VIRTRUST_LOG_DEBUG("|DomainStart||START||start domainName: {}, isonlyTsb:{}", domainName, isOnlyTsb);
-    if (conn == nullptr) {
-        VIRTRUST_LOG_ERROR("|DomainStart|END|returnF|| ConnCtx is nullptr.");
-        return VirtrustRc::ERROR;
-    }
     FileLock fileLock(LOCK_FILE);
     if (!fileLock.IsLocked()) {
         return VirtrustRc::ERROR;
     }
+
+    // conn must exits
     if (conn == nullptr) {
-        VIRTRUST_LOG_ERROR("|DomainStart|END|returnF||conn is nullptr");
+        VIRTRUST_LOG_ERROR("|DomainStart|END|returnF|| ConnCtx is nullptr.");
         return VirtrustRc::ERROR;
     }
+
+    // check flags
+    if (flags != DOMAIN_START_NONE) {
+        VIRTRUST_LOG_ERROR("flags only support: {}", static_cast<unsigned int>(DOMAIN_START_NONE));
+        return VirtrustRc::ERROR;
+    }
+
     // 如果带--only-tsb仅更新tsb资源
     if (isOnlyTsb) {
         std::string uuidStr = domainName;
@@ -974,21 +991,25 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
         VIRTRUST_LOG_DEBUG("|DomainStart||END|returnS|start domainName: {} success", domainName);
         return VirtrustRc::OK;
     }
-    if (flags != DOMAIN_START_NONE) {
-        VIRTRUST_LOG_ERROR("flags only support: {}", static_cast<unsigned int>(DOMAIN_START_NONE));
-        return VirtrustRc::ERROR;
-    }
+
+    // get domain
     auto domain = std::make_unique<DomainCtx>(conn, domainName);
     if (domain->Get() == nullptr) {
         VIRTRUST_LOG_ERROR("failed to find domain: {}", domainName);
         return VirtrustRc::ERROR;
     }
-
     std::string uuid = GetUUIDStr(domain->Get());
+
+    // start vroot
     auto asyncStartVRoot = std::async(&StartVRoot, uuid.data());
     VIRTRUST_LOG_INFO("Perform checking on: {} before start", domainName);
-    auto checkOk = CheckGuestBeforeStart(domainName, uuid);
+
+    std::string diskPath;            // qcow2 image path
+    std::vector<uint8_t> diskDigest; // qcow2 image path
+    auto checkOk = CheckGuestBeforeStart(domainName, uuid, diskPath, diskDigest);
     auto startVRootRc = asyncStartVRoot.get();
+
+    // if failed
     if (!checkOk && startVRootRc == 0) {
         VIRTRUST_LOG_ERROR("Check domain failed,domainName: {}", domainName);
         if (StopVRoot(uuid.data()) != 0) {
@@ -1001,13 +1022,15 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
         return VirtrustRc::ERROR;
     }
 
-    if (Libvirt::GetInstance().virDomainCreateWithFlags(domain->Get(), flags) < 0) {
+    if (Libvirt::GetInstance().virDomainCreateWithFlags(domain->Get(), flags) < 0 ||
+        DoSm3File(diskPath, diskDigest) != Sm3Rc::OK) {
         VIRTRUST_LOG_ERROR("failed to start domain: {}", domainName);
         if (StopVRoot(uuid.data()) != 0) {
             VIRTRUST_LOG_ERROR("stop vRoot failed domain: {}", domainName);
         }
         return VirtrustRc::ERROR;
     }
+
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     VIRTRUST_LOG_DEBUG("|DomainStart||END|returnS|start domainName: {} success", domainName);
