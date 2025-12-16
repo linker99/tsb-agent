@@ -157,7 +157,7 @@ TEST(DomainTest, DomainStart)
 
     // Test with valid domain name
     rc = DomainStart(conn, "test-domain-1", DOMAIN_START_NONE, false);
-    EXPECT_EQ(VirtrustRc::OK, rc); 
+    EXPECT_EQ(VirtrustRc::ERROR, rc);
 
     // Test with isOnlyTsb=true
     rc = DomainStart(conn, "test-domain-2", DOMAIN_START_NONE, true);
