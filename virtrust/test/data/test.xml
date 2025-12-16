@@ -1,11 +1,11 @@
 <!--
 WARNING: THIS IS AN AUTO-GENERATED FILE. DO NOT EDIT IT DIRECTLY.
 OVERWRITTEN AND LOST. Changs to this xml configuration should be made using:
-  virsh edit open-euler-vm
+  virsh edit test-domain-1
 or other application using the libvirt API.
 -->
 <domain type='qemu'>
-  <name>open-euler-vm</name>
+  <name>test-domain-1</name>
   <uuid>496eef9e-003f-46b8-a81d-178753825fa7</uuid>
   <memory unit='KiB'>4194304</memory>
   <currentMemory unit='KiB'>4194304</currentMemory>

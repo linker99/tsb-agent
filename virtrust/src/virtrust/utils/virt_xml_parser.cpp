@@ -70,13 +70,19 @@ std::vector<xmlNodePtr> VirtXmlParser::FindNodesByPath(std::string_view absPath)
 
 bool VirtXmlParser::LoadFile(std::string_view filename)
 {
-    if (filename.empty()) {
+    std::string_view filePath;
+#ifndef VIRTRUST_MOCK
+    filePath = filename;
+#else
+    filePath = "../../test/data/test.xml";
+#endif
+    if (filePath.empty()) {
         VIRTRUST_LOG_ERROR("|LoadFile|END|returnF||File name is empty.");
         return false;
     }
 
-    if (!std::filesystem::exists(filename) || !std::filesystem::is_regular_file(filename)) {
-        VIRTRUST_LOG_ERROR("|LoadFile|END|returnF||The file does not exist: {}.", filename);
+    if (!std::filesystem::exists(filePath) || !std::filesystem::is_regular_file(filePath)) {
+        VIRTRUST_LOG_ERROR("|LoadFile|END|returnF||The file does not exist: {}.", filePath);
         return false;
     }
 
@@ -86,7 +92,7 @@ bool VirtXmlParser::LoadFile(std::string_view filename)
         libxml2_.xmlFreeDoc(doc_);
         doc_ = nullptr;
     }
-    doc_ = libxml2_.xmlParseFile(filename.data());
+    doc_ = libxml2_.xmlParseFile(filePath.data());
     return doc_ != nullptr;
 }
 

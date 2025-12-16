@@ -5,17 +5,22 @@
 #pragma once
 
 #include <dlfcn.h>
-
-#include <cstdarg>
-#include <cstdint>
-#include <functional>
 #include <string_view>
 
 #include "virtrust/dllib/common.h"
 #include "virtrust/dllib/libguestfs_defines.h"
 
+#ifdef VIRTRUST_MOCK
+#include "virtrust/dllib/mock/libguestfs_mock.h"
+#endif
+
 namespace virtrust {
 
+#ifdef VIRTRUST_MOCK
+// Use Mock implementation in fuzz mode
+using Libguestfs = LibguestfsMock;
+#else
+// Use real implementation in production mode
 // libguestfs api
 class Libguestfs : public DlLibBase {
 public:
@@ -126,5 +131,6 @@ private:
 
     static constexpr std::string_view LIB_NAME = "libguestfs.so";
 };
+#endif
 
 } // namespace virtrust

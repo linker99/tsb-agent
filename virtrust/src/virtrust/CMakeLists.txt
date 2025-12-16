@@ -1,5 +1,19 @@
 # Copyright (c) Huawei Technologies Co., Ltd. 2025-2025. All rights reserved.
 
+option(VIRTRUST_ENABLE_COVERAGE "Enable LLVM coverage for virtrust libs" ON)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Fuzz")
+    set(VIRTRUST_COVERAGE_COMPILE_FLAGS
+            -fprofile-instr-generate
+            -fcoverage-mapping
+            -g
+    )
+    set(VIRTRUST_COVERAGE_LINK_FLAGS
+            -fprofile-instr-generate
+            -fcoverage-mapping
+    )
+endif()
+
 add_library(virtrust-obj OBJECT)
 
 find_package(Protobuf REQUIRED)
@@ -18,6 +32,10 @@ add_subdirectory(utils)
 # Object lib
 
 target_sources(virtrust-obj PRIVATE ${VIRTRUST_SOURCE_FILES})
+
+if(CMAKE_BUILD_TYPE STREQUAL "Fuzz")
+    target_compile_options(virtrust-obj PRIVATE ${VIRTRUST_COVERAGE_COMPILE_FLAGS})
+endif()
 
 target_include_directories(
   virtrust-obj
@@ -67,6 +85,10 @@ target_link_libraries(
           absl_log_internal_nullguard)
 target_include_directories(virtrust_proto PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
 
+if(CMAKE_BUILD_TYPE STREQUAL "Fuzz")
+    target_compile_options(virtrust_proto PRIVATE ${VIRTRUST_COVERAGE_COMPILE_FLAGS})
+endif()
+
 # Shared lib
 
 add_library(virtrust-shared SHARED $<TARGET_OBJECTS:virtrust-obj>
@@ -77,7 +99,7 @@ target_include_directories(
   PRIVATE ${CMAKE_DEPS_INCLUDEDIR} ${CMAKE_CURRENT_BINARY_DIR}/src
           $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
-target_link_libraries(virtrust-shared PRIVATE Deps::spdlog boundscheck)
+target_link_libraries(virtrust-shared PRIVATE tsb-agent Deps::spdlog boundscheck)
 
 target_link_libraries(
   virtrust-shared
@@ -97,3 +119,8 @@ target_link_libraries(
           absl_log_internal_check_op
           absl_log_internal_message
           absl_log_internal_nullguard)
+
+if(CMAKE_BUILD_TYPE STREQUAL "Fuzz")
+    target_compile_options(virtrust-shared PRIVATE ${VIRTRUST_COVERAGE_COMPILE_FLAGS})
+    target_link_options(virtrust-shared PRIVATE ${VIRTRUST_COVERAGE_LINK_FLAGS})
+endif()

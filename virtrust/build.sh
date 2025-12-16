@@ -14,6 +14,7 @@
 ###     -t || --target      Specifying build target, default is `all`
 ###                         Support targets:
 ###                             cicd_default: build default target
+###                             fuzz: build fuzzing targets with clang and libFuzzer
 
 
 # 函数内命令（后台命令） 失败时退出脚本
@@ -84,6 +85,20 @@ function build_output() {
     popd
 }
 
+function build_fuzz() {
+    log_info "***** start build fuzz targets *****"
+    rm -rf build
+    mkdir -p build
+    pushd build
+    cmake -DCMAKE_C_COMPILER=clang \
+          -DCMAKE_CXX_COMPILER=clang++ \
+          -DCMAKE_BUILD_TYPE=Fuzz \
+          -DFUZZTEST_COMPATIBILITY_MODE=libfuzzer \
+          ..
+    make -j$(nproc)
+    popd
+}
+
 function build_cmake() {
     log_info "***** start build cmake *****"
     log_info "building target ${build_target}"
@@ -91,6 +106,8 @@ function build_cmake() {
         build_type='Release'
         enable_test='Off'
         build_output
+    elif [[ "${build_target}" == "fuzz" ]]; then
+        build_fuzz
     fi
 
     local ret=$?

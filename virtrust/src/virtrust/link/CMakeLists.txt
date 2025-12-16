@@ -5,8 +5,18 @@ set(VIRTRUST_SOURCE_FILES
     ${PROTO_SRC}
     ${CMAKE_CURRENT_LIST_DIR}/grpc_server.cpp
     ${CMAKE_CURRENT_LIST_DIR}/migration_service_impl.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/grpc_client.cpp
     ${CMAKE_CURRENT_LIST_DIR}/migration_session.cpp)
+
+# Add Mock source files in Fuzz mode
+if(ENABLE_MOCK)
+    list(APPEND VIRTRUST_SOURCE_FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/mock/grpc_client_mock.cpp
+    )
+else ()
+    list(APPEND VIRTRUST_SOURCE_FILES
+            ${CMAKE_CURRENT_LIST_DIR}/grpc_client.cpp
+    )
+endif()
 
 set(VIRTRUST_PROTO_SOURCE_FILES ${VIRTRUST_PROTO_SOURCE_FILES}
                                 ${CMAKE_CURRENT_LIST_DIR}/proto/migrate.proto)

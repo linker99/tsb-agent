@@ -1,0 +1,82 @@
+# Domain Create test cases - 基于libvirt mock支持的test域名
+create, /usr/bin/virt-install, --name=test-domain-1, --ram=1024, --vcpus=2, --disk-size=10G
+create, /usr/bin/virt-install, --name=test-domain-2, --ram=2048, --vcpus=4, --disk-size=20G
+create, /usr/bin/virt-install, --name=another-shut-off-domain, --ram=4096, --vcpus=4
+create, /usr/bin/virt-install, --name=running-domain, --ram=512, --vcpus=1
+create, /usr/bin/virt-install, --name=test-vm-new, --ram=4096, --vcpus=8, --import
+create, /usr/bin/virt-install, --cdrom=/path/to/iso, --name=test-cdrom, --ram=8192
+create, /usr/bin/virt-install, --pxe, --network=default, --name=test-pxe
+
+# Domain Destroy test cases - 基于mock UUID和域名
+destroy, test-domain-1, 0, true
+destroy, test-domain-2, 1, false
+destroy, another-shut-off-domain, 0, true
+destroy, running-domain, 1, true
+destroy, 12345678-1234-1234-1234-123456789001, 0, true
+destroy, 12345678-1234-1234-1234-123456789002, 1, false
+destroy, 12345678-1234-1234-1234-123456789003, 0, true
+destroy, 12345678-1234-1234-1234-123456789004, 1, true
+destroy, test-nonexistent, 4294967295, false
+destroy, invalid-uuid-format, 0, false
+
+# Domain Start test cases - 启动已知mock域
+start, test-domain-1, 0, true
+start, test-domain-2, 1, false
+start, another-shut-off-domain, 0, true
+start, running-domain, 1, false  # 已经在运行
+start, 12345678-1234-1234-1234-123456789001, 0, true
+start, 12345678-1234-1234-1234-123456789002, 1, false
+start, 12345678-1234-1234-1234-123456789003, 0, true
+start, 12345678-1234-1234-1234-123456789004, 1, true
+start, test-new-domain, 65536, false
+
+# Domain Shutdown test cases
+shutdown, test-domain-1, 0, true
+shutdown, test-domain-2, 1, false
+shutdown, another-shut-off-domain, 0, true
+shutdown, running-domain, 1, true  # 运行中可以关闭
+shutdown, 12345678-1234-1234-1234-123456789001, 0, true
+shutdown, 12345678-1234-1234-1234-123456789002, 1, false
+shutdown, 12345678-1234-1234-1234-123456789003, 0, true
+shutdown, 12345678-1234-1234-1234-123456789004, 1, true
+shutdown, test-unknown-domain, 0, false
+
+# Domain List test cases - 测试不同flags
+list, 0, true
+list, 1, false
+list, 2, true
+list, 3, false
+list, 4294967295, true
+list, 255, false
+
+# Domain Undefine test cases
+undefine, test-domain-1, 0, true
+undefine, test-domain-2, 1, false
+undefine, another-shut-off-domain, 0, true
+undefine, running-domain, 1, true
+undefine, 12345678-1234-1234-1234-123456789001, 0, true
+undefine, 12345678-1234-1234-1234-123456789002, 1, false
+undefine, 12345678-1234-1234-1234-123456789003, 0, true
+undefine, 12345678-1234-1234-1234-123456789004, 1, true
+
+# Domain Migrate test cases - 基于DomainMigrate要求，只迁移shut off的域，destUri必须以qemu+tls://开头
+migrate, test-domain-1, qemu+tls://192.168.1.100:16509/system, 0
+migrate, test-domain-2, qemu+tls://192.168.1.101:16509/system, 0
+migrate, another-shut-off-domain, qemu+tls://192.168.1.102:16509/system, 1
+migrate, test-domain-1, qemu+tls://example.com:16509/system, 0
+migrate, test-domain-2, qemu+tls://[2001:db8::1]:16509/system, 1
+migrate, another-shut-off-domain, qemu+tls://10.0.0.50:16509/system, 0
+
+# Domain Migrate error cases - 违反DomainMigrate规则
+migrate, running-domain, qemu+tls://192.168.1.100:16509/system, 0  # 运行中的域不能迁移
+migrate, test-domain-1, qemu+tcp://192.168.1.100:16509/system, 0  # 必须是qemu+tls://
+migrate, test-domain-1, xen://192.168.1.103/, 0  # 必须是qemu+tls://
+migrate, nonexistent-domain, qemu+tls://192.168.1.100:16509/system, 0  # 域不存在
+
+
+# Edge cases and stress testing
+create, test-domain-with-very-long-name-that-might-cause-buffer-issues-123456789, --ram=16384, --vcpus=16
+destroy, , 0, false
+start, test-domain, 0, true
+migrate, test-domain, , 0
+list, -1, false

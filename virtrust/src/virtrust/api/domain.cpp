@@ -126,12 +126,14 @@ bool CalcVirshMeasure(std::string_view guestName, VirshMeasureSummary &measureSu
         return false;
     }
 
+#ifndef VIRTRUST_MOCK
     if (verifyConfig.GetGuestName() != guestName) {
         VIRTRUST_LOG_ERROR("|main|END|returnF||guest name mismatch: the designated "
                            "name is:{}, while the one in the xml is: {}",
                            guestName, verifyConfig.GetGuestName());
         return false;
     }
+#endif
     auto mounter = virtrust::ForeignMounter();
     mounter.TryInit();
     auto start = std::chrono::high_resolution_clock::now();
@@ -403,7 +405,6 @@ VirtrustRc UndefineDomainWithRetry(std::unique_ptr<DomainCtx> &domain, const std
         VIRTRUST_LOG_INFO("try to undefine domain: {}, try times: {}", domainName, i);
         if (libvirt.virDomainUndefineFlags(domain->Get(), flags) >= 0) {
             VIRTRUST_LOG_INFO("undefine domain: {} success, try times: {}", domainName, i);
-
             return VirtrustRc::OK;
         }
     }
@@ -721,6 +722,12 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
     // run virt-install in a child progress
     VIRTRUST_LOG_INFO("|DomainCreate|RUNNING|||Execute cmd: {},allowStoreMeasurements:{}", argStr,
                       allowStoreMeasurements);
+
+#ifdef VIRTRUST_MOCK
+    // Fuzz模式下跳过真实的fork/exec，直接模拟成功
+    VIRTRUST_LOG_INFO("|DomainCreate|FUZZ_MODE|||Skipping real virt-install execution");
+    return CreateDomainAndVRoot(conn, domainName, allowStoreMeasurements);
+#else
     pid_t pid = fork();
     if (pid == -1) {
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||Failed to create fork, msg:{}", strerror(errno));
@@ -750,6 +757,7 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
             return VirtrustRc::ERROR;
         }
     }
+#endif
     VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||create domainName : {} success", domainName);
     return VirtrustRc::OK;
 }

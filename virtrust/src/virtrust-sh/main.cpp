@@ -20,7 +20,12 @@ namespace {
 
 std::string GetLogPath()
 {
+#ifdef VIRTRUST_FUZZING_CLI_MODE
+    // 在fuzzing模式下，将日志输出到/dev/null避免文件I/O
+    return "/dev/null";
+#else
     return std::filesystem::current_path() / virtrust::VIRTRUST_SH_LOGFILE_NAME;
+#endif
 }
 
 void PrintVersion(std::string_view progname)
@@ -133,7 +138,13 @@ int ProcessArgs(int argc, char **argv)
 
 } // namespace
 
+// ---------- Fuzzing Entry Point ----------
+#ifdef VIRTRUST_FUZZING_CLI_MODE
+int FuzzVirtrustCliMain(int argc, char *argv[])
+#else
 int main(int argc, char *argv[])
+#endif
+
 {
     // Check input parameters
     if (argv[0] == nullptr || strlen(argv[0]) > PATH_MAX) {
@@ -162,3 +173,4 @@ int main(int argc, char *argv[])
     // Run virtrust based on args
     return ProcessArgs(argc, argv);
 }
+

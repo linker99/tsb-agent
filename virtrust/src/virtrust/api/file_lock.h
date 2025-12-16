@@ -16,7 +16,15 @@ namespace virtrust {
 
 class FileLock {
 public:
-    FileLock(const char *fileName) : fd_(open(fileName, O_RDWR | O_CREAT | O_CLOEXEC, LOCK_FILE_PERMISSIONS))
+    FileLock(const char *fileName)
+#ifdef VIRTRUST_MOCK
+        : fd_(0) // Mock文件描述符，总是成功
+    {
+        // Fuzz模式下跳过所有文件操作，直接返回成功
+        (void)fileName;
+    }
+#else
+        : fd_(open(fileName, O_RDWR | O_CREAT | O_CLOEXEC, LOCK_FILE_PERMISSIONS))
     {
         if (fd_ == -1) {
             VIRTRUST_LOG_ERROR("Failed to open file {}, msg {}", fileName, strerror(errno));
@@ -35,14 +43,20 @@ public:
             }
         }
     }
+#endif
 
     ~FileLock()
     {
+#ifdef VIRTRUST_MOCK
+        // Fuzz模式下不需要做任何清理
+        (void)0;
+#else
         if (fd_ != -1) {
             flock(fd_, LOCK_UN);
             close(fd_);
             fd_ = -1;
         }
+#endif
     }
 
     bool IsLocked() const

@@ -3,6 +3,7 @@ project(virtrust CXX C)
 
 option(BUILD_TEST "Enable/Disable tests" On)
 option(USE_MOCK_TSB_AGENT "Use Mocked Tsb Agent (DO NOT USE IN PRODUCTION)" Off)
+option(ENABLE_MOCK "Enable mock for UT" Off)
 
 set(USER_DEPS_DIR
     "${PROJECT_SOURCE_DIR}/external"
@@ -33,7 +34,6 @@ if(NOT BUILD_TEST AND CMAKE_BUILD_TYPE STREQUAL "Fuzz")
       "CMAKE_BUILD_TYPE is Fuzz but BUILD_TEST has been set to Off, turn on BUILD_TEST automatically."
   )
   set(BUILD_TEST On)
-  message(FATAL "Fuzz is not currently supported!")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -56,6 +56,16 @@ if(USE_MOCK_TSB_AGENT)
         "USE_MOCK_TSB_AGENT has been set to On while building with Release, please make sure this is intentional."
     )
   endif()
+endif()
+
+# Fuzz mode specific definitions
+if(CMAKE_BUILD_TYPE STREQUAL "Fuzz")
+  set(USE_MOCK_TSB_AGENT On CACHE BOOL "Use Mocked Tsb Agent" FORCE)
+  set(ENABLE_MOCK ON CACHE BOOL "Enable mock for UT" FORCE)
+endif()
+
+if (ENABLE_MOCK)
+  add_compile_definitions(VIRTRUST_MOCK)
 endif()
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -101,9 +111,19 @@ add_compiler_flags(-Wno-missing-field-initializers) # for dllib guestfs
 add_compiler_flags(-Wno-unused-parameter) # for tsb interface
 add_compiler_flags(-Wno-deprecated-declarations) # rapidjson headers
 add_compiler_flags(-Wno-error=pragmas) # rapidjson headers
-add_compiler_flags(-Wno-class-memaccess) # rapidjson headers
 add_compiler_flags(-Wno-implicit-fallthrough) # rapidjson headers
-add_compiler_flags(-Wno-template-body) # rapidjson headers
+
+# 针对 GCC 的特有选项 (Clang 不支持)
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  add_compiler_flags(-Wno-class-memaccess) # rapidjson headers
+  add_compiler_flags(-Wno-template-body) # rapidjson headers
+endif()
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+   add_compiler_flags(-Wno-unused-const-variable)
+   add_compiler_flags(-Wno-unused-variable)
+   add_compiler_flags(-Wno-unused-function)
+endif()
 
 get_property(
   virtrust_link_options
@@ -127,6 +147,7 @@ message(STATUS "CMAKE_INSTALL_PREFIX  :${CMAKE_INSTALL_PREFIX}")
 message(STATUS "CMAKE_DEPS_SRCDIR  :${CMAKE_DEPS_SRCDIR}")
 message(STATUS "(opt) BUILD_TEST  :${BUILD_TEST}")
 message(STATUS "(opt) USE_MOCK_TSB_AGENT  :${USE_MOCK_TSB_AGENT}")
+message(STATUS "(opt) ENABLE_MOCK  :${ENABLE_MOCK}")
 
 include(FetchContent)
 include(ExternalProject)
@@ -150,6 +171,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY
     ${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR})
 
 include(AddVirtrustTestIf)
+include(AddFuzzer)
 
 if(BUILD_TEST)
   include(CTest)
@@ -158,9 +180,9 @@ if(BUILD_TEST)
 endif()
 
 add_subdirectory(src)
-
-if(BUILD_TEST)
-  add_subdirectory(test)
+add_subdirectory(test)
+if(BUILD_TEST AND CMAKE_BUILD_TYPE STREQUAL "Fuzz")
+    add_subdirectory(test/fuzz)
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Coverage")
