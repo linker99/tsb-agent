@@ -219,13 +219,17 @@ void FreeMeasureInfo(struct MeasureInfo *bios, struct MeasureInfo *shim, struct 
     }
 }
 
-bool CheckGuestBeforeStart(std::string_view domainName, std::string &uuid)
+bool CheckGuestBeforeStart(std::string_view domainName, std::string &uuid, std::future<int> &asyncStartRoot,
+                           int &startVRootRc)
 {
     // 收集需要度量文件的摘要值
     VirshMeasureSummary measureSummary(uuid);
     if (!CalcVirshMeasure(domainName, measureSummary)) {
+        startVRootRc = asyncStartRoot.get();
         return false;
     }
+    startVRootRc = asyncStartRoot.get();
+
     // 转换为tsb-agent需要的结构体
     struct MeasureInfo *bios = nullptr;
     struct MeasureInfo *shim = nullptr;
@@ -987,8 +991,8 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
     std::string uuid = GetUUIDStr(domain->Get());
     auto asyncStartVRoot = std::async(&StartVRoot, uuid.data());
     VIRTRUST_LOG_INFO("Perform checking on: {} before start", domainName);
-    auto checkOk = CheckGuestBeforeStart(domainName, uuid);
-    auto startVRootRc = asyncStartVRoot.get();
+    int startVRootRc = 0;
+    auto checkOk = CheckGuestBeforeStart(domainName, uuid, asyncStartVRoot, startVRootRc);
     if (!checkOk && startVRootRc == 0) {
         VIRTRUST_LOG_ERROR("Check domain failed,domainName: {}", domainName);
         if (StopVRoot(uuid.data()) != 0) {
