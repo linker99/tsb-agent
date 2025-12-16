@@ -142,8 +142,7 @@ bool CalcVirshMeasure(std::string_view guestName, VirshMeasureSummary &measureSu
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
-    VIRTRUST_LOG_DEBUG("|main||calc time-consuming, target: func_mount, duration:{} ms", verifyConfig.GetDiskPath(),
-                       duration.count());
+    VIRTRUST_LOG_DEBUG("|main||calc time-consuming, target: func_mount, duration:{} ms", duration.count());
 
     std::string grubCfgContent;
     ForeignMounterRc rc = mounter.ReadFile(verifyConfig.GetGrubCfgPath(), grubCfgContent);
@@ -224,11 +223,11 @@ bool CheckGuestBeforeStart(std::string_view domainName, std::string &uuid, std::
 {
     // 收集需要度量文件的摘要值
     VirshMeasureSummary measureSummary(uuid);
-    if (!CalcVirshMeasure(domainName, measureSummary)) {
-        startVRootRc = asyncStartRoot.get();
+    auto checkResult = CalcVirshMeasure(domainName, measureSummary);
+    startVRootRc = asyncStartRoot.get();
+    if (!checkResult) {
         return false;
     }
-    startVRootRc = asyncStartRoot.get();
 
     // 转换为tsb-agent需要的结构体
     struct MeasureInfo *bios = nullptr;
@@ -1005,6 +1004,7 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
         return VirtrustRc::ERROR;
     }
 
+    auto libvirtStartTime = std::chrono::high_resolution_clock::now();
     if (Libvirt::GetInstance().virDomainCreateWithFlags(domain->Get(), flags) < 0) {
         VIRTRUST_LOG_ERROR("failed to start domain: {}", domainName);
         if (StopVRoot(uuid.data()) != 0) {
@@ -1012,10 +1012,14 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
         }
         return VirtrustRc::ERROR;
     }
+    auto libvirtEndTime = std::chrono::high_resolution_clock::now();
+    auto libvirtDuration = std::chrono::duration_cast<std::chrono::milliseconds>(libvirtEndTime - libvirtStartTime);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
     VIRTRUST_LOG_DEBUG("|DomainStart||END|returnS|start domainName: {} success", domainName);
-    VIRTRUST_LOG_DEBUG("|DomainStart||calc time-consuming, target: func_DomainStart, duration:{} ms", duration.count());
+    VIRTRUST_LOG_DEBUG("|DomainStart||calc time-consuming, target: func_DomainStart, sum_duration:{} ms, "
+                       "libvirt_duration:{} ms",
+                       duration.count(), libvirtDuration.count());
     return VirtrustRc::OK;
 }
 
