@@ -155,7 +155,7 @@ MigrateSessionRc MigrationSession::OnExchangeKeyResponseReceived(protos::EXchang
     }
 
     // 2.校验对端报告
-    rc = VerifyHostAndVmReport(res.hostreport(), res.vmreport());
+    rc = VerifyHostAndVmReport(res.hostreport(), res.vmreport(), false);
     if (rc != MigrateSessionRc::OK) {
         VIRTRUST_LOG_ERROR("|OnExchangeKeyResponseReceived|END|returnF|domain name: {}|Verify peer report failed.",
                            domainName_);
@@ -416,7 +416,8 @@ MigrateSessionRc MigrationSession::VerifyCertificate(std::string uuid, std::stri
 }
 
 MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustReportNew &hostProtoReport,
-                                                         const protos::TrustReportNew &vmProtoReport)
+                                                         const protos::TrustReportNew &vmProtoReport,
+                                                         bool isDestEnd)
 {
     VIRTRUST_LOG_DEBUG("|VerifyHostAndVmReport|START|");
     trust_report_new hostReport;
@@ -426,15 +427,22 @@ MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustRepo
                            domainName_);
         return MigrateSessionRc::ERROR;
     }
-    trust_report_new vmReport;
-    success = ReportFromProto(vmProtoReport, vmReport);
-    if (!success) {
-        VIRTRUST_LOG_DEBUG("|VerifyHostAndVmReport|END|returnF|domain name: {}|TSB: report from proto failed.",
-                           domainName_);
-        return MigrateSessionRc::ERROR;
+
+    int ret = 0;
+    // 只有目的端需要校验 vmReport，源端该参数直接传入nullptr
+    if (isDestEnd) {
+        trust_report_new vmReport;
+        success = ReportFromProto(vmProtoReport, vmReport);
+        if (!success) {
+            VIRTRUST_LOG_DEBUG("|VerifyHostAndVmReport|END|returnF|domain name: {}|TSB: report from proto failed.",
+                               domainName_);
+            return MigrateSessionRc::ERROR;
+        }
+        VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: VerifyTrustReport start.", domainName_);
+        ret = VerifyTrustReport(sessionId_.data(), sessionId_.data(), &hostReport, &vmReport);
+    } else {
+        ret = VerifyTrustReport(sessionId_.data(), sessionId_.data(), &hostReport, nullptr);
     }
-    VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: VerifyTrustReport start.", domainName_);
-    auto ret = VerifyTrustReport(sessionId_.data(), sessionId_.data(), &hostReport, &vmReport);
     if (ret != 0) {
         VIRTRUST_LOG_DEBUG("|VerifyHostAndVmReport|END|returnF|domain name: {}|TSB: VerifyTrustReport failed.",
                            domainName_);
@@ -739,7 +747,7 @@ MigrateSessionRc MigrationSession::OnExchangeKeyRequestReceived(const protos::EX
     }
 
     // 3. 校验对端报告
-    rc = VerifyHostAndVmReport(request->hostreport(), request->vmreport());
+    rc = VerifyHostAndVmReport(request->hostreport(), request->vmreport(), true);
     if (rc != MigrateSessionRc::OK) {
         VIRTRUST_LOG_ERROR("|OnExchangeKeyRequestReceived|END|returnF|domain name: {}|Verify peer report failed.",
                            domainName_);

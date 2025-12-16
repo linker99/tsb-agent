@@ -106,7 +106,8 @@ private:
     MigrateSessionRc VerifyCertificate(std::string uuid, std::string cert, std::string pubkey);
 
     MigrateSessionRc VerifyHostAndVmReport(const protos::TrustReportNew &hostReport,
-                                           const protos::TrustReportNew &vmReport);
+                                           const protos::TrustReportNew &vmReport,
+                                           bool isDestEnd);
 
     MigrateSessionRc GetVmInfo(Description &vmInfo);
 
