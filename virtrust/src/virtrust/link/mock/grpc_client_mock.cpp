@@ -33,21 +33,6 @@ int32_t UdsClientMock::DomainMigrate(const MigrationConfig &config)
     }
     session->SetRpcClient(std::make_unique<RpcClientMock>(config_));
 
-    // Create destination migration session
-    // MigrationConfig destConfig = config;
-    // destConfig.uuid = std::string(MOCK_DEST_UUID);
-    // MigrationSession *destSession = mgr.CreateSession(
-    //     MigrationSession::Role::Responder,
-    //     destConfig.uuid,
-    //     destConfig.domainName,
-    //     destConfig.destUri,
-    //     destConfig.localUri,
-    //     destConfig.flags
-    // );
-    // if (!session) {
-    //     return 1; // Failed to create session
-    // }
-
     // Start the migration session - this will cover migration_session.cpp
     auto ret = session->Start();
     session->Cleanup();

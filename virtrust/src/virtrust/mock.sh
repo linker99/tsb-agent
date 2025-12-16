@@ -8,9 +8,8 @@ cmake -S . -B build -DCMAKE_BUILD_TYPE=Coverage -DUSE_MOCK_TSB_AGENT=ON -DENABLE
 
  cd build
 
- make -j${nproc}
+make -j 16
 
 make test
 
-cd ..
 cmake --build build --target coverage

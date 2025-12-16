@@ -17,6 +17,8 @@ static std::unordered_map<std::string, std::string> mockFileContents = {
     {"bios_version", "7.12"},
     {".raw", "123456"},
     {"QEMU", "123456"},
+    {"grub.cfg", "linux /boot/vmlinuz-5.10.0-60.18.0.50.oe1.x86_64 root=/dev/mapper/root ro\n"
+                        "initrd /boot/initramfs-5.10.0-60.18.0.50.oe1.x86_64.img"},
 };
 
 // Mock global state to track file positions and content

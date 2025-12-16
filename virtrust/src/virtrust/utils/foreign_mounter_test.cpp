@@ -14,8 +14,8 @@ namespace virtrust::test {
 
 namespace {
 constexpr std::string_view IMAGE_PATH = "/data/openEuler-24.03-LTS-SP1-aarch64.gcow2";
-constexpr std::string_view VM_FILE_PATH = "/root/vnTestFile.txt";
-constexpr std::string_view VM_FILE_CONTENT = "This is a file in VM.\n";
+constexpr std::string_view VM_FILE_PATH = "bios_version";
+constexpr std::string_view VM_FILE_CONTENT = "6.66";
 } // namespace
 
 namespace {
@@ -41,7 +41,7 @@ TEST(VerifyConfig, Works)
     EXPECT_EQ(config.GetLinuzPath(), TEST_LINUZ_PATH);
 }
 
-TEST(DISABLED_ForeignMounterTest, Works)
+TEST(ForeignMounterTest, Works)
 {
     auto mounter = ForeignMounter();
     EXPECT_TRUE(mounter.CheckOk());
@@ -55,7 +55,7 @@ TEST(DISABLED_ForeignMounterTest, Works)
     EXPECT_EQ(rc, ForeignMounterRc::OK);
 }
 
-TEST(DISABLED_ForeignMounterTest, Mount)
+TEST(ForeignMounterTest, Mount)
 {
     auto mounter = ForeignMounter();
     EXPECT_TRUE(mounter.CheckOk());

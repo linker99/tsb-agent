@@ -62,6 +62,7 @@ public:
     DlFun<virDomainPtr, virDomainPtr, virConnectPtr, virTypedParameterPtr, unsigned int, unsigned int>
         virDomainMigrate3;
 
+    DllibRc CheckOk() const;
 private:
     void InitializeMockFunctions();
 

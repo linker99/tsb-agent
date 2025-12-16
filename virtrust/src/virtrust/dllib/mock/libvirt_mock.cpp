@@ -129,6 +129,11 @@ static void InitializeMockDomainData()
     }
 }
 
+DllibRc LibvirtMock::CheckOk() const
+{
+    return DllibRc::OK;
+}
+
 void LibvirtMock::InitializeMockFunctions()
 {
     // Initialize mock domain data

@@ -7,6 +7,7 @@
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <filesystem>
 
 #include <future>
 #include <unordered_set>
@@ -121,16 +122,24 @@ bool CalcVirshMeasure(std::string_view guestName, VirshMeasureSummary &measureSu
     const std::string guestXmlPah = fmt::format(VIRTRUST_XML_REGEX_PATH, guestName);
     virtrust::VirtXmlParser xmlParser;
     virtrust::VerifyConfig verifyConfig;
+#ifndef VIRTRUST_MOCK
     if (!xmlParser.Parse(verifyConfig, guestXmlPah)) {
         VIRTRUST_LOG_ERROR("|main|END|returnF|file: {}|parse xml file failed.", guestXmlPah);
         return false;
     }
 
-#ifndef VIRTRUST_MOCK
     if (verifyConfig.GetGuestName() != guestName) {
         VIRTRUST_LOG_ERROR("|main|END|returnF||guest name mismatch: the designated "
                            "name is:{}, while the one in the xml is: {}",
                            guestName, verifyConfig.GetGuestName());
+        return false;
+    }
+#else
+    auto filePath = std::filesystem::path(__FILE__);
+    auto testXmlPah = (filePath / ".." / ".." / ".." / "test" / "data" / "test.xml")
+    .lexically_normal().string();
+    if (!xmlParser.Parse(verifyConfig, testXmlPah)) {
+        VIRTRUST_LOG_ERROR("|main|END|returnF|file: {}|parse xml file failed.", testXmlPah);
         return false;
     }
 #endif
