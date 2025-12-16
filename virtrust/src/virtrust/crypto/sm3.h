@@ -41,4 +41,7 @@ private:
 std::array<uint8_t, Sm3::DigestSize()> DoSm3(std::string_view data);
 Sm3Rc DoSm3(std::string_view data, std::vector<uint8_t> &out);
 
+// file sm3
+Sm3Rc DoSm3File(const std::string &filePath, std::vector<uint8_t> &out);
+
 } // namespace virtrust
