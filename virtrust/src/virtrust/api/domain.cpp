@@ -1022,8 +1022,9 @@ VirtrustRc DomainStart(const std::unique_ptr<ConnCtx> &conn, const std::string &
         return VirtrustRc::ERROR;
     }
 
+    std::vector<uint8_t> checkDiskDigest;
     if (Libvirt::GetInstance().virDomainCreateWithFlags(domain->Get(), flags) < 0 ||
-        DoSm3File(diskPath, diskDigest) != Sm3Rc::OK) {
+        DoSm3File(diskPath, checkDiskDigest) != Sm3Rc::OK || checkDiskDigest != diskDigest) {
         VIRTRUST_LOG_ERROR("failed to start domain: {}", domainName);
         if (StopVRoot(uuid.data()) != 0) {
             VIRTRUST_LOG_ERROR("stop vRoot failed domain: {}", domainName);
