@@ -39,6 +39,14 @@ sudo dnf install libxml2-devel libguestfs-devel openssl-devel libvirt-devel
 # - rapidjson（JSON解析）
 ```
 
+注意：由于 edk2-aarch64 性能问题，建议用户使用 openEuler 24.03 SP2 操作系统时，执行以下操作
+
+```bash
+sudo dnf remove edk2-aarch64
+wget https://dl-cdn.openeuler.openatom.cn/openEuler-24.03-LTS-SP1/OS/aarch64/Packages/edk2-aarch64-202308-17.oe2403sp1.noarch.rpm
+sudo dnf install ./edk2-aarch64-202308-17.oe2403sp1.noarch.rpm
+```
+
 ## 编译指南
 
 ### 使用 CMake 直接编译
