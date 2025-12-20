@@ -24,7 +24,7 @@ void SignalHandler(int signum)
 {
     VIRTRUST_LOG_INFO("Received signal: {}", signum);
     if (signum == SIGPIPE) {
-        VIRTRUST_LOG_INFO("SIGPIPE signal received, ignored.");
+        VIRTRUST_LOG_INFO("SIGPIPE signal received, ignored");
 
         return;
     }
