@@ -97,6 +97,7 @@ void SaveVRootsToFile(const std::string &file, const std::unordered_map<std::str
             f << ToHexStr(item.second->GetData().grubCfg) << TSB_AGENT_FILE_SEP;             // grubCfg
             f << ToHexStr(item.second->GetData().kernel) << TSB_AGENT_FILE_SEP;              // kernel
             f << ToHexStr(item.second->GetData().initrd) << TSB_AGENT_FILE_SEP;              // initrd
+            f << (item.second->GetData().hasStarted ? "1" : "0") << TSB_AGENT_FILE_SEP;      // hasStarted
             f << std::endl;
         }
         f.close();
@@ -130,6 +131,7 @@ std::unordered_map<std::string, std::unique_ptr<VRoot>> LoadVRootsFromFile(const
             data.grubCfg = FromHexStr<VROOT_SM3_OUTPUT_BYTES>(lineVec[7]);         // grubCfg
             data.kernel = FromHexStr<VROOT_SM3_OUTPUT_BYTES>(lineVec[8]);          // kernel
             data.initrd = FromHexStr<VROOT_SM3_OUTPUT_BYTES>(lineVec[9]);          // initrd
+            data.hasStarted = (lineVec.size() > 10 && lineVec[10] == "1");         // hasStarted
 
             // status are implicitly coverted to
             map.emplace(lineVec[0] /*uuid*/, std::make_unique<VRoot>(data));
@@ -151,6 +153,16 @@ std::vector<Description> TsbAgentImpl::GetVRoots()
     return out;
 }
 
+bool TsbAgentImpl::HasVRootStarted(const std::string &uuid)
+{
+    vRootMap_ = LoadVRootsFromFile(storageFilePath_.c_str());
+    auto it = vRootMap_.find(uuid);
+    if (it != vRootMap_.end()) {
+        return it->second->HasStarted();
+    }
+    return false;
+}
+
 TsbAgentRc TsbAgentImpl::CreateVRoot(const std::string &uuid, const std::string &name)
 {
     vRootMap_ = LoadVRootsFromFile(storageFilePath_.c_str());
@@ -162,7 +174,7 @@ TsbAgentRc TsbAgentImpl::CreateVRoot(const std::string &uuid, const std::string 
     if (std::find_if(vRootMap_.begin(), vRootMap_.end(), [name](const auto &root) {
             return name == root.second->GetDescription().name;
         }) != vRootMap_.end()) {
-        SPDLOG_ERROR("[MOCK-TSB-AGENT] uuid already exist");
+        SPDLOG_ERROR("[MOCK-TSB-AGENT] name already exist");
         return TsbAgentRc::ERROR;
     }
 
@@ -207,7 +219,7 @@ TsbAgentRc TsbAgentImpl::StopVRoot(const std::string &uuid)
         return TsbAgentRc::ERROR;
     }
     vRootMap_[uuid]->GetDataRef().status = VRootStatus::OFF;
-    SaveVRootsToFile(storageFilePath_, vRootMap_);
+    SaveVRootsToFile(storageFilePath_.c_str(), vRootMap_);
     return TsbAgentRc::OK;
 }
 
@@ -221,11 +233,11 @@ TsbAgentRc TsbAgentImpl::StartVRoot(const std::string &uuid)
     }
     if (vRootMap_[uuid]->GetDataRef().status != VRootStatus::OFF) {
         SPDLOG_ERROR("[MOCK-TSB-AGENT] uuid:{} status not OFF", uuid);
-
         return TsbAgentRc::ERROR;
     }
     vRootMap_[uuid]->GetDataRef().status = VRootStatus::RUNNING;
-    SaveVRootsToFile(storageFilePath_, vRootMap_);
+    vRootMap_[uuid]->GetDataRef().hasStarted = true;  // 设置已启动过
+    SaveVRootsToFile(storageFilePath_.c_str(), vRootMap_);
     return TsbAgentRc::OK;
 }
 
@@ -237,7 +249,7 @@ TsbAgentRc TsbAgentImpl::RemoveVRoot(const std::string &uuid)
         return TsbAgentRc::ERROR;
     }
     vRootMap_.erase(uuid);
-    SaveVRootsToFile(storageFilePath_, vRootMap_);
+    SaveVRootsToFile(storageFilePath_.c_str(), vRootMap_);
     return TsbAgentRc::OK;
 }
 
@@ -250,7 +262,7 @@ TsbAgentRc TsbAgentImpl::UpdateMeasure(const std::string &uuid, MeasureInfo bios
         return TsbAgentRc::ERROR;
     }
     // REVIEW
-    SaveVRootsToFile(storageFilePath_, vRootMap_);
+    SaveVRootsToFile(storageFilePath_.c_str(), vRootMap_);
     return TsbAgentRc::OK;
 }
 
@@ -263,7 +275,7 @@ TsbAgentRc TsbAgentImpl::CheckMeasure(const std::string &uuid, MeasureInfo bios,
         return TsbAgentRc::ERROR;
     }
     // REVIEW
-    SaveVRootsToFile(storageFilePath_, vRootMap_);
+    SaveVRootsToFile(storageFilePath_.c_str(), vRootMap_);
     return TsbAgentRc::OK;
 }
 
@@ -271,23 +283,10 @@ TsbAgentRc TsbAgentImpl::CheckMeasure(const std::string &uuid, MeasureInfo bios,
 TsbAgentRc TsbAgentImpl::GetReport(const std::string &pUuid, const std::string &vUuid,
                                    struct trust_report_new *hostreport, struct trust_report_new *vmreport)
 {
-    vRootMap_ = LoadVRootsFromFile(storageFilePath_.c_str());
-    if (vRootMap_.find(vUuid) == vRootMap_.end()) {
-        SPDLOG_ERROR("[MOCK-TSB-AGENT] vUuid:{} not found", vUuid);
-        return TsbAgentRc::ERROR;
-    }
-
-    if (hostreport == nullptr) {
-        hostreport = (trust_report_new *)malloc(sizeof(trust_report_new));
-        SPDLOG_WARN("[MOCK-TSB-AGENT] malloc host report of {} internally", pUuid);
-    }
-
-    if (vmreport == nullptr) {
-        vmreport = (trust_report_new *)malloc(sizeof(trust_report_new));
-        SPDLOG_WARN("[MOCK-TSB-AGENT] malloc vm report of {} internally", vUuid);
-    }
-
-    SaveVRootsToFile(storageFilePath_, vRootMap_);
+    (void)pUuid;
+    (void)vUuid;
+    (void)hostreport;
+    (void)vmreport;
     return TsbAgentRc::OK;
 }
 
@@ -306,7 +305,7 @@ TsbAgentRc TsbAgentImpl::VerifyReport(const std::string &pUuid, const std::strin
         return TsbAgentRc::ERROR;
     }
 
-    SaveVRootsToFile(storageFilePath_, vRootMap_);
+    SaveVRootsToFile(storageFilePath_.c_str(), vRootMap_);
     return TsbAgentRc::OK;
 }
 
