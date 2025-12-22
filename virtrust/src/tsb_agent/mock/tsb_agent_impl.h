@@ -84,7 +84,7 @@ private:
     // REVIEW migration data
     std::vector<char> pk_;
 
-    // default to current location
-    std::filesystem::path storageFilePath_ = std::filesystem::current_path() / STORAGE_FILENAME;
+    // default in config dir
+    std::filesystem::path storageFilePath_ = std::filesystem::path("/etc/virtrust") / STORAGE_FILENAME;
 };
 } // namespace virtrust::mock
