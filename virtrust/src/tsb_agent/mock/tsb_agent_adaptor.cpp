@@ -22,6 +22,35 @@ int ParseTsbAgentRc(TsbAgentRc rc)
             return -1;
     }
 }
+
+bool CheckVRootExists(const char *vUuid)
+{
+    if (vUuid == nullptr) {
+        return false;
+    }
+
+    auto &tsbAgent = TsbAgentImpl::GetInstance();
+    auto instances = tsbAgent.GetVRoots();
+
+    // 校验vUuid是否存在
+    for (const auto &instance : instances) {
+        if (strcmp(instance.uuid, vUuid) == 0) {
+            return true; // 找到对应的vUuid
+        }
+    }
+
+    return false; // vUuid不存在
+}
+
+bool CheckVRootStarted(const char *vUuid)
+{
+    if (vUuid == nullptr) {
+        return false;
+    }
+
+    auto &tsbAgent = TsbAgentImpl::GetInstance();
+    return tsbAgent.HasVRootStarted(std::string(vUuid));
+}
 } // namespace
 
 // NOTE ALL memories are allocated inside APIs by using "mallloc", remeber to
@@ -99,20 +128,29 @@ int GetReport(char *pUuid,                         // 物理机的uuid
               struct trust_report_new *vmreport    // 输出：virtual machine report
 )
 {
-    auto &tsbAgent = TsbAgentImpl::GetInstance();
-    return ParseTsbAgentRc(tsbAgent.GetReport(pUuid, vUuid, hostreport, vmreport));
+    if (pUuid == nullptr || vUuid == nullptr) {
+        return -1;
+    }
+    (void)hostreport;
+    (void)vmreport;
+    return 0;
 }
 
 int VerifyTrustReport(char *pUuid,                         // 物理机的uuid
                       char *vUuid,                         // 虚拟机的uuid
-                      struct trust_report_new *hostreport, // 输出：host report
-                      struct trust_report_new *vmreport    // 输出：virtual machine report
+                      struct trust_report_new *hostreport, // 输入：host report
+                      struct trust_report_new *vmreport    // 输入：virtual machine report
 )
 {
-    auto &tsbAgent = TsbAgentImpl::GetInstance();
-    return ParseTsbAgentRc(tsbAgent.VerifyReport(pUuid, vUuid, hostreport, vmreport));
+    if (pUuid == nullptr || vUuid == nullptr) {
+        return -1;
+    }
+    (void)hostreport;
+    (void)vmreport;
+    return 0;
 }
 
+// 无需调用 tsbAgent.MigrationGetCert；先判断vUUid是否存在，然后分配内存，返回固定cert和pubkey
 int MigrationGetCert(char *vUuid,   // 虚拟机的uuid
                      char **cert,   // 输出：对 pubkey 签名的证书（BMC可验证）
                      int *certLen,  // 输出：证书长度
@@ -120,59 +158,131 @@ int MigrationGetCert(char *vUuid,   // 虚拟机的uuid
                      int *pubkeyLen // 输出：公钥长度
 )
 {
-    auto &tsbAgent = TsbAgentImpl::GetInstance();
-    std::vector<uint8_t> out_cert;
-    std::vector<uint8_t> out_pubkey;
-    auto rc = tsbAgent.MigrationGetCert(vUuid, out_cert, out_pubkey);
+    // 目的端没有vUuid，此处不判断vUuid是否存在
+    if (vUuid == nullptr) {
+        return -1;
+    }
 
-    if (cert == nullptr || pubkey == nullptr || rc != TsbAgentRc::OK || *cert != nullptr || *pubkey != nullptr) {
-        return ParseTsbAgentRc(TsbAgentRc::ERROR);
+    // 检查输出参数有效性
+    if (cert == nullptr || certLen == nullptr || pubkey == nullptr || pubkeyLen == nullptr) {
+        return -1;
     }
-    if (out_cert.size() > static_cast<size_t>(INT_MAX)) {
-        return ParseTsbAgentRc(TsbAgentRc::ERROR);
+
+    // 返回固定的证书内容
+    const char *mockCert = "mock_migration_cert_data";
+    const char *mockPubkey = "mock_migration_pubkey_data";
+
+    int certDataLen = strlen(mockCert);
+    int pubkeyDataLen = strlen(mockPubkey);
+
+    // 分配证书内存
+    *cert = static_cast<char *>(malloc(certDataLen));
+    if (*cert == nullptr) {
+        return -1;
     }
-    *certLen = static_cast<int>(out_cert.size());
-    *cert = static_cast<char *>(malloc(*certLen));
-    if (memcpy_s(*cert, *certLen, out_cert.data(), out_cert.size()) != EOK) {
+
+    // 复制证书数据
+    if (memcpy_s(*cert, certDataLen, mockCert, certDataLen) != EOK) {
         free(*cert);
         *cert = nullptr;
-        return ParseTsbAgentRc(TsbAgentRc::ERROR);
+        return -1;
     }
-    if (out_pubkey.size() > static_cast<size_t>(INT_MAX)) {
+    *certLen = certDataLen;
+
+    // 分配公钥内存
+    *pubkey = static_cast<char *>(malloc(pubkeyDataLen));
+    if (*pubkey == nullptr) {
         free(*cert);
         *cert = nullptr;
-        return ParseTsbAgentRc(TsbAgentRc::ERROR);
+        return -1;
     }
-    *pubkeyLen = out_pubkey.size();
-    *pubkey = static_cast<char *>(malloc(out_pubkey.size()));
-    memcpy(*pubkey, out_pubkey.data(), out_pubkey.size());
 
-    return ParseTsbAgentRc(rc);
+    // 复制公钥数据
+    if (memcpy_s(*pubkey, pubkeyDataLen, mockPubkey, pubkeyDataLen) != EOK) {
+        free(*cert);
+        *cert = nullptr;
+        free(*pubkey);
+        *pubkey = nullptr;
+        return -1;
+    }
+    *pubkeyLen = pubkeyDataLen;
+
+    return 0;
 }
 
+// 两端都调用，但目的端还未导入vRoot资源，仅校验vUuid是否为nullptr
 int MigrationCheckPeerPk(char *vUuid, // 虚拟机的uuid
                          char *pk1,   // peer cert 公钥 (REVIEW: 改成 cert?)
                          char *pk2    // peer 临时生成的随机密钥对的公钥, a.k.a. pubkey
 )
 {
-    return 0;
+    return vUuid != nullptr ? 0 : -1;
 }
 
+// 两端都调用，最后通知时，目的端已经导入了vRoot资源，仅校验vUuid是否存在
 int MigrationNotify(char *vUuid, // 虚拟机的uuid
                     int status)
 {
+    return CheckVRootExists(vUuid) ? 0 : -1;
+}
+
+// 仅源端调用
+// pUuid不作处理，但需判断vUuid是否存在，然后再判断虚机是否启动过，若未启动则返回EN_STATE::ERR_VM_NOT_STARTED；
+// 然后给cipher分配内存，cipher和cipherLen赋值固定内容
+int MigrationGetVrootCipher(char *pUuid,
+                            char *vUuid,   // 虚拟机的uuid
+                            char **cipher, // 输出：加密后的密码资源
+                            int *cipherLen // 输出：密文长度
+)
+{
+    // 判断vUuid是否存在
+    if (!CheckVRootExists(vUuid)) {
+        return -1;
+    }
+    (void)pUuid;
+
+    // 判断虚机是否启动过，若未启动则返回EN_STATE::ERR_VM_NOT_STARTED
+    if (!CheckVRootStarted(vUuid)) {
+        return ERR_VM_NOT_STARTED;
+    }
+
+    // 给cipher分配内存，cipher和cipherLen赋值固定内容
+    if (cipher != nullptr && cipherLen != nullptr) {
+        const char *mockCipher = "mock_vroot_cipher_data";
+        int cipherDataLen = strlen(mockCipher);
+
+        *cipher = static_cast<char *>(malloc(cipherDataLen));
+        if (*cipher == nullptr) {
+            return -1;
+        }
+
+        if (memcpy_s(*cipher, cipherDataLen, mockCipher, cipherDataLen) != EOK) {
+            free(*cipher);
+            *cipher = nullptr;
+            return -1;
+        }
+
+        *cipherLen = cipherDataLen;
+    }
+
     return 0;
 }
 
+// 仅目的端调用，仅校验pUuid和vUuid是否为空
 int MigrationImportVrootCipher(char *pUuid,
                                char *vUuid,  // 虚拟机的uuid
                                char *cipher, // 加密后的密码资源
                                int cipherLen // 密文长度
 )
 {
+    if (pUuid == nullptr || vUuid == nullptr) {
+        return -1;
+    }
     return 0;
 }
 
+// 两端都调用
+// 先判断vUuid是否为空；当导出时，为tcm2bOut分配内存，tcm2bOut和tcm2bLenOut赋值固定内容；导入时不做任何操作。
 int TransDupPub(int type,         // 输入/输入，对应EnDirection中的枚举
                 char *vUuid,      // 虚拟机的uuid，仅type=EN_IMPORT时需要
                 char **tcm2bOut,  // 导出tcm2秘钥，仅type=EN_EXPORT时需要
@@ -181,14 +291,37 @@ int TransDupPub(int type,         // 输入/输入，对应EnDirection中的枚�
                 int tcm2bLenIn    // 导入tcm2秘钥长度，仅type=EN_IMPORT时需要
 )
 {
-    return 0;
-}
+    // 目的端导出时，为tcm2bOut分配内存，赋值固定内容
+    if (type == EN_EXPORT) {
+        // vUuid为nullptr，无需检查
+        if (tcm2bOut == nullptr || tcm2bLenOut == nullptr) {
+            return -1;
+        }
 
-int MigrationGetVrootCipher(char *pUuid,
-                            char *vUuid,   // 虚拟机的uuid
-                            char **cipher, // 输出：加密后的密码资源
-                            int *cipherLen // 输出：密文长度
-)
-{
+        const char *mockKey = "mock_tcm2_key_data";
+        int keyLen = strlen(mockKey);
+
+        *tcm2bOut = static_cast<char *>(malloc(keyLen));
+        if (*tcm2bOut == nullptr) {
+            return -1;
+        }
+
+        if (memcpy_s(*tcm2bOut, keyLen, mockKey, keyLen) != EOK) {
+            free(*tcm2bOut);
+            *tcm2bOut = nullptr;
+            return -1;
+        }
+
+        *tcm2bLenOut = keyLen;
+    } else {
+        // 源端导入时仅检查vUuid是否存在
+        if (!CheckVRootExists(vUuid)) {
+            return -1;
+        }
+        (void)tcm2bIn;
+        (void)tcm2bLenIn;
+    }
+
+
     return 0;
 }
