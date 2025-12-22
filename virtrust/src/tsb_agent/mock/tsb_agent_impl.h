@@ -46,6 +46,8 @@ public:
 
     std::vector<Description> GetVRoots();
 
+    bool HasVRootStarted(const std::string &uuid);
+
     TsbAgentRc CreateVRoot(const std::string &uuid, const std::string &name);
 
     TsbAgentRc StartVRoot(const std::string &uuid);
