@@ -36,6 +36,7 @@ struct VRootData {
     std::array<char, VROOT_SM3_OUTPUT_BYTES> grubCfg = {}; // sm3 (bytes)
     std::array<char, VROOT_SM3_OUTPUT_BYTES> kernel = {};  // sm3 (bytes)
     std::array<char, VROOT_SM3_OUTPUT_BYTES> initrd = {};  // sm3 (bytes)
+    bool hasStarted = false;                               // 是否启动过
 };
 
 // Virtual Root
@@ -65,6 +66,11 @@ public:
         memcpy_s(out.name, VROOT_VM_NAME_MAX_LEN, data_.name.data(), data_.name.size());
         memcpy_s(out.uuid, VROOT_VM_UUID_MAX_LEN, data_.uuid.data(), data_.uuid.size());
         return out;
+    }
+
+    bool HasStarted() const
+    {
+        return data_.hasStarted;
     }
 
 private:

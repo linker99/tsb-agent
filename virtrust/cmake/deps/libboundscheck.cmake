@@ -23,7 +23,7 @@ if(EXISTS "${_libboundscheck_src}")
 else()
   ExternalProject_Add(
     libboundscheck-src
-    GIT_REPOSITORY https://gitee.com/openeuler/libboundscheck
+    GIT_REPOSITORY https://gitcode.com/openeuler/libboundscheck
     GIT_TAG master
     GIT_SHALLOW On
     PREFIX ${CMAKE_DEPS_PREFIX}

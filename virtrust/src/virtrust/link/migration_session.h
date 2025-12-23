@@ -32,7 +32,7 @@ public:
 
     enum class State { Init, WaitingKey, CertVerify, Transferring, Finished, Failed };
 
-    MigrationSession(Role role, const std::string &sessionId, const std::string &domainName,
+    MigrationSession(Role role, const std::string &uuid, const std::string &domainName,
                      const std::string &destUri = "", const std::string &localUri = "", const unsigned int flags = 0);
 
     // 主动方起步
@@ -49,7 +49,7 @@ public:
 
     const std::string &Id() const
     {
-        return sessionId_;
+        return uuid_;
     }
 
     // 仅 Initiator 使用：注入 RPC 客户端（会话拥有其生命周期）
@@ -128,7 +128,7 @@ private:
 private:
     Role role_;
     State state_;
-    std::string sessionId_;
+    std::string uuid_;
     std::string domainName_;
     std::string destUri_;
     std::string localUri_;
@@ -156,15 +156,15 @@ public:
     SessionManager &operator=(const SessionManager &) = delete;
 
     // 创建并托管一个会话，返回裸指针，所有权仍在manager内
-    MigrationSession *CreateSession(MigrationSession::Role role, const std::string &sessionId,
+    MigrationSession *CreateSession(MigrationSession::Role role, const std::string &uuid,
                                     const std::string &domainName, const std::string &destUri,
                                     const std::string &localUri, const unsigned int flags);
 
     // 查找会话（比如 gRPC handler 用这个）
-    MigrationSession *GetSession(const std::string &sessionId);
+    MigrationSession *GetSession(const std::string &uuid);
 
     // 会话结束时调用，真正删除
-    void RemoveSession(const std::string &sessionId);
+    void RemoveSession(const std::string &uuid);
 
 private:
     SessionManager() = default;

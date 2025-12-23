@@ -36,7 +36,7 @@ libvirt 虚拟化层
 
 ### 系统要求
 
-- **操作系统**：openEuler 24.03 LTS SP1 或 openEuler 24.03 LTS SP2
+- **操作系统**：openEuler 24.03 LTS SP2
 - **权限**：需要足够的权限来管理虚拟机
 - **依赖**：libvirt、gRPC 相关库
 

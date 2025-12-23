@@ -28,45 +28,45 @@ unsigned int GetFlagCleard(const unsigned int &flags, const unsigned int &clear)
 }
 } // namespace
 
-MigrationSession *SessionManager::CreateSession(MigrationSession::Role role, const std::string &sessionId,
+MigrationSession *SessionManager::CreateSession(MigrationSession::Role role, const std::string &uuid,
                                                 const std::string &domainName, const std::string &destUri,
                                                 const std::string &localUri, const unsigned int flags)
 {
     std::lock_guard<std::mutex> lock(mtx_);
 
-    auto it = sessions_.find(sessionId);
+    auto it = sessions_.find(uuid);
     if (it != sessions_.end()) {
-        VIRTRUST_LOG_ERROR("|CreateSession|END|returnF|uuid: {}|already exists session with same uuid.", sessionId);
+        VIRTRUST_LOG_ERROR("|CreateSession|END|returnF|uuid: {}|already exists session with same uuid.", uuid);
         return nullptr;
     }
 
-    auto session = std::make_unique<MigrationSession>(role, sessionId, domainName, destUri, localUri, flags);
+    auto session = std::make_unique<MigrationSession>(role, uuid, domainName, destUri, localUri, flags);
     MigrationSession *raw = session.get();
-    sessions_[sessionId] = std::move(session);
+    sessions_[uuid] = std::move(session);
     return raw;
 }
 
-MigrationSession *SessionManager::GetSession(const std::string &sessionId)
+MigrationSession *SessionManager::GetSession(const std::string &uuid)
 {
     std::lock_guard<std::mutex> lock(mtx_);
-    auto it = sessions_.find(sessionId);
+    auto it = sessions_.find(uuid);
     if (it == sessions_.end()) {
         return nullptr;
     }
     return it->second.get();
 }
 
-void SessionManager::RemoveSession(const std::string &sessionId)
+void SessionManager::RemoveSession(const std::string &uuid)
 {
     std::lock_guard<std::mutex> lock(mtx_);
-    sessions_.erase(sessionId);
+    sessions_.erase(uuid);
 }
 
-MigrationSession::MigrationSession(Role role, const std::string &sessionId, const std::string &domainName,
+MigrationSession::MigrationSession(Role role, const std::string &uuid, const std::string &domainName,
                                    const std::string &destUri, const std::string &localUri, const unsigned int flags)
     : role_(role),
       state_(State::Init),
-      sessionId_(sessionId),
+      uuid_(uuid),
       domainName_(domainName),
       destUri_(destUri),
       localUri_(localUri),
@@ -93,7 +93,7 @@ MigrateSessionRc MigrationSession::SendMigrateRequest()
     }
 
     protos::PrepareMigRequest req;
-    req.set_uuid(sessionId_);
+    req.set_uuid(uuid_);
     req.set_domainname(domainName_);
 
     protos::PrepareMigReply reply;
@@ -180,7 +180,7 @@ MigrateSessionRc MigrationSession::SendStartMigration()
     VIRTRUST_LOG_DEBUG("|SendStartMigration|START|");
     protos::StartMigRequest req;
     req.set_domainname(domainName_);
-    req.set_uuid(sessionId_);
+    req.set_uuid(uuid_);
 
     protos::StartMigReply res;
     int32_t ret = rpcClient_->StartMigration(RPC_SIGNAL_TIMEOUT, req, &res);
@@ -206,7 +206,7 @@ MigrateSessionRc MigrationSession::OnStartMigrationResponseReceived()
     int cipherLen = 0;
     // 收集密码资源
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: MigrationGetVrootCipher start.", domainName_);
-    auto ret = MigrationGetVrootCipher(sessionId_.data(), sessionId_.data(), &cipher, &cipherLen);
+    auto ret = MigrationGetVrootCipher(uuid_.data(), uuid_.data(), &cipher, &cipherLen);
     if (ret != 0 || cipher == nullptr) {
         if (cipher != nullptr) {
             free(cipher);
@@ -253,7 +253,7 @@ MigrateSessionRc MigrationSession::SendTransferOnce(const std::string &cipher, c
 
     // 2.传输数据
     protos::VRsourceInfoRequest req;
-    req.set_uuid(sessionId_);
+    req.set_uuid(uuid_);
     req.set_cipherdata(cipher);
     auto protosDesc = req.mutable_vtpcminfo();
     DescriptionToProto(vmInfo, protosDesc);
@@ -296,12 +296,12 @@ MigrateSessionRc MigrationSession::OnTransferResponseReceived(bool transferRet)
     // 所有动作执行完后，判断是否删除本地虚机
     if (flags_ & MIGRATE_UNDEFINE_SOURCE) {
         (void)UndefineVirtDomainBaseUri(localUri_);
-        int tsbRet = RemoveVRoot(sessionId_.data());
+        int tsbRet = RemoveVRoot(uuid_.data());
         if (tsbRet != 0) {
             VIRTRUST_LOG_ERROR("|OnTransferResponseReceived|END|returnF||tsb resource remove "
                                "failed, maybe not exist tsb resource uuid: "
                                "{},domainName: {}.",
-                               sessionId_, domainName_);
+                               uuid_, domainName_);
         }
     }
 
@@ -316,7 +316,7 @@ MigrateSessionRc MigrationSession::SendFinishedNotify(bool success)
     VIRTRUST_LOG_DEBUG("|SendFinishedNotify|START|");
     protos::MigrateResultRequest req;
     req.set_result(success ? 0 : 1);
-    req.set_uuid(sessionId_);
+    req.set_uuid(uuid_);
     protos::MigrateResultReply res;
     auto ret = rpcClient_->NotifyVRMigrateResult(RPC_SIGNAL_TIMEOUT, req, &res);
     if (ret != 0) {
@@ -336,7 +336,7 @@ MigrateSessionRc MigrationSession::GetExchangePkAndReport(protos::EXchangePkAndR
                                                           protos::EXchangePkAndReportReply *res)
 {
     VIRTRUST_LOG_DEBUG("|GetExchangePkAndReport|START|");
-    auto uuid = sessionId_;
+    auto uuid = uuid_;
     char *cert = nullptr;
     int certLen = 0;
     char *pubKey = nullptr;
@@ -439,9 +439,9 @@ MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustRepo
             return MigrateSessionRc::ERROR;
         }
         VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: VerifyTrustReport start.", domainName_);
-        ret = VerifyTrustReport(sessionId_.data(), sessionId_.data(), &hostReport, &vmReport);
+        ret = VerifyTrustReport(uuid_.data(), uuid_.data(), &hostReport, &vmReport);
     } else {
-        ret = VerifyTrustReport(sessionId_.data(), sessionId_.data(), &hostReport, nullptr);
+        ret = VerifyTrustReport(uuid_.data(), uuid_.data(), &hostReport, nullptr);
     }
     if (ret != 0) {
         VIRTRUST_LOG_DEBUG("|VerifyHostAndVmReport|END|returnF|domain name: {}|TSB: VerifyTrustReport failed.",
@@ -565,7 +565,7 @@ MigrateSessionRc MigrationSession::NotifyVRMigration(bool success)
 {
     VIRTRUST_LOG_DEBUG("|NotifyVRMigration|START|");
     auto status = success ? 0 : -1;
-    auto ret = MigrationNotify(sessionId_.data(), status);
+    auto ret = MigrationNotify(uuid_.data(), status);
     if (ret != 0) {
         VIRTRUST_LOG_INFO("|NotifyVRMigration|END|returnF|domainName:{}, migration statu: {}|Notify TSB failed.",
                           domainName_, success);
@@ -590,7 +590,7 @@ MigrateSessionRc MigrationSession::GetVmInfo(Description &vmInfo)
         return MigrateSessionRc::ERROR;
     }
 
-    const std::string &uuid = sessionId_;
+    const std::string &uuid = uuid_;
 
     for (int i = 0; i < vNums; ++i) {
         if (std::strncmp(vInfos.get()[i].uuid, uuid.c_str(), sizeof(vInfos.get()[i].uuid)) == 0) {
@@ -627,7 +627,7 @@ MigrateSessionRc MigrationSession::ExportTcm2Key(std::string &tcm2Key)
 MigrateSessionRc MigrationSession::ImportTcm2Key(std::string_view tcm2Key)
 {
     VIRTRUST_LOG_DEBUG("|domain name: {}|TSB: TransDupPub import start.", domainName_);
-    auto ret = TransDupPub(EN_IMPORT, sessionId_.data(), nullptr, nullptr, std::string(tcm2Key).data(), tcm2Key.size());
+    auto ret = TransDupPub(EN_IMPORT, uuid_.data(), nullptr, nullptr, std::string(tcm2Key).data(), tcm2Key.size());
     if (ret != 0) {
         VIRTRUST_LOG_ERROR("|ImportTcm2Key|END|returnF|domain name: {}|TSB: TransDupPub import failed.", domainName_);
         return MigrateSessionRc::ERROR;
@@ -689,8 +689,8 @@ void MigrationSession::OnTimeout(State stateWhenSet)
 void MigrationSession::Cleanup()
 {
     CancelTimer();
-    VIRTRUST_LOG_DEBUG("|Cleanup|START|sessionId : {}", sessionId_);
-    SessionManager::GetInstance().RemoveSession(sessionId_);
+    VIRTRUST_LOG_DEBUG("|Cleanup|START|uuid: {}", uuid_);
+    SessionManager::GetInstance().RemoveSession(uuid_);
 }
 
 void MigrationSession::OnFail()

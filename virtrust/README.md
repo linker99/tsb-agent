@@ -1,6 +1,6 @@
 # TSB-agent/virtrust
 
-A Trusted Security Boot (TSB) Agent that provides virtualized Trusted Computing Module (vTPCM) support for openEuler 24.03 LTS SP3. This project enables trusted computing virtualization capabilities with a focus on virtual machine domain management and trust measurement.
+A Trusted Security Boot (TSB) Agent that provides virtualized Trusted Computing Module (vTPCM) support for openEuler 24.03 LTS SP2. This project enables trusted computing virtualization capabilities with a focus on virtual machine domain management and trust measurement.
 
 ## Project Overview
 
@@ -173,7 +173,6 @@ TSB-agent/virtrust/
 ### Prerequisites
 
 Supporting OS:
-- openEuler 24.03 SP1
 - openEuler 24.03 SP2
 
 ```bash

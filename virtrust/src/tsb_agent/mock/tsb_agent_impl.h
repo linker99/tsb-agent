@@ -46,6 +46,8 @@ public:
 
     std::vector<Description> GetVRoots();
 
+    bool HasVRootStarted(const std::string &uuid);
+
     TsbAgentRc CreateVRoot(const std::string &uuid, const std::string &name);
 
     TsbAgentRc StartVRoot(const std::string &uuid);
@@ -84,7 +86,7 @@ private:
     // REVIEW migration data
     std::vector<char> pk_;
 
-    // default to current location
-    std::filesystem::path storageFilePath_ = std::filesystem::current_path() / STORAGE_FILENAME;
+    // default in config dir
+    std::filesystem::path storageFilePath_ = std::filesystem::path("/etc/virtrust") / STORAGE_FILENAME;
 };
 } // namespace virtrust::mock
