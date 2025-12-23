@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.22)
 project(virtrust CXX C)
 
 option(BUILD_TEST "Enable/Disable tests" On)
-option(USE_MOCK_TSB_AGENT "Use Mocked Tsb Agent (DO NOT USE IN PRODUCTION)" Off)
+option(USE_MOCK_TSB_AGENT "Use Mocked Tsb Agent (DO NOT USE IN PRODUCTION)" On)
 
 set(USER_DEPS_DIR
     "${PROJECT_SOURCE_DIR}/external"
