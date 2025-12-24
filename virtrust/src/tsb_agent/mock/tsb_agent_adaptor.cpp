@@ -5,6 +5,7 @@
 #include <climits>
 
 #include "tsb_agent/mock/tsb_agent_impl.h"
+#include "tsb_agent/mock/mock_vm_infos.h"
 #include "tsb_agent/tsb_agent.h"
 
 using namespace virtrust::mock;
@@ -29,6 +30,15 @@ bool CheckVRootExists(const char *vUuid)
         return false;
     }
 
+#ifdef VIRTRUST_MOCK
+    // 使用 MOCK_DOMAINS 判断 uuid 是否存在
+    for (int i = 0; i < MOCK_DOMAIN_COUNT; ++i) {
+        if (strcmp(MOCK_DOMAINS[i].uuid, vUuid) == 0) {
+            return true;
+        }
+    }
+    return false;
+#else
     auto &tsbAgent = TsbAgentImpl::GetInstance();
     auto instances = tsbAgent.GetVRoots();
 
@@ -40,6 +50,7 @@ bool CheckVRootExists(const char *vUuid)
     }
 
     return false; // vUuid不存在
+#endif
 }
 
 bool CheckVRootStarted(const char *vUuid)
@@ -47,9 +58,13 @@ bool CheckVRootStarted(const char *vUuid)
     if (vUuid == nullptr) {
         return false;
     }
-
+    
+#ifdef VIRTRUST_MOCK
+    return true;
+#else
     auto &tsbAgent = TsbAgentImpl::GetInstance();
     return tsbAgent.HasVRootStarted(std::string(vUuid));
+#endif
 }
 } // namespace
 
@@ -58,6 +73,32 @@ bool CheckVRootStarted(const char *vUuid)
 
 int GetVRoots(int *vtpcmNums, struct Description **vtpcmInfo)
 {
+#ifdef VIRTRUST_MOCK
+    if (vtpcmNums == nullptr || vtpcmInfo == nullptr) {
+        return -1;
+    }
+    *vtpcmNums = MOCK_DOMAIN_COUNT;
+    *vtpcmInfo = static_cast<Description*>(malloc(*vtpcmNums * sizeof(Description)));
+
+    if (*vtpcmInfo == nullptr) {
+        return -1;
+    }
+
+    for (int i = 0; i < MOCK_DOMAIN_COUNT; ++i) {
+        if (strncpy_s((*vtpcmInfo)[i].uuid, sizeof((*vtpcmInfo)[i].uuid), MOCK_DOMAINS[i].uuid, strlen(MOCK_DOMAINS[i].uuid)) != EOK) {
+            return 1;
+        }
+        (*vtpcmInfo)[i].uuid[sizeof((*vtpcmInfo)[i].uuid) - 1] = '\0'; // 确保字符串终止
+
+        if (strncpy_s((*vtpcmInfo)[i].name, sizeof((*vtpcmInfo)[i].name), MOCK_DOMAINS[i].name, strlen(MOCK_DOMAINS[i].name)) != EOK) {
+            return 1;
+        }
+        (*vtpcmInfo)[i].name[sizeof((*vtpcmInfo)[i].name) - 1] = '\0'; // 确保字符串终止
+        (*vtpcmInfo)[i].state = MOCK_DOMAINS[i].state;
+    }
+
+    return 0; // success
+#else
     auto &tsbAgent = TsbAgentImpl::GetInstance();
 
     auto instances = tsbAgent.GetVRoots(); // get virt roots from mock tsb agent
@@ -78,30 +119,91 @@ int GetVRoots(int *vtpcmNums, struct Description **vtpcmInfo)
     }
 
     return 0; // success
+#endif
 }
 
 int CreateVRoot(struct Description *vtpcmInfo)
 {
+#ifdef VIRTRUST_MOCK
+    if (vtpcmInfo == nullptr || vtpcmInfo->uuid[0] == '\0' || vtpcmInfo->name[0] == '\0') {
+        return -1;
+    }
+
+    // Check if UUID already exists (simple string comparison)
+    for (int i = 0; i < MOCK_DOMAIN_COUNT; ++i) {
+        if (strcmp(MOCK_DOMAINS[i].uuid, vtpcmInfo->uuid) == 0) {
+            return -1; // duplicate UUID
+        }
+    }
+
+    return 0; // Success
+#else
     auto &tsbAgent = TsbAgentImpl::GetInstance();
     return ParseTsbAgentRc(tsbAgent.CreateVRoot(vtpcmInfo->uuid, vtpcmInfo->name));
+#endif
 }
 
 int StartVRoot(char *uuid)
 {
+#ifdef VIRTRUST_MOCK
+    if (uuid == nullptr || uuid[0] == '\0') {
+        return -1;
+    }
+
+    // Check if it's a known UUID
+    for (int i = 0; i < MOCK_DOMAIN_COUNT; ++i) {
+        if (strcmp(MOCK_DOMAINS[i].uuid, uuid) == 0) {
+            return SUCCESS;
+        }
+    }
+
+    return -1; // can't find uuid
+#else
     auto &tsbAgent = TsbAgentImpl::GetInstance();
     return ParseTsbAgentRc(tsbAgent.StartVRoot(uuid));
+#endif
 }
 
 int StopVRoot(char *uuid)
 {
+#ifdef VIRTRUST_MOCK
+    if (uuid == nullptr || uuid[0] == '\0') {
+        return -1;
+    }
+
+    // Check if it's a known UUID
+    for (int i = 0; i < MOCK_DOMAIN_COUNT; ++i) {
+        if (strcmp(MOCK_DOMAINS[i].uuid, uuid) == 0) {
+            return MOCK_DOMAINS[i].state == VM_RUNNING ? SUCCESS : -1; // fail if already stopped
+        }
+    }
+
+    return 0; // Always succeed for mock
+#else
     auto &tsbAgent = TsbAgentImpl::GetInstance();
     return ParseTsbAgentRc(tsbAgent.StopVRoot(uuid));
+#endif
 }
 
 int RemoveVRoot(char *uuid)
 {
+#ifdef VIRTRUST_MOCK
+    if (uuid == nullptr || uuid[0] == '\0') {
+        return -1;
+    }
+
+    // Can't remove running domains
+    for (int i = 0; i < MOCK_DOMAIN_COUNT; ++i) {
+        if (strcmp(MOCK_DOMAINS[i].uuid, uuid) == 0) {
+            return MOCK_DOMAINS[i].state == 0 ? 0 : -1; // fail if running
+        }
+    }
+
+    return 0; // Always succeed for mock
+#else
     auto &tsbAgent = TsbAgentImpl::GetInstance();
     return ParseTsbAgentRc(tsbAgent.RemoveVRoot(uuid));
+#endif
 }
 
 int UpdateMeasure(char *uuid, struct MeasureInfo *bios, struct MeasureInfo *shim, struct MeasureInfo *grub,

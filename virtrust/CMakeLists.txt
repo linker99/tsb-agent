@@ -3,6 +3,7 @@ project(virtrust CXX C)
 
 option(BUILD_TEST "Enable/Disable tests" On)
 option(USE_MOCK_TSB_AGENT "Use Mocked Tsb Agent (DO NOT USE IN PRODUCTION)" Off)
+option(ENABLE_MOCK "Enable mock for UT" Off)
 
 set(USER_DEPS_DIR
     "${PROJECT_SOURCE_DIR}/external"
@@ -33,7 +34,6 @@ if(NOT BUILD_TEST AND CMAKE_BUILD_TYPE STREQUAL "Fuzz")
       "CMAKE_BUILD_TYPE is Fuzz but BUILD_TEST has been set to Off, turn on BUILD_TEST automatically."
   )
   set(BUILD_TEST On)
-  message(FATAL "Fuzz is not currently supported!")
 endif()
 
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -56,6 +56,10 @@ if(USE_MOCK_TSB_AGENT)
         "USE_MOCK_TSB_AGENT has been set to On while building with Release, please make sure this is intentional."
     )
   endif()
+endif()
+
+if (ENABLE_MOCK)
+  add_compile_definitions(VIRTRUST_MOCK)
 endif()
 
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
@@ -127,6 +131,7 @@ message(STATUS "CMAKE_INSTALL_PREFIX  :${CMAKE_INSTALL_PREFIX}")
 message(STATUS "CMAKE_DEPS_SRCDIR  :${CMAKE_DEPS_SRCDIR}")
 message(STATUS "(opt) BUILD_TEST  :${BUILD_TEST}")
 message(STATUS "(opt) USE_MOCK_TSB_AGENT  :${USE_MOCK_TSB_AGENT}")
+message(STATUS "(opt) ENABLE_MOCK  :${ENABLE_MOCK}")
 
 include(FetchContent)
 include(ExternalProject)

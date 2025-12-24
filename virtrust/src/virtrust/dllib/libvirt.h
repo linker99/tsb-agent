@@ -11,8 +11,17 @@
 #include "virtrust/dllib/common.h"
 #include "virtrust/dllib/libvirt_defines.h"
 
+#ifdef VIRTRUST_MOCK
+#include "virtrust/dllib/mock/libvirt_mock.h"
+#endif
+
 namespace virtrust {
 
+#ifdef VIRTRUST_MOCK
+// Use Mock implementation in fuzz mode
+using Libvirt = LibvirtMock;
+#else
+// Use real implementation in production mode
 // libvirt api
 class Libvirt : public DlLibBase {
 public:
@@ -133,5 +142,6 @@ private:
 
     static constexpr std::string_view LIB_NAME = "libvirt.so";
 };
+#endif
 
 } // namespace virtrust

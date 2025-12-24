@@ -7,6 +7,7 @@
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <filesystem>
 
 #include <future>
 #include <unordered_set>
@@ -121,6 +122,7 @@ bool CalcVirshMeasure(std::string_view guestName, VirshMeasureSummary &measureSu
     const std::string guestXmlPah = fmt::format(VIRTRUST_XML_REGEX_PATH, guestName);
     virtrust::VirtXmlParser xmlParser;
     virtrust::VerifyConfig verifyConfig;
+#ifndef VIRTRUST_MOCK
     if (!xmlParser.Parse(verifyConfig, guestXmlPah)) {
         VIRTRUST_LOG_ERROR("|main|END|returnF|file: {}|parse xml file failed.", guestXmlPah);
         return false;
@@ -132,6 +134,15 @@ bool CalcVirshMeasure(std::string_view guestName, VirshMeasureSummary &measureSu
                            guestName, verifyConfig.GetGuestName());
         return false;
     }
+#else
+    auto filePath = std::filesystem::path(__FILE__);
+    auto testXmlPah = (filePath / ".." / ".." / ".." / "test" / "data" / "test.xml")
+    .lexically_normal().string();
+    if (!xmlParser.Parse(verifyConfig, testXmlPah)) {
+        VIRTRUST_LOG_ERROR("|main|END|returnF|file: {}|parse xml file failed.", testXmlPah);
+        return false;
+    }
+#endif
     auto mounter = virtrust::ForeignMounter();
     mounter.TryInit();
     auto start = std::chrono::high_resolution_clock::now();
@@ -406,7 +417,6 @@ VirtrustRc UndefineDomainWithRetry(std::unique_ptr<DomainCtx> &domain, const std
         VIRTRUST_LOG_INFO("try to undefine domain: {}, try times: {}", domainName, i);
         if (libvirt.virDomainUndefineFlags(domain->Get(), flags) >= 0) {
             VIRTRUST_LOG_INFO("undefine domain: {} success, try times: {}", domainName, i);
-
             return VirtrustRc::OK;
         }
     }
@@ -724,6 +734,12 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
     // run virt-install in a child progress
     VIRTRUST_LOG_INFO("|DomainCreate|RUNNING|||Execute cmd: {},allowStoreMeasurements:{}", argStr,
                       allowStoreMeasurements);
+
+#ifdef VIRTRUST_MOCK
+    // Fuzz模式下跳过真实的fork/exec，直接模拟成功
+    VIRTRUST_LOG_INFO("|DomainCreate|FUZZ_MODE|||Skipping real virt-install execution");
+    return CreateDomainAndVRoot(conn, domainName, allowStoreMeasurements);
+#else
     pid_t pid = fork();
     if (pid == -1) {
         VIRTRUST_LOG_ERROR("|DomainCreate|END|returnF||Failed to create fork, msg:{}", strerror(errno));
@@ -753,6 +769,7 @@ VirtrustRc DomainCreate(const std::unique_ptr<ConnCtx> &conn, const std::vector<
             return VirtrustRc::ERROR;
         }
     }
+#endif
     VIRTRUST_LOG_DEBUG("|DomainCreate|END|returnS||create domainName : {} success", domainName);
     return VirtrustRc::OK;
 }

@@ -11,234 +11,375 @@
 #include "virtrust/api/context.h"
 #include "virtrust/api/defines.h"
 #include "virtrust/api/domain.h"
-#include "virtrust/base/logger.h"
-#include "virtrust/crypto/sm3.h"
 #include "virtrust/dllib/libvirt.h"
-#include "virtrust/utils/file_io.h"
-#include "virtrust/utils/foreign_mounter.h"
-#include "virtrust/utils/virt_xml_parser.h"
 
 namespace virtrust {
 
-// Test that basic compilation works
-TEST(DISABLED_DomainTest, BasicCompilation)
+namespace {
+
+// Helper function to create connection context (similar to fuzz_helper.h)
+inline std::unique_ptr<ConnCtx> CreateConnCtx(const std::string &uri)
 {
-    // Basic compile-time test - just ensure the functions exist and can be called
-    EXPECT_TRUE(true);
-}
-
-// Test that VerifyConfig can be instantiated and used
-TEST(DISABLED_DomainTest, VerifyConfigBasics)
-{
-    // Test that VerifyConfig can be constructed with basic parameters
-    VerifyConfig config("test-guest", "/path/to/disk", "/path/to/loader");
-
-    // Test basic getter functions exist and work
-    EXPECT_EQ(config.GetGuestName(), "test-guest");
-    EXPECT_EQ(config.GetDiskPath(), "/path/to/disk");
-    EXPECT_EQ(config.GetLoaderPath(), "/path/to/loader");
-}
-
-// Test additional VerifyConfig methods
-TEST(DISABLED_DomainTest, VerifyConfigAdditionalPaths)
-{
-    VerifyConfig config("test-guest", "/path/to/disk", "/path/to/loader");
-
-    // Test getter functions exist and return non-empty strings after construction
-    EXPECT_EQ(config.GetGuestName(), "test-guest");
-    EXPECT_EQ(config.GetDiskPath(), "/path/to/disk");
-    EXPECT_EQ(config.GetLoaderPath(), "/path/to/loader");
-
-    // Test that other paths return something (may be empty initially)
-    EXPECT_NO_THROW(config.GetShimPath());
-    EXPECT_NO_THROW(config.GetGrubPath());
-    EXPECT_NO_THROW(config.GetGrubCfgPath());
-    EXPECT_NO_THROW(config.GetInitrdPath());
-    EXPECT_NO_THROW(config.GetLinuzPath());
-}
-
-// Test DomainList with different connection scenarios
-TEST(DISABLED_DomainTest, DomainListScenarios)
-{
-    std::unordered_map<std::string, DomainInfo> domainInfos;
-
-    // Test with null connection - should handle gracefully
-    (void)DomainList(nullptr, DomainListFlags::LIST_DOMAINS_ACTIVE, domainInfos, false);
-    // Function should not crash - actual return code may vary
-
-    domainInfos.clear();
-    // Test with valid connection and different flags
     auto conn = std::make_unique<ConnCtx>();
-    (void)DomainList(conn, DomainListFlags::LIST_DOMAINS_ACTIVE, domainInfos, false);
-    // Just verify the function can be called - actual result depends on test environment
-
-    domainInfos.clear();
-    (void)DomainList(conn, DomainListFlags::LIST_DOMAINS_INACTIVE, domainInfos, false);
-
-    domainInfos.clear();
-    (void)DomainList(conn, DomainListFlags::LIST_DOMAINS_ACTIVE | DomainListFlags::LIST_DOMAINS_INACTIVE, domainInfos,
-                     false);
+    if (!conn || !conn->SetUri(uri)) {
+        return nullptr;
+    }
+    conn->Connect();
+    if (conn->Get() == nullptr) {
+        return nullptr;
+    }
+    return conn;
 }
 
-// Test DomainCreate with various parameters
-TEST(DISABLED_DomainTest, DomainCreateVariations)
+inline const std::unique_ptr<ConnCtx> &GetGlobalConn(const std::string &uri = "qemu:///system")
+{
+    static std::unique_ptr<ConnCtx> globalConn;
+
+    if (!globalConn) {
+        globalConn = CreateConnCtx(uri);
+    }
+    return globalConn;
+}
+}
+
+// DomainCreate Test Cases
+TEST(DomainTest, DomainCreate)
 {
     // Test with null connection
     std::vector<std::string> args;
-    (void)DomainCreate(nullptr, args);
-    // Should handle null connection gracefully
+    VirtrustRc rc = DomainCreate(nullptr, args);
+    EXPECT_EQ(rc, VirtrustRc::ERROR); // Should fail with null connection
 
     // Test with valid connection but empty args
+    auto &conn = GetGlobalConn();
     args.clear();
-    (void)DomainCreate(std::make_unique<ConnCtx>(), args);
-    // Should handle empty args gracefully
+    rc = DomainCreate(conn, args);
+    EXPECT_EQ(rc, VirtrustRc::ERROR); // Should fail with empty args
 
-    // Test with valid connection and mock args
+    // Test with valid connection and proper args
     args = {"/usr/bin/virt-install", "--name", "test-vm", "--ram", "1024", "--import"};
-    (void)DomainCreate(std::make_unique<ConnCtx>(), args);
-    // Should handle valid args gracefully
+    rc = DomainCreate(conn, args);
+    // Note: Actual success depends on test environment, but function should not crash
+    EXPECT_EQ(rc, VirtrustRc::ERROR);
 }
 
-// Test DomainStart with various scenarios
-TEST(DISABLED_DomainTest, DomainStartScenarios)
+// DomainDestroy Test Cases
+TEST(DomainTest, DomainDestroy)
 {
     // Test with null connection
-    (void)DomainStart(nullptr, "test-domain", DomainStartFlags::DOMAIN_START_NONE, false);
 
-    // Test with valid connection and empty domain name
-    (void)DomainStart(std::make_unique<ConnCtx>(), "", DomainStartFlags::DOMAIN_START_NONE, false);
+    VirtrustRc rc = DomainDestroy(nullptr, "test-domain-1", DomainDestroyFlags::DOMAIN_DESTROY_NONE, false);
+    EXPECT_EQ(rc, VirtrustRc::ERROR);
 
-    // Test with valid connection and domain name
-    (void)DomainStart(std::make_unique<ConnCtx>(), "test-domain", DomainStartFlags::DOMAIN_START_NONE, false);
+    auto &conn = GetGlobalConn();
+
+    // Test with empty domain name
+    rc = DomainDestroy(conn, "", DomainDestroyFlags::DOMAIN_DESTROY_NONE, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc);
+
+    // Test with valid domain name, VM state is shut up
+    rc = DomainDestroy(conn, "test-domain-1", DomainDestroyFlags::DOMAIN_DESTROY_NONE, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
+
+    // Test with isOnlyTsb=true, domainName should be valid uuid
+    rc = DomainDestroy(conn, "12345678-1234-1234-1234-123456789001", DomainDestroyFlags::DOMAIN_DESTROY_NONE, true);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
+}
+
+TEST(DomainTest, DomainDestroyEdgeCases)
+{
+    auto &conn = GetGlobalConn();
+
+    // Test with mock name when isOnlyTsb=false
+    VirtrustRc rc = DomainDestroy(conn, "test-domain-1",
+                                 DomainDestroyFlags::DOMAIN_DESTROY_NONE, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
+
+    // Test shut up VM with isOnlyTsb=true and UUID
+    rc = DomainDestroy(conn, "12345678-1234-1234-1234-123456789002",
+                      DomainDestroyFlags::DOMAIN_DESTROY_NONE, true);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
+
+    // Test running VM with isOnlyTsb=true and running domain UUID
+    rc = DomainDestroy(conn, "12345678-1234-1234-1234-123456789003",
+                      DomainDestroyFlags::DOMAIN_DESTROY_NONE, true);
+    EXPECT_EQ(VirtrustRc::OK, rc); 
+
+    // Test with another-shut-off-domain name when isOnlyTsb=false
+    rc = DomainDestroy(conn, "another-shut-off-domain",
+                      DomainDestroyFlags::DOMAIN_DESTROY_NONE, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
+
+    // Test with isOnlyTsb=true using UUID from another-shut-off-domain
+    rc = DomainDestroy(conn, "12345678-1234-1234-1234-123456789004",
+                      DomainDestroyFlags::DOMAIN_DESTROY_NONE, true);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
+
+    // Test with non-existent domain
+    rc = DomainDestroy(conn, "non-existent-domain", DomainDestroyFlags::DOMAIN_DESTROY_NONE, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
+}
+
+// DomainMigrate Test Cases
+TEST(DomainTest, DomainMigrate)
+{
+    auto &conn = GetGlobalConn();
+
+    // Test with empty domain name
+    VirtrustRc rc = DomainMigrate(conn, "", "qemu+tls://dest:16509/system", MIGRATE_UNDEFINE_SOURCE);
+    EXPECT_EQ(VirtrustRc::ERROR, rc);
+
+    // Test with empty destination URI
+    rc = DomainMigrate(conn, "test-domain", "", MIGRATE_UNDEFINE_SOURCE);
+    EXPECT_EQ(VirtrustRc::ERROR, rc);
+
+    // Test with invalid flag
+    rc = DomainMigrate(conn, "test-domain-1", "qemu+tls://dest:16509/system", 0);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
+
+    // Test with running domain (should fail to migrate)
+    rc = DomainMigrate(conn, "running-domain", "qemu+tls://dest:16509/system", MIGRATE_UNDEFINE_SOURCE);
+    EXPECT_EQ(VirtrustRc::ERROR, rc);     
+    
+    // Test with valid domain name and valid flag
+    rc = DomainMigrate(conn, "test-domain-2", "qemu+tls://dest:16509/system", MIGRATE_UNDEFINE_SOURCE);
+    EXPECT_EQ(VirtrustRc::OK, rc);
+}
+
+// DomainStart Test Cases
+TEST(DomainTest, DomainStart)
+{
+    auto &conn = GetGlobalConn();
+
+    // Test with empty domain name
+    VirtrustRc rc = DomainStart(conn, "", DOMAIN_START_NONE, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc);
+
+    // Test with valid domain name
+    rc = DomainStart(conn, "test-domain-1", DOMAIN_START_NONE, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc);
 
     // Test with isOnlyTsb=true
-    (void)DomainStart(std::make_unique<ConnCtx>(), "test-domain", DomainStartFlags::DOMAIN_START_NONE, true);
+    rc = DomainStart(conn, "test-domain-2", DOMAIN_START_NONE, true);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
 }
 
-// Test DomainDestroy with various scenarios
-TEST(DISABLED_DomainTest, DomainDestroyScenarios)
+TEST(DomainTest, DomainStartEdgeCases)
 {
-    // Test with null connection
-    (void)DomainDestroy(nullptr, "test-domain", DomainDestroyFlags::DOMAIN_DESTROY_NONE, false);
+    auto &conn = GetGlobalConn();
 
-    // Test with valid connection and empty domain name
-    (void)DomainDestroy(std::make_unique<ConnCtx>(), "", DomainDestroyFlags::DOMAIN_DESTROY_NONE, false);
+    // Test with UUID (mock domain)
+    VirtrustRc rc = DomainStart(conn, "12345678-1234-1234-1234-123456789001",
+                               DOMAIN_START_NONE, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
 
-    // Test with valid connection and domain name
-    (void)DomainDestroy(std::make_unique<ConnCtx>(), "test-domain", DomainDestroyFlags::DOMAIN_DESTROY_NONE, false);
+    // Test with isOnlyTsb=true and UUID (flags should be ignored)
+    rc = DomainStart(conn, "12345678-1234-1234-1234-123456789002",
+                    DOMAIN_START_NONE, true);
+    EXPECT_EQ(VirtrustRc::OK, rc);
+
+    // Test with non-existent domain
+    rc = DomainStart(conn, "non-existent-domain", DOMAIN_START_NONE, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
+}
+
+// DomainUndefine Test Cases
+TEST(DomainTest, DomainUndefine)
+{
+    auto &conn = GetGlobalConn();
+
+    // Test with empty domain name
+    VirtrustRc rc = DomainUndefine(conn, "", 0, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc);
+
+    // Test with valid domain name
+    rc = DomainUndefine(conn, "test-domain-1", 0, false);
+    EXPECT_EQ(VirtrustRc::OK, rc); 
 
     // Test with isOnlyTsb=true
-    (void)DomainDestroy(std::make_unique<ConnCtx>(), "test-domain", DomainDestroyFlags::DOMAIN_DESTROY_NONE, true);
-}
-
-// Test DomainMigrate with various scenarios
-TEST(DISABLED_DomainTest, DomainMigrateScenarios)
-{
-    // Test with null connection
-    (void)DomainMigrate(nullptr, "test-domain", "qemu+tls://dest:16509/system", 0);
-
-    // Test with valid connection and empty domain name
-    (void)DomainMigrate(std::make_unique<ConnCtx>(), "", "qemu+tls://dest:16509/system", 0);
-
-    // Test with valid connection and empty destination URI
-    (void)DomainMigrate(std::make_unique<ConnCtx>(), "test-domain", "", 0);
-
-    // Test with valid parameters
-    (void)DomainMigrate(std::make_unique<ConnCtx>(), "test-domain", "qemu+tls://dest:16509/system", 0);
-
-    // Test with migrate flags
-    (void)DomainMigrate(std::make_unique<ConnCtx>(), "test-domain", "qemu+tls://dest:16509/system",
-                        DomainMigrateFlags::MIGRATE_UNDEFINE_SOURCE);
-}
-
-// Test DomainUndefine with various scenarios
-TEST(DISABLED_DomainTest, DomainUndefineScenarios)
-{
-    // Test with null connection
-    (void)DomainUndefine(nullptr, "test-domain", 0, false);
-
-    // Test with valid connection and empty domain name
-    (void)DomainUndefine(std::make_unique<ConnCtx>(), "", 0, false);
-
-    // Test with valid connection and domain name
-    (void)DomainUndefine(std::make_unique<ConnCtx>(), "test-domain", 0, false);
-
-    // Test with isOnlyTsb=true
-    (void)DomainUndefine(std::make_unique<ConnCtx>(), "test-domain", 0, true);
+    rc = DomainUndefine(conn, "test-domain-2", 0, true);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
 
     // Test with nvram flags
-    (void)DomainUndefine(std::make_unique<ConnCtx>(), "test-domain", DomainUndefineFlags::DOMAIN_UNDEFINE_NVRAM, false);
+    rc = DomainUndefine(conn, "another-shut-off-domain", DOMAIN_UNDEFINE_NVRAM, false);
+    EXPECT_EQ(VirtrustRc::OK, rc); 
 
-    (void)DomainUndefine(std::make_unique<ConnCtx>(), "test-domain", DomainUndefineFlags::DOMAIN_UNDEFINE_KEEP_NVRAM,
-                         false);
+    rc = DomainUndefine(conn, "test-domain-1", DOMAIN_UNDEFINE_KEEP_NVRAM, false);
+    EXPECT_EQ(VirtrustRc::OK, rc); 
 }
 
-// Test ConnCtx functionality
-TEST(DISABLED_DomainTest, ConnCtxFunctionality)
+TEST(DomainTest, DomainUndefineEdgeCases)
 {
-    // Test ConnCtx construction and methods
-    auto conn = std::make_unique<ConnCtx>();
-    EXPECT_FALSE(conn->CheckOk()); // Should be false since no connection established
+    auto &conn = GetGlobalConn();
 
-    EXPECT_TRUE(conn->GetUri().empty()); // URI should be empty initially
+    // Test with UUID (mock domain)
+    VirtrustRc rc = DomainUndefine(conn, "12345678-1234-1234-1234-123456789001", 0, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc); 
 
-    // Test SetUri functionality
-    EXPECT_TRUE(conn->SetUri("test:///default"));
-    EXPECT_EQ(conn->GetUri(), "test:///default");
+    // Test with isOnlyTsb=true and UUID, ignore flag
+    rc = DomainUndefine(conn, "12345678-1234-1234-1234-123456789002", 666, true);
+    EXPECT_EQ(VirtrustRc::OK, rc);
 
-    // Test setting another URI
-    EXPECT_TRUE(conn->SetUri("qemu:///system"));
+    // Test with multiple nvram flags (should not be used together, but function should handle)
+    rc = DomainUndefine(conn, "test-domain-1", DOMAIN_UNDEFINE_NVRAM , false);
+    EXPECT_EQ(VirtrustRc::OK, rc);
+
+    rc = DomainUndefine(conn, "test-domain-2", DOMAIN_UNDEFINE_KEEP_NVRAM , false);
+    EXPECT_EQ(VirtrustRc::OK, rc);
+
+    rc = DomainUndefine(conn, "test-domain-2", DOMAIN_UNDEFINE_NVRAM|DOMAIN_UNDEFINE_KEEP_NVRAM , false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc);
+}
+
+// DomainList Test Cases
+TEST(DomainTest, DomainList)
+{
+    std::unordered_map<std::string, DomainInfo> domainInfos;
+
+    // Test with null connection
+    VirtrustRc rc = DomainList(nullptr, DomainListFlags::LIST_DOMAINS_ACTIVE, domainInfos, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc);
+
+    auto &conn = GetGlobalConn();
+
+    // Test with LIST_DOMAINS_ACTIVE
+    domainInfos.clear();
+    rc = DomainList(conn, DomainListFlags::LIST_DOMAINS_ACTIVE, domainInfos, false);
+    EXPECT_EQ(VirtrustRc::OK, rc); 
+
+    // Test with LIST_DOMAINS_INACTIVE
+    domainInfos.clear();
+    rc = DomainList(conn, DomainListFlags::LIST_DOMAINS_INACTIVE, domainInfos, false);
+    EXPECT_EQ(VirtrustRc::OK, rc); 
+
+    // Test with both flags
+    domainInfos.clear();
+    rc = DomainList(conn, DomainListFlags::LIST_DOMAINS_ACTIVE | DomainListFlags::LIST_DOMAINS_INACTIVE,
+                   domainInfos, false);
+    EXPECT_EQ(VirtrustRc::OK, rc); 
+}
+
+TEST(DomainTest, DomainListDetailed)
+{
+    auto &conn = GetGlobalConn();
+    std::unordered_map<std::string, DomainInfo> domainInfos;
+
+    // Test with printErrToCli=true
+    VirtrustRc rc = DomainList(conn, DomainListFlags::LIST_DOMAINS_ACTIVE, domainInfos, true);
+    EXPECT_EQ(VirtrustRc::OK, rc); 
+
+    // Verify DomainInfo structure if any domains are returned
+    if (!domainInfos.empty()) {
+        for (const auto& [name, info] : domainInfos) {
+            EXPECT_EQ(false, name.empty());
+            // Verify DomainInfo fields are accessible - just access them to ensure they exist
+            unsigned char testState = info.state;
+            unsigned long testMaxMem = info.maxMem;
+            unsigned long testMemory = info.memory;
+            unsigned short testNrVirtCpu = info.nrVirtCpu;
+            unsigned long long testCpuTime = info.cpuTime;
+            (void)testState; (void)testMaxMem; (void)testMemory; (void)testNrVirtCpu; (void)testCpuTime; // Suppress unused warnings
+
+            // Check if domain name matches our mock domains
+            bool isMockDomain = (name == "test-domain-1" || name == "test-domain-2" ||
+                                name == "running-domain" || name == "another-shut-off-domain");
+            if (isMockDomain) {
+                // Verify mock domain data consistency
+                EXPECT_TRUE(info.maxMem >= 512 * 1024);  // At least 512MB
+                EXPECT_TRUE(info.maxMem <= 4096 * 1024); // At most 4GB
+            }
+        }
+    }
+}
+
+TEST(DomainTest, DomainListEdgeCases)
+{
+    auto &conn = GetGlobalConn();
+    std::unordered_map<std::string, DomainInfo> domainInfos;
+
+    // Test with no flags
+    VirtrustRc rc = DomainList(conn,  0, domainInfos, false);
+    EXPECT_EQ(VirtrustRc::ERROR, rc);
+
+    // List active vm
+    rc = DomainList(conn,  LIST_DOMAINS_ACTIVE, domainInfos, false);
+    EXPECT_EQ(VirtrustRc::OK, rc);
+
+    // List inactive vm
+    rc = DomainList(conn,  LIST_DOMAINS_INACTIVE, domainInfos, false);
+    EXPECT_EQ(VirtrustRc::OK, rc);
+
+    // List all vm
+    rc = DomainList(conn,  LIST_DOMAINS_ACTIVE | LIST_DOMAINS_INACTIVE, domainInfos, false);
+    EXPECT_EQ(VirtrustRc::OK, rc);
+}
+
+// ConnCtx Test Cases
+TEST(DomainTest, ConnCtxBasicFunctionality)
+{
+    // Test ConnCtx construction
+    auto &conn = GetGlobalConn();
+    EXPECT_TRUE(conn->CheckOk());
+
+    EXPECT_FALSE(conn->GetUri().empty());
+
+    // Test SetUri with valid URIs
+    EXPECT_EQ(true, conn->SetUri("qemu:///system"));
     EXPECT_EQ(conn->GetUri(), "qemu:///system");
 
-    // Test invalid URI setting if any
-    // Just verify the function can be called without crashing
-    EXPECT_NO_THROW(conn->SetUri("invalid://uri"));
+    EXPECT_EQ(true, conn->SetUri("qemu:///session"));
+    EXPECT_EQ(conn->GetUri(), "qemu:///session");
 }
 
-// Test VerifyConfig construction with different Linux distributions
-TEST(DISABLED_DomainTest, VerifyConfigDistroVariations)
+TEST(DomainTest, ConnCtxEdgeCases)
 {
-    VerifyConfig configEuler("test-guest", "/path/to/disk", "/path/to/loader", LinuxDistro::OPENEULER);
-    EXPECT_EQ(configEuler.GetGuestName(), "test-guest");
+    auto &conn = GetGlobalConn();
 
-    VerifyConfig configCentos("test-guest", "/path/to/disk", "/path/to/loader", LinuxDistro::CENTOS);
-    EXPECT_EQ(configCentos.GetGuestName(), "test-guest");
+    // Test with various URI formats
+    std::vector<std::string> testUris = {
+        "qemu+tls://host/system",
+        "qemu+ssh://user@host/system",
+        "qemu+tcp://host:16509/system",
+        "xen:///",
+        "test:///default"
+    };
 
-    VerifyConfig configUbuntu("test-guest", "/path/to/disk", "/path/to/loader", LinuxDistro::UBUNTU);
-    EXPECT_EQ(configUbuntu.GetGuestName(), "test-guest");
+    for (const auto& uri : testUris) {
+        EXPECT_EQ(true, conn->SetUri(uri)) << "Failed to set URI: " << uri;
+        EXPECT_EQ(conn->GetUri(), uri);
+    }
 
-    VerifyConfig configDebian("test-guest", "/path/to/disk", "/path/to/loader", LinuxDistro::DEBIAN);
-    EXPECT_EQ(configDebian.GetGuestName(), "test-guest");
-
-    VerifyConfig configFedora("test-guest", "/path/to/disk", "/path/to/loader", LinuxDistro::FEDORA);
-    EXPECT_EQ(configFedora.GetGuestName(), "test-guest");
+    // Test with empty URI
+    EXPECT_EQ(true, conn->SetUri(""));
+    EXPECT_EQ(conn->GetUri(), "");
 }
 
-// Test VerifyConfig ParseGrubCfgContent functionality
-TEST(DISABLED_DomainTest, VerifyConfigParseGrubCfgContent)
+// Constants and Flags Test Cases
+TEST(DomainTest, ConstantsVerification)
 {
-    VerifyConfig config("test-guest", "/path/to/disk", "/path/to/loader");
+    // Verify enum values are as expected
+    EXPECT_EQ(0, static_cast<int>(VirtrustRc::OK));
+    EXPECT_EQ(1, static_cast<int>(VirtrustRc::ERROR));
+    EXPECT_EQ(2, static_cast<int>(VirtrustRc::CHECK_FAILED));
+    EXPECT_EQ(3, static_cast<int>(VirtrustRc::INCONSISTENT_RESOURCE));
 
-    // Test parsing GRUB config content
-    std::string grubContent = R"(
-# GRUB configuration file
-set default="0"
-set timeout=5
+    EXPECT_EQ(1 << 0, DomainListFlags::LIST_DOMAINS_ACTIVE);
+    EXPECT_EQ(1 << 1, DomainListFlags::LIST_DOMAINS_INACTIVE);
 
-menuentry "Test OS" {
-    linux /boot/vmlinuz-5.10.0 root=/dev/sda1
-    initrd /boot/initramfs-5.10.0.img
+    EXPECT_EQ(0, DOMAIN_START_NONE);
+    EXPECT_EQ(0, DomainDestroyFlags::DOMAIN_DESTROY_NONE);
+
+    EXPECT_EQ(1 << 2, DOMAIN_UNDEFINE_NVRAM);
+    EXPECT_EQ(1 << 3, DOMAIN_UNDEFINE_KEEP_NVRAM);
+
+    EXPECT_EQ(1 << 4, DomainMigrateFlags::MIGRATE_UNDEFINE_SOURCE);
 }
-)";
 
-    EXPECT_NO_THROW(config.ParseGrubCfgContent(grubContent));
-
-    // Test with empty content
-    EXPECT_NO_THROW(config.ParseGrubCfgContent(""));
-
-    // Test with malformed content
-    std::string malformedContent = "invalid grub config content\n";
-    EXPECT_NO_THROW(config.ParseGrubCfgContent(malformedContent));
+TEST(DomainTest, DefaultValues)
+{
+    // Verify default values
+    EXPECT_EQ(VIRTRUST_DEFAULT_URI, "qemu:///session");
+    EXPECT_EQ(UDS_PATH, "/tmp/grpc.sock");
 }
 
 } // namespace virtrust

@@ -10,7 +10,17 @@
 
 #include "virtrust/link/proto/migrate.grpc.pb.h"
 
+#ifdef VIRTRUST_MOCK
+#include "virtrust/link/mock/grpc_client_mock.h"
+#endif
+
 namespace virtrust {
+
+#ifdef VIRTRUST_MOCK
+// Use Mock implementation in fuzz mode
+using UdsClient = UdsClientMock;
+using RpcClient = RpcClientMock;
+#else
 // 给virsh-sh命令行使用
 class UdsClient {
 public:
@@ -48,5 +58,6 @@ public:
 private:
     LinkConfig config_;
 };
+#endif
 
 } // namespace virtrust

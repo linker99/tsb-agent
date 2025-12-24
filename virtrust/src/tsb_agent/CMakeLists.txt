@@ -11,9 +11,3 @@ else()
     tsb-agent PRIVATE ${CMAKE_DEPS_INCLUDEDIR}
                       $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 endif()
-
-# NOTE Make sure targets are linekd to tsb-agent
-target_link_libraries(virtrust-obj PRIVATE tsb-agent)
-target_link_libraries(virtrust-shared PRIVATE tsb-agent)
-target_link_libraries(virtrust-sh PRIVATE tsb-agent)
-target_link_libraries(libvirtrustd PRIVATE tsb-agent)

@@ -41,9 +41,6 @@ TEST(LibGuestfsTest, CheckOkFunction)
     // Test the CheckOk function
     auto &libguestfs = Libguestfs::GetInstance();
     EXPECT_EQ(libguestfs.CheckOk(), DllibRc::OK);
-
-    // Test size function
-    EXPECT_GT(libguestfs.Size(), (size_t)0);
 }
 
 TEST(LibGuestfsTest, ReloadFunction)

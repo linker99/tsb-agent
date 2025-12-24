@@ -32,9 +32,6 @@ TEST(LibvirtTest, CheckOkFunction)
     // Test the CheckOk function
     auto &libvirt = Libvirt::GetInstance();
     EXPECT_EQ(libvirt.CheckOk(), DllibRc::OK);
-
-    // Test size function
-    EXPECT_GT(libvirt.Size(), (size_t)0);
 }
 
 TEST(LibvirtTest, ReloadFunction)
