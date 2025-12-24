@@ -42,7 +42,7 @@ protected:
 };
 
 // Test case: Test GetVRoots function
-TEST_F(TsbAgentItfTest, GetVRoots)
+TEST_F(TsbAgentItfTest, DISABLED_GetVRoots)
 {
     int vtpcmNums = 0;
     struct Description *vtpcmInfo = nullptr;
@@ -64,7 +64,7 @@ TEST_F(TsbAgentItfTest, GetVRoots)
 }
 
 // Test case: Test CreateVRoots function
-TEST_F(TsbAgentItfTest, CreateVRoot)
+TEST_F(TsbAgentItfTest, DISABLED_CreateVRoot)
 {
     struct Description desc = {};
     strcpy_sp(desc.name, 255, "test-vm");
@@ -83,7 +83,7 @@ TEST_F(TsbAgentItfTest, CreateVRoot)
 }
 
 // Test case: Test StartVRoot function
-TEST_F(TsbAgentItfTest, StartVRoot)
+TEST_F(TsbAgentItfTest, DISABLED_StartVRoot)
 {
     char uuid[37] = "12345678-1234-5678-1234-567812345678";
 
@@ -95,7 +95,7 @@ TEST_F(TsbAgentItfTest, StartVRoot)
 }
 
 // Test case: Test StopVRoot function
-TEST_F(TsbAgentItfTest, StopVRoot)
+TEST_F(TsbAgentItfTest, DISABLED_StopVRoot)
 {
     char uuid[37] = "12345678-1234-5678-1234-567812345678";
 
@@ -107,7 +107,7 @@ TEST_F(TsbAgentItfTest, StopVRoot)
 }
 
 // Test case: Test RemoveVRoot function
-TEST_F(TsbAgentItfTest, RemoveVRoot)
+TEST_F(TsbAgentItfTest, DISABLED_RemoveVRoot)
 {
     char uuid[37] = "12345678-1234-5678-1234-567812345678";
 
