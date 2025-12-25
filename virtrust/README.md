@@ -172,8 +172,8 @@ TSB-agent/virtrust/
 
 ### Prerequisites
 
-Supporting OS:
-- openEuler 24.03 SP2
+Supported OS:
+- openEuler 24.03 SP2 (aarch-64)
 
 ```bash
 # c++ toolchain
