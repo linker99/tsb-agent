@@ -416,8 +416,7 @@ MigrateSessionRc MigrationSession::VerifyCertificate(std::string uuid, std::stri
 }
 
 MigrateSessionRc MigrationSession::VerifyHostAndVmReport(const protos::TrustReportNew &hostProtoReport,
-                                                         const protos::TrustReportNew &vmProtoReport,
-                                                         bool isDestEnd)
+                                                         const protos::TrustReportNew &vmProtoReport, bool isDestEnd)
 {
     VIRTRUST_LOG_DEBUG("|VerifyHostAndVmReport|START|");
     trust_report_new hostReport;

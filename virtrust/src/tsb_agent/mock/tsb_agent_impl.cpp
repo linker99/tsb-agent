@@ -236,7 +236,7 @@ TsbAgentRc TsbAgentImpl::StartVRoot(const std::string &uuid)
         return TsbAgentRc::ERROR;
     }
     vRootMap_[uuid]->GetDataRef().status = VRootStatus::RUNNING;
-    vRootMap_[uuid]->GetDataRef().hasStarted = true;  // 设置已启动过
+    vRootMap_[uuid]->GetDataRef().hasStarted = true; // 设置已启动过
     SaveVRootsToFile(storageFilePath_.c_str(), vRootMap_);
     return TsbAgentRc::OK;
 }

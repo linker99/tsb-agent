@@ -32,8 +32,8 @@ public:
 
     enum class State { Init, WaitingKey, CertVerify, Transferring, Finished, Failed };
 
-    MigrationSession(Role role, const std::string &uuid, const std::string &domainName,
-                     const std::string &destUri = "", const std::string &localUri = "", const unsigned int flags = 0);
+    MigrationSession(Role role, const std::string &uuid, const std::string &domainName, const std::string &destUri = "",
+                     const std::string &localUri = "", const unsigned int flags = 0);
 
     // 主动方起步
     MigrateSessionRc Start();
@@ -106,8 +106,7 @@ private:
     MigrateSessionRc VerifyCertificate(std::string uuid, std::string cert, std::string pubkey);
 
     MigrateSessionRc VerifyHostAndVmReport(const protos::TrustReportNew &hostReport,
-                                           const protos::TrustReportNew &vmReport,
-                                           bool isDestEnd);
+                                           const protos::TrustReportNew &vmReport, bool isDestEnd);
 
     MigrateSessionRc GetVmInfo(Description &vmInfo);
 
@@ -156,9 +155,8 @@ public:
     SessionManager &operator=(const SessionManager &) = delete;
 
     // 创建并托管一个会话，返回裸指针，所有权仍在manager内
-    MigrationSession *CreateSession(MigrationSession::Role role, const std::string &uuid,
-                                    const std::string &domainName, const std::string &destUri,
-                                    const std::string &localUri, const unsigned int flags);
+    MigrationSession *CreateSession(MigrationSession::Role role, const std::string &uuid, const std::string &domainName,
+                                    const std::string &destUri, const std::string &localUri, const unsigned int flags);
 
     // 查找会话（比如 gRPC handler 用这个）
     MigrationSession *GetSession(const std::string &uuid);

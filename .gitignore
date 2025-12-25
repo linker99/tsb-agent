@@ -10,6 +10,7 @@ virtrust/build/*
 .vscode
 
 *.claude
+.agent-shell
 
 transcript.txt
 

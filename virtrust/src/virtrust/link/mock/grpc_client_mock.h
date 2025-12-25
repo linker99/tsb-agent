@@ -6,13 +6,14 @@
 
 #ifdef VIRTRUST_MOCK
 
+#include <securec.h>
+
 #include <cstdint>
 #include <string>
 
 #include "virtrust/link/defines.h"
-#include "virtrust/link/proto/migrate.grpc.pb.h"
 
-#include <securec.h>
+#include "virtrust/link/proto/migrate.grpc.pb.h"
 
 namespace virtrust {
 
@@ -28,7 +29,8 @@ public:
     void operator=(const UdsClientMock &) = delete;
 
     // Constructor
-    explicit UdsClientMock(LinkConfig config) : config_(config) {}
+    explicit UdsClientMock(LinkConfig config) : config_(config)
+    {}
 
     // Mock DomainMigrate function - migration entry point
     int32_t DomainMigrate(const MigrationConfig &config);
@@ -45,7 +47,8 @@ public:
     void operator=(const RpcClientMock &) = delete;
 
     // Constructor
-    explicit RpcClientMock(LinkConfig config) : config_(config) {}
+    explicit RpcClientMock(LinkConfig config) : config_(config)
+    {}
 
     // Mock the 5 migration phase RPC calls
 
@@ -58,8 +61,7 @@ public:
                                 protos::EXchangePkAndReportReply *response);
 
     // 3: Start migration
-    int32_t StartMigration(uint32_t timeout, const protos::StartMigRequest &request,
-                           protos::StartMigReply *response);
+    int32_t StartMigration(uint32_t timeout, const protos::StartMigRequest &request, protos::StartMigReply *response);
 
     // 4: Transfer VM resource data
     int32_t SendVRsourceData(uint32_t timeout, const protos::VRsourceInfoRequest &request,

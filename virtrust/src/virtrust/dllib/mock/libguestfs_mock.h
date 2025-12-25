@@ -6,8 +6,8 @@
 
 #ifdef VIRTRUST_MOCK
 
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
 #include <string_view>
 
 #include "virtrust/dllib/common.h"
@@ -65,6 +65,7 @@ public:
     DlFun<char *, guestfs_h *, const char *, size_t *> guestfs_read_file;
 
     DllibRc CheckOk() const;
+
 private:
     void InitializeMockFunctions();
 
