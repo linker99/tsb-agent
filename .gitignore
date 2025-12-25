@@ -11,6 +11,7 @@ virtrust/build/*
 
 *.claude
 .agent-shell
+CLAUDE.md
 
 transcript.txt
 
