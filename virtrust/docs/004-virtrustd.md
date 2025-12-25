@@ -231,7 +231,7 @@ sudo journalctl -u virtrustd --since "1 hour ago" -p err
 ## 安全配置
 
 ### TLS 证书管理
-
+grpc服务启动会需要下面示例生成的证书, 该示例不对安全性负责。 生成的私钥文件未使用口令保护，有安全性问题，若需要口令保护请修改示例。
 1. **生成 CA 证书**：
 ```bash
 # 创建 CA 私钥
