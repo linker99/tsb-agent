@@ -5,6 +5,7 @@
 #pragma once
 
 #include <dlfcn.h>
+
 #include <string_view>
 
 #include "virtrust/dllib/common.h"

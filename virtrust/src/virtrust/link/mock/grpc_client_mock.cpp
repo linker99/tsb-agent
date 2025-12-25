@@ -6,9 +6,8 @@
 
 #include "virtrust/link/mock/grpc_client_mock.h"
 
-
-#include "virtrust/link/migration_session.h"
 #include "virtrust/link/migration_service_impl.h"
+#include "virtrust/link/migration_session.h"
 
 namespace virtrust {
 
@@ -20,14 +19,8 @@ int32_t UdsClientMock::DomainMigrate(const MigrationConfig &config)
 {
     // Create source migration session
     auto &mgr = SessionManager::GetInstance();
-    MigrationSession *session = mgr.CreateSession(
-        MigrationSession::Role::Initiator,
-        config.uuid,
-        config.domainName,
-        config.destUri,
-        config.localUri,
-        config.flags
-    );
+    MigrationSession *session = mgr.CreateSession(MigrationSession::Role::Initiator, config.uuid, config.domainName,
+                                                  config.destUri, config.localUri, config.flags);
     if (!session) {
         return 1; // Failed to create session
     }
@@ -105,7 +98,8 @@ int32_t RpcClientMock::ExchangePkAndReport(uint32_t timeout, const protos::EXcha
 int32_t RpcClientMock::StartMigration(uint32_t timeout, const protos::StartMigRequest &request,
                                       protos::StartMigReply *response)
 {
-    (void)timeout; (void)request;
+    (void)timeout;
+    (void)request;
 
     // Always succeed for stable unit testing - removed random failure logic
 
@@ -126,7 +120,8 @@ int32_t RpcClientMock::StartMigration(uint32_t timeout, const protos::StartMigRe
 int32_t RpcClientMock::SendVRsourceData(uint32_t timeout, const protos::VRsourceInfoRequest &request,
                                         protos::VRsourceInfoReply *response)
 {
-    (void)timeout; (void)request;
+    (void)timeout;
+    (void)request;
 
     // Always succeed for stable unit testing - removed random failure logic
 
@@ -147,7 +142,8 @@ int32_t RpcClientMock::SendVRsourceData(uint32_t timeout, const protos::VRsource
 int32_t RpcClientMock::NotifyVRMigrateResult(uint32_t timeout, const protos::MigrateResultRequest &request,
                                              protos::MigrateResultReply *response)
 {
-    (void)timeout; (void)request;
+    (void)timeout;
+    (void)request;
 
     // Always succeed for stable unit testing - removed random failure logic
 
@@ -170,21 +166,21 @@ protos::TrustReportNew RpcClientMock::GenerateMockTrustReport()
     protos::TrustReportNew report;
 
     // Generate mock trust report content
-    protos::TrustReportContentNew* content = report.mutable_content();
+    protos::TrustReportContentNew *content = report.mutable_content();
     content->set_be_host_report_time(1640995200); // Mock timestamp
     content->set_be_host_startup_time(1640995100);
-    content->set_be_eval(1); // Success
+    content->set_be_eval(1);             // Success
     content->set_be_host_ip(0xC0A80101); // 192.168.1.1
 
     // Set mock IDs (32 bytes each)
-    const char* mockHostId = "mock-host-id-1234567890123456789012";
-    const char* mockTpcmId = "mock-tpcm-id-1234567890123456789012";
+    const char *mockHostId = "mock-host-id-1234567890123456789012";
+    const char *mockTpcmId = "mock-tpcm-id-1234567890123456789012";
 
     content->set_host_id(mockHostId, 32);
     content->set_tpcm_id(mockTpcmId, 32);
 
     // Set mock PCR values (32 bytes each)
-    const char* mockPcr = "mock-pcr-value-1234567890123456789012";
+    const char *mockPcr = "mock-pcr-value-1234567890123456789012";
     content->set_bios_pcr(mockPcr, 32);
     content->set_boot_loader_pcr(mockPcr, 32);
     content->set_kernel_pcr(mockPcr, 32);
@@ -198,7 +194,7 @@ protos::TrustReportNew RpcClientMock::GenerateMockTrustReport()
     content->set_be_nonce(1234567890);
 
     // Set mock global control policy
-    protos::GlobalControlPolicy* policy = content->mutable_global_control_policy();
+    protos::GlobalControlPolicy *policy = content->mutable_global_control_policy();
     policy->set_be_size(1024);
     policy->set_be_boot_measure_on(1);
     policy->set_be_program_measure_on(1);
@@ -207,7 +203,7 @@ protos::TrustReportNew RpcClientMock::GenerateMockTrustReport()
     policy->set_be_program_control(1);
 
     // Set mock append data
-    const char* mockAppendData = "mock-append-data-for-trust-report-testing";
+    const char *mockAppendData = "mock-append-data-for-trust-report-testing";
     report.set_append_data(mockAppendData);
 
     return report;

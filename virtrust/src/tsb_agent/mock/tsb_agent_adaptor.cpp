@@ -4,8 +4,8 @@
 
 #include <climits>
 
-#include "tsb_agent/mock/tsb_agent_impl.h"
 #include "tsb_agent/mock/mock_vm_infos.h"
+#include "tsb_agent/mock/tsb_agent_impl.h"
 #include "tsb_agent/tsb_agent.h"
 
 using namespace virtrust::mock;
@@ -58,7 +58,7 @@ bool CheckVRootStarted(const char *vUuid)
     if (vUuid == nullptr) {
         return false;
     }
-    
+
 #ifdef VIRTRUST_MOCK
     return true;
 #else
@@ -78,19 +78,21 @@ int GetVRoots(int *vtpcmNums, struct Description **vtpcmInfo)
         return -1;
     }
     *vtpcmNums = MOCK_DOMAIN_COUNT;
-    *vtpcmInfo = static_cast<Description*>(malloc(*vtpcmNums * sizeof(Description)));
+    *vtpcmInfo = static_cast<Description *>(malloc(*vtpcmNums * sizeof(Description)));
 
     if (*vtpcmInfo == nullptr) {
         return -1;
     }
 
     for (int i = 0; i < MOCK_DOMAIN_COUNT; ++i) {
-        if (strncpy_s((*vtpcmInfo)[i].uuid, sizeof((*vtpcmInfo)[i].uuid), MOCK_DOMAINS[i].uuid, strlen(MOCK_DOMAINS[i].uuid)) != EOK) {
+        if (strncpy_s((*vtpcmInfo)[i].uuid, sizeof((*vtpcmInfo)[i].uuid), MOCK_DOMAINS[i].uuid,
+                      strlen(MOCK_DOMAINS[i].uuid)) != EOK) {
             return 1;
         }
         (*vtpcmInfo)[i].uuid[sizeof((*vtpcmInfo)[i].uuid) - 1] = '\0'; // 确保字符串终止
 
-        if (strncpy_s((*vtpcmInfo)[i].name, sizeof((*vtpcmInfo)[i].name), MOCK_DOMAINS[i].name, strlen(MOCK_DOMAINS[i].name)) != EOK) {
+        if (strncpy_s((*vtpcmInfo)[i].name, sizeof((*vtpcmInfo)[i].name), MOCK_DOMAINS[i].name,
+                      strlen(MOCK_DOMAINS[i].name)) != EOK) {
             return 1;
         }
         (*vtpcmInfo)[i].name[sizeof((*vtpcmInfo)[i].name) - 1] = '\0'; // 确保字符串终止
@@ -423,7 +425,6 @@ int TransDupPub(int type,         // 输入/输入，对应EnDirection中的枚�
         (void)tcm2bIn;
         (void)tcm2bLenIn;
     }
-
 
     return 0;
 }

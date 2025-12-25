@@ -4,11 +4,11 @@
 
 #ifdef VIRTRUST_MOCK
 
-#include "virtrust/utils/file_io.h"
-
+#include <cstring>
 #include <sstream>
 #include <unordered_map>
-#include <cstring>
+
+#include "virtrust/utils/file_io.h"
 
 namespace virtrust {
 
@@ -18,7 +18,7 @@ static std::unordered_map<std::string, std::string> mockFileContents = {
     {".raw", "123456"},
     {"QEMU", "123456"},
     {"grub.cfg", "linux /boot/vmlinuz-5.10.0-60.18.0.50.oe1.x86_64 root=/dev/mapper/root ro\n"
-                        "initrd /boot/initramfs-5.10.0-60.18.0.50.oe1.x86_64.img"},
+                 "initrd /boot/initramfs-5.10.0-60.18.0.50.oe1.x86_64.img"},
 };
 
 // Mock global state to track file positions and content
@@ -29,7 +29,7 @@ static std::unordered_map<std::string, bool> mockFileEofStates;
 std::string GetMockContent(const std::string &fileName)
 {
     // Check if filename contains any of our mock patterns
-    for (const auto& [pattern, content] : mockFileContents) {
+    for (const auto &[pattern, content] : mockFileContents) {
         if (fileName.find(pattern) != std::string::npos) {
             return content;
         }
@@ -40,8 +40,7 @@ std::string GetMockContent(const std::string &fileName)
 }
 
 // Mock FileInputStream implementation
-FileInputStream::FileInputStream(std::string fileName)
-    : fileName_(std::move(fileName)), fileLen_(0)
+FileInputStream::FileInputStream(std::string fileName) : fileName_(std::move(fileName)), fileLen_(0)
 {
     // Get mock content for this filename
     std::string content = GetMockContent(fileName_);

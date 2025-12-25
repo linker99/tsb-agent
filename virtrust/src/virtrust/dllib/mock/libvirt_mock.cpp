@@ -7,11 +7,12 @@
 #include "virtrust/dllib/mock/libvirt_mock.h"
 
 #include <securec.h>
-#include <vector>
-#include <cstring>
 
-#include "tsb_agent/tsb_agent.h"
+#include <cstring>
+#include <vector>
+
 #include "tsb_agent/mock/mock_vm_infos.h"
+#include "tsb_agent/tsb_agent.h"
 
 namespace virtrust {
 namespace {
@@ -37,53 +38,43 @@ inline virDomainState ConvertVmStateToLibvirtState(int vmState)
 }
 
 // Mock domain data - using data from mock_vm_infos.h
-static MockDomainInfo LIBVIRT_MOCK_DOMAINS[] = {
-    {
-        .ptr = &DOMAIN_POINT[0],
-        .name = {},  // Will be initialized from MOCK_DOMAINS[0]
-        .uuid = {}, // Will be initialized from MOCK_DOMAINS[0]
-        .state = VIR_DOMAIN_SHUTOFF,    // Will be updated from MOCK_DOMAINS[0]
-        .maxMem = 1024 * 1024,         // 1GB
-        .memory = 0,
-        .nrVirtCpu = 1,
-        .cpuTime = 0
-    },
-    {
-        .ptr = &DOMAIN_POINT[1],
-        .name = {},  // Will be initialized from MOCK_DOMAINS[1]
-        .uuid = {}, // Will be initialized from MOCK_DOMAINS[1]
-        .state = VIR_DOMAIN_SHUTOFF,    // Will be updated from MOCK_DOMAINS[1]
-        .maxMem = 2048 * 1024,         // 2GB
-        .memory = 0,
-        .nrVirtCpu = 2,
-        .cpuTime = 0
-    },
-    {
-        .ptr = &DOMAIN_POINT[2],
-        .name = {},  // Will be initialized from MOCK_DOMAINS[2]
-        .uuid = {}, // Will be initialized from MOCK_DOMAINS[2]
-        .state = VIR_DOMAIN_RUNNING,    // Will be updated from MOCK_DOMAINS[2]
-        .maxMem = 512 * 1024,          // 512MB
-        .memory = 256 * 1024,          // 256MB
-        .nrVirtCpu = 1,
-        .cpuTime = 5000000
-    },
-    {
-        .ptr = &DOMAIN_POINT[3],
-        .name = {},  // Will be initialized from MOCK_DOMAINS[3]
-        .uuid = {}, // Will be initialized from MOCK_DOMAINS[3]
-        .state = VIR_DOMAIN_SHUTOFF,    // Will be updated from MOCK_DOMAINS[3]
-        .maxMem = 4096 * 1024,         // 4GB
-        .memory = 0,
-        .nrVirtCpu = 4,
-        .cpuTime = 0
-    }
-};
+static MockDomainInfo LIBVIRT_MOCK_DOMAINS[] = {{.ptr = &DOMAIN_POINT[0],
+                                                 .name = {}, // Will be initialized from MOCK_DOMAINS[0]
+                                                 .uuid = {}, // Will be initialized from MOCK_DOMAINS[0]
+                                                 .state = VIR_DOMAIN_SHUTOFF, // Will be updated from MOCK_DOMAINS[0]
+                                                 .maxMem = 1024 * 1024,       // 1GB
+                                                 .memory = 0,
+                                                 .nrVirtCpu = 1,
+                                                 .cpuTime = 0},
+                                                {.ptr = &DOMAIN_POINT[1],
+                                                 .name = {}, // Will be initialized from MOCK_DOMAINS[1]
+                                                 .uuid = {}, // Will be initialized from MOCK_DOMAINS[1]
+                                                 .state = VIR_DOMAIN_SHUTOFF, // Will be updated from MOCK_DOMAINS[1]
+                                                 .maxMem = 2048 * 1024,       // 2GB
+                                                 .memory = 0,
+                                                 .nrVirtCpu = 2,
+                                                 .cpuTime = 0},
+                                                {.ptr = &DOMAIN_POINT[2],
+                                                 .name = {}, // Will be initialized from MOCK_DOMAINS[2]
+                                                 .uuid = {}, // Will be initialized from MOCK_DOMAINS[2]
+                                                 .state = VIR_DOMAIN_RUNNING, // Will be updated from MOCK_DOMAINS[2]
+                                                 .maxMem = 512 * 1024,        // 512MB
+                                                 .memory = 256 * 1024,        // 256MB
+                                                 .nrVirtCpu = 1,
+                                                 .cpuTime = 5000000},
+                                                {.ptr = &DOMAIN_POINT[3],
+                                                 .name = {}, // Will be initialized from MOCK_DOMAINS[3]
+                                                 .uuid = {}, // Will be initialized from MOCK_DOMAINS[3]
+                                                 .state = VIR_DOMAIN_SHUTOFF, // Will be updated from MOCK_DOMAINS[3]
+                                                 .maxMem = 4096 * 1024,       // 4GB
+                                                 .memory = 0,
+                                                 .nrVirtCpu = 4,
+                                                 .cpuTime = 0}};
 
 constexpr int LIBVIRT_MOCK_DOMAIN_COUNT = sizeof(LIBVIRT_MOCK_DOMAINS) / sizeof(LIBVIRT_MOCK_DOMAINS[0]);
 
 // Helper function to find domain info by pointer
-const MockDomainInfo* FindMockDomainByPtr(virDomainPtr ptr)
+const MockDomainInfo *FindMockDomainByPtr(virDomainPtr ptr)
 {
     for (int i = 0; i < LIBVIRT_MOCK_DOMAIN_COUNT; ++i) {
         if (LIBVIRT_MOCK_DOMAINS[i].ptr == ptr) {
@@ -94,7 +85,7 @@ const MockDomainInfo* FindMockDomainByPtr(virDomainPtr ptr)
 }
 
 // Helper function to find domain info by name
-const MockDomainInfo* FindMockDomainByName(const char* name)
+const MockDomainInfo *FindMockDomainByName(const char *name)
 {
     for (int i = 0; i < LIBVIRT_MOCK_DOMAIN_COUNT; ++i) {
         if (strcmp(LIBVIRT_MOCK_DOMAINS[i].name, name) == 0) {
@@ -109,18 +100,20 @@ static void InitializeMockDomainData()
 {
     for (int i = 0; i < LIBVIRT_MOCK_DOMAIN_COUNT && i < MOCK_DOMAIN_COUNT; ++i) {
         // Initialize name with null terminator from MOCK_DOMAINS
-        if (strncpy_s(LIBVIRT_MOCK_DOMAINS[i].name, sizeof(LIBVIRT_MOCK_DOMAINS[i].name),
-                      MOCK_DOMAINS[i].name, strlen(MOCK_DOMAINS[i].name)) != EOK) {
+        if (strncpy_s(LIBVIRT_MOCK_DOMAINS[i].name, sizeof(LIBVIRT_MOCK_DOMAINS[i].name), MOCK_DOMAINS[i].name,
+                      strlen(MOCK_DOMAINS[i].name)) != EOK) {
             // If copy fails, fallback to empty string
-            memset_s(LIBVIRT_MOCK_DOMAINS[i].name, sizeof(LIBVIRT_MOCK_DOMAINS[i].name), 0, sizeof(LIBVIRT_MOCK_DOMAINS[i].name));
+            memset_s(LIBVIRT_MOCK_DOMAINS[i].name, sizeof(LIBVIRT_MOCK_DOMAINS[i].name), 0,
+                     sizeof(LIBVIRT_MOCK_DOMAINS[i].name));
         }
         LIBVIRT_MOCK_DOMAINS[i].name[sizeof(LIBVIRT_MOCK_DOMAINS[i].name) - 1] = '\0';
 
         // Initialize uuid with null terminator from MOCK_DOMAINS
-        if (strncpy_s(LIBVIRT_MOCK_DOMAINS[i].uuid, sizeof(LIBVIRT_MOCK_DOMAINS[i].uuid),
-                      MOCK_DOMAINS[i].uuid, strlen(MOCK_DOMAINS[i].uuid)) != EOK) {
+        if (strncpy_s(LIBVIRT_MOCK_DOMAINS[i].uuid, sizeof(LIBVIRT_MOCK_DOMAINS[i].uuid), MOCK_DOMAINS[i].uuid,
+                      strlen(MOCK_DOMAINS[i].uuid)) != EOK) {
             // If copy fails, fallback to empty string
-            memset_s(LIBVIRT_MOCK_DOMAINS[i].uuid, sizeof(LIBVIRT_MOCK_DOMAINS[i].uuid), 0, sizeof(LIBVIRT_MOCK_DOMAINS[i].uuid));
+            memset_s(LIBVIRT_MOCK_DOMAINS[i].uuid, sizeof(LIBVIRT_MOCK_DOMAINS[i].uuid), 0,
+                     sizeof(LIBVIRT_MOCK_DOMAINS[i].uuid));
         }
         LIBVIRT_MOCK_DOMAINS[i].uuid[sizeof(LIBVIRT_MOCK_DOMAINS[i].uuid) - 1] = '\0';
 
@@ -140,24 +133,22 @@ void LibvirtMock::InitializeMockFunctions()
     InitializeMockDomainData();
 
     // Mock连接管理
-    virConnectOpen = DlFun<virConnectPtr, const char *>("virConnectOpen",
-        [](const char* uri) -> virConnectPtr {
-            return &DOMAIN_POINT[0]; // Mock连接指针
-        });
+    virConnectOpen = DlFun<virConnectPtr, const char *>("virConnectOpen", [](const char *uri) -> virConnectPtr {
+        return &DOMAIN_POINT[0]; // Mock连接指针
+    });
 
-    virConnectClose = DlFun<int, virConnectPtr>("virConnectClose",
-        [](virConnectPtr conn) -> int {
-            return 0; // 总是成功关闭
-        });
+    virConnectClose = DlFun<int, virConnectPtr>("virConnectClose", [](virConnectPtr conn) -> int {
+        return 0; // 总是成功关闭
+    });
 
-    virSetErrorFunc = DlFun<void, void *, virErrorFunc>("virSetErrorFunc",
-        [](void* userData, virErrorFunc handler) -> void {
+    virSetErrorFunc =
+        DlFun<void, void *, virErrorFunc>("virSetErrorFunc", [](void *userData, virErrorFunc handler) -> void {
             // Mock实现，不做任何操作
         });
 
     // Mock域查询
-    virConnectListAllDomains = DlFun<int, virConnectPtr, virDomainPtr **, unsigned int>("virConnectListAllDomains",
-        [](virConnectPtr conn, virDomainPtr **domains, unsigned int flags) -> int {
+    virConnectListAllDomains = DlFun<int, virConnectPtr, virDomainPtr **, unsigned int>(
+        "virConnectListAllDomains", [](virConnectPtr conn, virDomainPtr **domains, unsigned int flags) -> int {
             std::vector<virDomainPtr> domainPtrs;
 
             // 根据flags筛选域
@@ -185,7 +176,7 @@ void LibvirtMock::InitializeMockFunctions()
             }
 
             // 分配并填充域指针数组
-            *domains = static_cast<virDomainPtr*>(calloc(count + 1, sizeof(virDomainPtr)));
+            *domains = static_cast<virDomainPtr *>(calloc(count + 1, sizeof(virDomainPtr)));
             if (*domains == nullptr) {
                 return -1;
             }
@@ -197,23 +188,22 @@ void LibvirtMock::InitializeMockFunctions()
         });
 
     // Mock域操作
-    virDomainLookupByName = DlFun<virDomainPtr, virConnectPtr, const char *>("virDomainLookupByName",
-        [](virConnectPtr conn, const char* name) -> virDomainPtr {
+    virDomainLookupByName = DlFun<virDomainPtr, virConnectPtr, const char *>(
+        "virDomainLookupByName", [](virConnectPtr conn, const char *name) -> virDomainPtr {
             // Always succeed for stable unit testing - removed random failure logic
-            const MockDomainInfo* domainInfo = FindMockDomainByName(name);
+            const MockDomainInfo *domainInfo = FindMockDomainByName(name);
             return domainInfo ? domainInfo->ptr : nullptr;
         });
 
-    virDomainGetName = DlFun<const char *, virDomainPtr>("virDomainGetName",
-        [](virDomainPtr domain) -> const char* {
-            const MockDomainInfo* domainInfo = FindMockDomainByPtr(domain);
-            return domainInfo ? domainInfo->name : "unknown-domain";
-        });
+    virDomainGetName = DlFun<const char *, virDomainPtr>("virDomainGetName", [](virDomainPtr domain) -> const char * {
+        const MockDomainInfo *domainInfo = FindMockDomainByPtr(domain);
+        return domainInfo ? domainInfo->name : "unknown-domain";
+    });
 
-    virDomainGetUUIDString = DlFun<int, virDomainPtr, char *>("virDomainGetUUIDString",
-        [](virDomainPtr domain, char* uuid) -> int {
+    virDomainGetUUIDString =
+        DlFun<int, virDomainPtr, char *>("virDomainGetUUIDString", [](virDomainPtr domain, char *uuid) -> int {
             // Always succeed for stable unit testing - removed random failure logic
-            const MockDomainInfo* domainInfo = FindMockDomainByPtr(domain);
+            const MockDomainInfo *domainInfo = FindMockDomainByPtr(domain);
             if (domainInfo) {
                 if (strncpy_s(uuid, 37, domainInfo->uuid, strlen(domainInfo->uuid)) != EOK) {
                     return -1; // 内存拷贝失败
@@ -228,13 +218,13 @@ void LibvirtMock::InitializeMockFunctions()
             return 0;
         });
 
-    virDomainGetInfo = DlFun<int, virDomainPtr, virDomainInfo *>("virDomainGetInfo",
-        [](virDomainPtr domain, virDomainInfo* info) -> int {
+    virDomainGetInfo = DlFun<int, virDomainPtr, virDomainInfo *>(
+        "virDomainGetInfo", [](virDomainPtr domain, virDomainInfo *info) -> int {
             // Always succeed for stable unit testing - removed random failure logic
             // 初始化结构体
             memset_s(info, sizeof(*info), 0, sizeof(*info));
 
-            const MockDomainInfo* domainInfo = FindMockDomainByPtr(domain);
+            const MockDomainInfo *domainInfo = FindMockDomainByPtr(domain);
             if (domainInfo) {
                 // 从结构体数据填充virDomainInfo
                 info->state = domainInfo->state;
@@ -255,58 +245,60 @@ void LibvirtMock::InitializeMockFunctions()
         });
 
     // Mock域生命周期管理
-    virDomainCreateWithFlags = DlFun<int, virDomainPtr, unsigned int>("virDomainCreateWithFlags",
-        [](virDomainPtr domain, unsigned int flags) -> int {
+    virDomainCreateWithFlags = DlFun<int, virDomainPtr, unsigned int>(
+        "virDomainCreateWithFlags", [](virDomainPtr domain, unsigned int flags) -> int {
             // Always succeed for stable unit testing - removed random failure logic
             return 0; // 成功
         });
 
     virDomainDestroyFlags = DlFun<int, virDomainPtr, unsigned int>("virDomainDestroyFlags",
-        [](virDomainPtr domain, unsigned int flags) -> int {
-            // Always succeed for stable unit testing - removed random failure logic
-            return 0; // 成功
-        });
+                                                                   [](virDomainPtr domain, unsigned int flags) -> int {
+                                                                       // Always succeed for stable unit testing -
+                                                                       // removed random failure logic
+                                                                       return 0; // 成功
+                                                                   });
 
     virDomainUndefineFlags = DlFun<int, virDomainPtr, unsigned int>("virDomainUndefineFlags",
-        [](virDomainPtr domain, unsigned int flags) -> int {
-            // Always succeed for stable unit testing - removed random failure logic
-            return 0; // 成功
-        });
+                                                                    [](virDomainPtr domain, unsigned int flags) -> int {
+                                                                        // Always succeed for stable unit testing -
+                                                                        // removed random failure logic
+                                                                        return 0; // 成功
+                                                                    });
 
     // Mock域清理
-    virDomainFree = DlFun<int, virDomainPtr>("virDomainFree",
-        [](virDomainPtr domain) -> int {
-            return 0; // 总是成功
-        });
+    virDomainFree = DlFun<int, virDomainPtr>("virDomainFree", [](virDomainPtr domain) -> int {
+        return 0; // 总是成功
+    });
 
     // Mock其他函数
     virDomainShutdownFlags = DlFun<int, virDomainPtr, unsigned int>("virDomainShutdownFlags",
-        [](virDomainPtr domain, unsigned int flags) -> int {
-            return 0; // 总是成功
-        });
+                                                                    [](virDomainPtr domain, unsigned int flags) -> int {
+                                                                        return 0; // 总是成功
+                                                                    });
 
-    virConnectNumOfDomains = DlFun<int, virConnectPtr>("virConnectNumOfDomains",
-        [](virConnectPtr conn) -> int {
-            return 3; // Mock域数量
-        });
+    virConnectNumOfDomains = DlFun<int, virConnectPtr>("virConnectNumOfDomains", [](virConnectPtr conn) -> int {
+        return 3; // Mock域数量
+    });
 
-    virDomainGetID = DlFun<unsigned int, virDomainPtr>("virDomainGetID",
-        [](virDomainPtr domain) -> unsigned int {
-            // 根据域指针返回对应的ID
-            const MockDomainInfo* domainInfo = FindMockDomainByPtr(domain);
-            if (domainInfo) {
-                // 使用指针的低字节作为ID，保持一致性
-                return static_cast<unsigned int>(reinterpret_cast<uint64_t>(domainInfo->ptr) & 0xFF);
-            }
-            return 0; // 默认ID
-        });
+    virDomainGetID = DlFun<unsigned int, virDomainPtr>("virDomainGetID", [](virDomainPtr domain) -> unsigned int {
+        // 根据域指针返回对应的ID
+        const MockDomainInfo *domainInfo = FindMockDomainByPtr(domain);
+        if (domainInfo) {
+            // 使用指针的低字节作为ID，保持一致性
+            return static_cast<unsigned int>(reinterpret_cast<uint64_t>(domainInfo->ptr) & 0xFF);
+        }
+        return 0; // 默认ID
+    });
 
     // Mock迁移相关函数
-    virDomainMigrate3 = DlFun<virDomainPtr, virDomainPtr, virConnectPtr, virTypedParameterPtr, unsigned int, unsigned int>("virDomainMigrate3",
-        [](virDomainPtr domain, virConnectPtr dconn, virTypedParameterPtr params, unsigned int nparams, unsigned int flags) -> virDomainPtr {
-            // Always succeed for stable unit testing - removed random failure logic
-            return reinterpret_cast<virDomainPtr>(0x98765432); // Mock迁移后的域指针
-        });
+    virDomainMigrate3 =
+        DlFun<virDomainPtr, virDomainPtr, virConnectPtr, virTypedParameterPtr, unsigned int, unsigned int>(
+            "virDomainMigrate3",
+            [](virDomainPtr domain, virConnectPtr dconn, virTypedParameterPtr params, unsigned int nparams,
+               unsigned int flags) -> virDomainPtr {
+                // Always succeed for stable unit testing - removed random failure logic
+                return reinterpret_cast<virDomainPtr>(0x98765432); // Mock迁移后的域指针
+            });
 }
 
 } // namespace virtrust

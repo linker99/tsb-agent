@@ -7,8 +7,8 @@
 #include <sys/file.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <filesystem>
 
+#include <filesystem>
 #include <future>
 #include <unordered_set>
 
@@ -136,8 +136,7 @@ bool CalcVirshMeasure(std::string_view guestName, VirshMeasureSummary &measureSu
     }
 #else
     auto filePath = std::filesystem::path(__FILE__);
-    auto testXmlPah = (filePath / ".." / ".." / ".." / "test" / "data" / "test.xml")
-    .lexically_normal().string();
+    auto testXmlPah = (filePath / ".." / ".." / ".." / "test" / "data" / "test.xml").lexically_normal().string();
     if (!xmlParser.Parse(verifyConfig, testXmlPah)) {
         VIRTRUST_LOG_ERROR("|main|END|returnF|file: {}|parse xml file failed.", testXmlPah);
         return false;
@@ -336,7 +335,7 @@ VirtrustRc CheckCreateDomainName(const std::string &arg, std::string &domainName
     }
     // 处理--name=***或-n=***或-n*****
     bool isLongContainsName = arg.length() > 7 && arg.substr(0, 7) == "--name="; // 7是--name=的长度
-    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n"; // 这里大于3是处理-n并且紧跟字符的情况
+    bool isShortContainsName = arg.length() > 3 && arg.substr(0, 2) == "-n";     // 这里大于3是处理-n并且紧跟字符的情况
     if (isLongContainsName || isShortContainsName) {
         if (isLongContainsName || (isLongContainsName && arg.find('=') != std::string::npos)) {
             domainName = arg.substr(arg.find('=') + 1);

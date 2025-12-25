@@ -58,7 +58,7 @@ if(USE_MOCK_TSB_AGENT)
   endif()
 endif()
 
-if (ENABLE_MOCK)
+if(ENABLE_MOCK)
   add_compile_definitions(VIRTRUST_MOCK)
 endif()
 

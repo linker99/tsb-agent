@@ -77,7 +77,8 @@ target_include_directories(
   PRIVATE ${CMAKE_DEPS_INCLUDEDIR} ${CMAKE_CURRENT_BINARY_DIR}/src
           $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/src>)
 
-target_link_libraries(virtrust-shared PRIVATE tsb-agent Deps::spdlog boundscheck)
+target_link_libraries(virtrust-shared PRIVATE tsb-agent Deps::spdlog
+                                              boundscheck)
 
 target_link_libraries(
   virtrust-shared

@@ -61,3 +61,5 @@ cp -rf ttm/platform_term/build/ttm  /usr/local/httcsec/
 
 4.	审计策略管理：
 /usr/local/httcsec/ttm/bin/ht_audit_switch [show; dmeasure/smeasure  success/fail/no/all]
+
+hello ci

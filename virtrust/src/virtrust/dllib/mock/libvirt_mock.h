@@ -6,8 +6,8 @@
 
 #ifdef VIRTRUST_MOCK
 
-#include <cstring>
 #include <cstdlib>
+#include <cstring>
 #include <string_view>
 
 #include "virtrust/dllib/common.h"
@@ -63,6 +63,7 @@ public:
         virDomainMigrate3;
 
     DllibRc CheckOk() const;
+
 private:
     void InitializeMockFunctions();
 
