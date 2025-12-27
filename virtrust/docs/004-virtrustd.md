@@ -247,13 +247,13 @@ openssl req -new -x509 -days 365 -key ca-key.pem -out ca-cert.pem \
 # 生成服务器私钥
 openssl genrsa -out server-key.pem 2048
 
-# 生成证书签名请求
+# 生成证书签名请求: 以下的ip需要替换为所在服务器的ip地址
 openssl req -new -key server-key.pem -out server-req.pem \
-  -subj "/C=CN/ST=State/L=City/O=Organization/CN=virtrustd-server"
+  -subj "/C=CN/ST=State/L=City/O=Organization/CN=virtrustd-server" -addext "subjectAltName=IP:{ip}"
 
-# 签发服务器证书
+# 签发服务器证书: 以下的ip需要替换为所在服务器的ip地址
 openssl x509 -req -days 365 -in server-req.pem -CA ca-cert.pem \
-  -CAkey ca-key.pem -CAcreateserial -out server-cert.pem
+  -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile < (printf "subjectAltName=IP:{ip}")
 ```
 
 3. **权限设置**：

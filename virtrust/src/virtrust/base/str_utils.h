@@ -156,7 +156,7 @@ inline bool IsAbsolutePath(std::string &filePath)
         return false;
     }
 
-    if (filePath[0] == '/') {
+    if (filePath[0] != '/') {
         return false;
     }
 
