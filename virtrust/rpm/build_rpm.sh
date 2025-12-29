@@ -81,7 +81,7 @@ GTEST_URL="https://gitee.com/mirrors/googletest/repository/archive/v1.15.2.tar.g
 OPENSSL_URL="https://gitee.com/mirrors/openssl/repository/archive/openssl-3.3.2.tar.gz"
 RAPIDJSON_URL="https://gitee.com/Tencent/RapidJSON/repository/archive/v1.1.0.tar.gz"
 SPDLOG_URL="https://gitee.com/mirrors_trending/spdlog/repository/archive/v1.14.1.tar.gz"
-LIBBOUNDSCHECK_URL="https://gitee.com/openeuler/libboundscheck/repository/archive/master.tar.gz"
+LIBBOUNDSCHECK_URL="https://gitcode.com/openeuler/libboundscheck/repository/archive/master.tar.gz"
 
 # Output file names for SourceN (keep in sync with spec!)
 GTEST_OUT="$DEST_DIR/googletest-v1.15.2.tar.gz"

@@ -4,7 +4,7 @@ Release:        1
 Summary:        Trusted Software Base Agent for openEuler
 Summary(zh_CN): 可信基础软件代理（TSB-agent）
 License:        MulanPSL-2.0
-URL:            https://gitee.com/openeuler/TSB-agent
+URL:            https://gitcode.com/openeuler/TSB-agent
 Source0:        %{name}-%{version}.tar.gz
 Source1:        googletest-v1.15.2.tar.gz
 Source2:        openssl-3.3.2.tar.gz
