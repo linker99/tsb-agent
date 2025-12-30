@@ -231,40 +231,32 @@ sudo journalctl -u virtrustd --since "1 hour ago" -p err
 ## 安全配置
 
 ### TLS 证书管理
-grpc服务启动会需要下面示例生成的证书, 该示例不对安全性负责。 生成的私钥文件未使用口令保护，有安全性问题，若需要口令保护请修改示例。
-1. **生成 CA 证书**：
+以下是生成grpc服务证书的示例， 开源规范允许私钥可以使用明文存储，因此生成的私钥文件暂时未使用口令保护，有其他需要可以以该脚本作为基础进行修改
 ```bash
-# 创建 CA 私钥
-openssl genrsa -out ca-key.pem 4096
+#!/bin/bash
+openssl genrsa -out ca-key.pem 2048
 
 # 创建 CA 证书
 openssl req -new -x509 -days 365 -key ca-key.pem -out ca-cert.pem \
   -subj "/C=CN/ST=State/L=City/O=Organization/CN=Virtrust-CA"
-```
 
-2. **生成服务器证书**：
-```bash
 # 生成服务器私钥
 openssl genrsa -out server-key.pem 2048
 
-# 生成证书签名请求: 以下的ip需要替换为所在服务器的ip地址
+# 生成证书签名请求
 openssl req -new -key server-key.pem -out server-req.pem \
-  -subj "/C=CN/ST=State/L=City/O=Organization/CN=virtrustd-server" -addext "subjectAltName=IP:{ip}"
+  -subj "/C=CN/ST=State/L=City/O=Organization/CN=virtrustd-server"
 
-# 签发服务器证书: 以下的ip需要替换为所在服务器的ip地址
+# 签发服务器证书: 以下的ip1,ip2需要替换为服务器的ip列表
 openssl x509 -req -days 365 -in server-req.pem -CA ca-cert.pem \
-  -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile < (printf "subjectAltName=IP:{ip}")
-```
-
-3. **权限设置**：
-```bash
-# 设置证书文件权限
-sudo chown root:root ca-cert.pem server-cert.pem server-key.pem
-sudo chmod 644 ca-cert.pem server-cert.pem
-sudo chmod 600 server-key.pem
+  -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile <(printf "subjectAltName=IP:ip1,IP:ip2,DNS:localhost")
 
 # 移动到安全位置
+mkdir -p  /etc/virtrust/certs/
 sudo mv ca-cert.pem server-cert.pem server-key.pem /etc/virtrust/certs/
+```
+```
+ 注意： 生成证书之后，再拷贝到其他服务器节点
 ```
 
 4. **libvirt证书**：
