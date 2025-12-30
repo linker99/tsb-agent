@@ -231,7 +231,7 @@ sudo journalctl -u virtrustd --since "1 hour ago" -p err
 ## 安全配置
 
 ### TLS 证书管理
-grpc服务启动会需要下面示例生成的证书, 开源规范允许私钥可以使用明文存储，因此生成的私钥文件暂时未使用口令保护。
+以下是生成grpc服务证书的示例， 开源规范允许私钥可以使用明文存储，因此生成的私钥文件暂时未使用口令保护，有其他需要可以以该脚本作为基础进行修改
 ```bash
 #!/bin/bash
 openssl genrsa -out ca-key.pem 2048
@@ -250,11 +250,6 @@ openssl req -new -key server-key.pem -out server-req.pem \
 # 签发服务器证书: 以下的ip1,ip2需要替换为服务器的ip列表
 openssl x509 -req -days 365 -in server-req.pem -CA ca-cert.pem \
   -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile <(printf "subjectAltName=IP:ip1,IP:ip2,DNS:localhost")
-
-# 设置证书文件权限
-sudo chown root:root ca-cert.pem server-cert.pem server-key.pem
-sudo chmod 644 ca-cert.pem server-cert.pem
-sudo chmod 600 server-key.pem
 
 # 移动到安全位置
 mkdir -p  /etc/virtrust/certs/
