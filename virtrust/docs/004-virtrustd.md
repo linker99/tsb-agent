@@ -231,7 +231,7 @@ sudo journalctl -u virtrustd --since "1 hour ago" -p err
 ## 安全配置
 
 ### TLS 证书管理
-grpc服务启动会需要下面示例生成的证书, 该示例不对安全性负责。 生成的私钥文件未使用口令保护，有安全性问题，若需要口令保护请修改示例。
+grpc服务启动会需要下面示例生成的证书, 开源规范允许私钥可以使用明文存储，因此生成的私钥文件暂时未使用口令保护。
 ```bash
 #!/bin/bash
 openssl genrsa -out ca-key.pem 2048
@@ -259,6 +259,9 @@ sudo chmod 600 server-key.pem
 # 移动到安全位置
 mkdir -p  /etc/virtrust/certs/
 sudo mv ca-cert.pem server-cert.pem server-key.pem /etc/virtrust/certs/
+```
+```
+ 注意： 生成证书之后，再拷贝到其他服务器节点
 ```
 
 4. **libvirt证书**：
