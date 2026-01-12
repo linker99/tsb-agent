@@ -75,10 +75,7 @@ private:
     DllibRc LoadAll()
     {
         // NOTE explicitly dlopen shared library
-        auto ret = SelfDlOpen();
-        if (ret != DllibRc::OK) {
-            return ret;
-        }
+        SelfDlOpen();
         if (DLLIB_SELF_DLSYM(EVP_MD_fetch) != DllibRc::OK) {
             return DllibRc::ERROR;
         }
@@ -114,10 +111,7 @@ private:
 
     Openssl() : DlLibBase(LIB_NAME)
     {
-        auto ret = LoadAll();
-        if (ret != DllibRc::OK) {
-            VIRTRUST_LOG_ERROR("|Openssl|END|returnF|Load libcrypto.so failed");
-        }
+        LoadAll();
     }
 
     static constexpr std::string_view LIB_NAME = "libcrypto.so";

@@ -49,10 +49,7 @@ private:
     DllibRc LoadAll()
     {
         // NOTE explicitly dlopen shared library
-        auto ret = SelfDlOpen();
-        if (ret != DllibRc::OK) {
-            return ret;
-        }
+        SelfDlOpen();
         if (DLLIB_SELF_DLSYM(xmlParseFile) != DllibRc::OK) {
             return DllibRc::ERROR;
         }
@@ -73,10 +70,7 @@ private:
 
     Libxml2() : DlLibBase(LIB_NAME)
     {
-        auto ret = LoadAll();
-        if (ret != DllibRc::OK) {
-            VIRTRUST_LOG_ERROR("|Libxml2|END|returnF|Load libxml2.so failed");
-        }
+        LoadAll();
     }
 
     static constexpr std::string_view LIB_NAME = "libxml2.so";

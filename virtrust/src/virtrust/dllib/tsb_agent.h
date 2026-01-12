@@ -66,10 +66,7 @@ private:
     DllibRc LoadAll()
     {
         // 显式 dlopen 共享库
-        auto ret = SelfDlOpen();
-        if (ret != DllibRc::OK) {
-            return ret;
-        }
+        SelfDlOpen();
 
         // dlsym 全部函数
         if (DLLIB_SELF_DLSYM(GetVRoots) != DllibRc::OK) {
@@ -131,10 +128,7 @@ private:
 
     TsbAgent() : DlLibBase(LIB_NAME)
     {
-        auto ret = LoadAll();
-        if (ret != DllibRc::OK) {
-            VIRTRUST_LOG_ERROR("|TsbAgent|END|returnF|Load libinterfac.so failed");
-        }
+        LoadAll();
     }
 
     static constexpr std::string_view LIB_NAME = "libinterfac.so";

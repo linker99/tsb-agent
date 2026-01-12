@@ -13,6 +13,7 @@
 #include <stdexcept>
 #include <string_view>
 
+#include "virtrust/base/exception.h"
 #include "virtrust/base/str_utils.h"
 
 namespace virtrust {
@@ -92,13 +93,10 @@ protected:
         size_ = 0;
     }
 
-    DllibRc SelfDlOpen()
+    void SelfDlOpen()
     {
         libptr_ = dlopen(libName_.data(), RTLD_NOW | RTLD_GLOBAL);
-        if (libptr_ == nullptr) {
-            return DllibRc::ERROR;
-        }
-        return DllibRc::OK;
+        VIRTRUST_ENFORCE(libptr_ != nullptr, std::string(dlerror()));
     }
 
     template <class R, class... Args> DllibRc SelfDlSym(std::string_view funName, DlFun<R, Args...> &outFun)

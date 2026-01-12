@@ -34,6 +34,8 @@ public:
     static Libvirt &GetInstance()
     {
         static Libvirt instance;
+        VIRTRUST_LOG_ERROR("|Libvirt|END|returnF|Load libvirt.so xxx");
+
         return instance;
     }
 
@@ -138,10 +140,7 @@ private:
 
     Libvirt() : DlLibBase(LIB_NAME)
     {
-        auto ret = LoadAll();
-        if (ret != DllibRc::OK) {
-            VIRTRUST_LOG_ERROR("|Libvirt|END|returnF|Load libvirt.so failed");
-        }
+        LoadAll();
     }
 
     static constexpr std::string_view LIB_NAME = "libvirt.so";
