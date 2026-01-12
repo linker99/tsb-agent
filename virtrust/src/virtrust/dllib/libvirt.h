@@ -8,6 +8,7 @@
 
 #include <string_view>
 
+#include "virtrust/base/logger.h"
 #include "virtrust/dllib/common.h"
 #include "virtrust/dllib/libvirt_defines.h"
 
@@ -137,7 +138,10 @@ private:
 
     Libvirt() : DlLibBase(LIB_NAME)
     {
-        LoadAll();
+        auto ret = LoadAll();
+        if (ret != DllibRc::OK) {
+            VIRTRUST_LOG_ERROR("|Libvirt|END|returnF|Load libvirt.so failed");
+        }
     }
 
     static constexpr std::string_view LIB_NAME = "libvirt.so";

@@ -10,6 +10,7 @@
 #include <functional>
 #include <string_view>
 
+#include "virtrust/base/logger.h"
 #include "virtrust/dllib/common.h"
 #include "virtrust/dllib/openssl_defines.h"
 
@@ -113,7 +114,10 @@ private:
 
     Openssl() : DlLibBase(LIB_NAME)
     {
-        LoadAll();
+        auto ret = LoadAll();
+        if (ret != DllibRc::OK) {
+            VIRTRUST_LOG_ERROR("|Openssl|END|returnF|Load libcrypto.so failed");
+        }
     }
 
     static constexpr std::string_view LIB_NAME = "libcrypto.so";

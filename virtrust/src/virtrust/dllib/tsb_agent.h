@@ -10,7 +10,7 @@
 #include <string_view>
 
 #include "tsb_agent/tsb_agent.h" // for structs and function prototypes
-
+#include "virtrust/base/logger.h"
 #include "virtrust/dllib/common.h"
 
 namespace virtrust {
@@ -131,7 +131,10 @@ private:
 
     TsbAgent() : DlLibBase(LIB_NAME)
     {
-        LoadAll();
+        auto ret = LoadAll();
+        if (ret != DllibRc::OK) {
+            VIRTRUST_LOG_ERROR("|TsbAgent|END|returnF|Load libinterfac.so failed");
+        }
     }
 
     static constexpr std::string_view LIB_NAME = "libinterfac.so";
