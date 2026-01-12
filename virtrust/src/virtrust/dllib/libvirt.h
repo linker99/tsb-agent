@@ -8,7 +8,6 @@
 
 #include <string_view>
 
-#include "virtrust/base/logger.h"
 #include "virtrust/dllib/common.h"
 #include "virtrust/dllib/libvirt_defines.h"
 
@@ -34,8 +33,6 @@ public:
     static Libvirt &GetInstance()
     {
         static Libvirt instance;
-        VIRTRUST_LOG_ERROR("|Libvirt|END|returnF|Load libvirt.so xxx");
-
         return instance;
     }
 

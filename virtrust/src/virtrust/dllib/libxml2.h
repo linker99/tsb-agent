@@ -8,7 +8,6 @@
 
 #include <string_view>
 
-#include "virtrust/base/logger.h"
 #include "virtrust/dllib/common.h"
 #include "virtrust/dllib/libxml2_defines.h"
 

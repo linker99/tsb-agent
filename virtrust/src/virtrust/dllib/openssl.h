@@ -10,7 +10,6 @@
 #include <functional>
 #include <string_view>
 
-#include "virtrust/base/logger.h"
 #include "virtrust/dllib/common.h"
 #include "virtrust/dllib/openssl_defines.h"
 
