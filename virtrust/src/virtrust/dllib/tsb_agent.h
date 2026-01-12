@@ -10,7 +10,6 @@
 #include <string_view>
 
 #include "tsb_agent/tsb_agent.h" // for structs and function prototypes
-
 #include "virtrust/dllib/common.h"
 
 namespace virtrust {
@@ -63,70 +62,32 @@ public:
     DlFun<int, int, char *, char **, int *, char *, int> TransDupPub;
 
 private:
-    DllibRc LoadAll()
+    void LoadAll()
     {
         // 显式 dlopen 共享库
-        auto ret = SelfDlOpen();
-        if (ret != DllibRc::OK) {
-            return ret;
-        }
+        SelfDlOpen();
 
         // dlsym 全部函数
-        if (DLLIB_SELF_DLSYM(GetVRoots) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(CreateVRoot) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(StartVRoot) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(StopVRoot) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(RemoveVRoot) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
+        DLLIB_SELF_DLSYM(GetVRoots);
+        DLLIB_SELF_DLSYM(CreateVRoot);
+        DLLIB_SELF_DLSYM(StartVRoot);
+        DLLIB_SELF_DLSYM(StopVRoot);
+        DLLIB_SELF_DLSYM(RemoveVRoot);
 
-        if (DLLIB_SELF_DLSYM(UpdateMeasure) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(CheckMeasure) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
+        DLLIB_SELF_DLSYM(UpdateMeasure);
+        DLLIB_SELF_DLSYM(CheckMeasure);
 
-        if (DLLIB_SELF_DLSYM(GetReport) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(VerifyTrustReport) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
+        DLLIB_SELF_DLSYM(GetReport);
+        DLLIB_SELF_DLSYM(VerifyTrustReport);
 
-        if (DLLIB_SELF_DLSYM(MigrationGetCert) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(MigrationCheckPeerPk) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(MigrationGetVrootCipher) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(MigrationGetVrootCipher) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(MigrationGetVrootCipher) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(MigrationImportVrootCipher) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(MigrationNotify) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(TransDupPub) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        return DllibRc::OK;
+        DLLIB_SELF_DLSYM(MigrationGetCert);
+        DLLIB_SELF_DLSYM(MigrationCheckPeerPk);
+        DLLIB_SELF_DLSYM(MigrationGetVrootCipher);
+        DLLIB_SELF_DLSYM(MigrationGetVrootCipher);
+        DLLIB_SELF_DLSYM(MigrationGetVrootCipher);
+        DLLIB_SELF_DLSYM(MigrationImportVrootCipher);
+        DLLIB_SELF_DLSYM(MigrationNotify);
+        DLLIB_SELF_DLSYM(TransDupPub);
     }
 
     TsbAgent() : DlLibBase(LIB_NAME)
