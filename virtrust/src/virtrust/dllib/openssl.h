@@ -71,44 +71,20 @@ public:
     DlFun<void, EVP_MD_CTX *> EVP_MD_CTX_free;
 
 private:
-    DllibRc LoadAll()
+    void LoadAll()
     {
         // NOTE explicitly dlopen shared library
-        auto ret = SelfDlOpen();
-        if (ret != DllibRc::OK) {
-            return ret;
-        }
-        if (DLLIB_SELF_DLSYM(EVP_MD_fetch) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(EVP_MD_get_size) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(EVP_MD_CTX_new) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(EVP_MD_CTX_reset) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(EVP_MD_CTX_copy_ex) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(EVP_DigestInit) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(EVP_DigestUpdate) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(EVP_DigestFinal_ex) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(EVP_MD_free) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        if (DLLIB_SELF_DLSYM(EVP_MD_CTX_free) != DllibRc::OK) {
-            return DllibRc::ERROR;
-        }
-        return DllibRc::OK;
+        SelfDlOpen();
+        DLLIB_SELF_DLSYM(EVP_MD_fetch);
+        DLLIB_SELF_DLSYM(EVP_MD_get_size);
+        DLLIB_SELF_DLSYM(EVP_MD_CTX_new);
+        DLLIB_SELF_DLSYM(EVP_MD_CTX_reset);
+        DLLIB_SELF_DLSYM(EVP_MD_CTX_copy_ex);
+        DLLIB_SELF_DLSYM(EVP_DigestInit);
+        DLLIB_SELF_DLSYM(EVP_DigestUpdate);
+        DLLIB_SELF_DLSYM(EVP_DigestFinal_ex);
+        DLLIB_SELF_DLSYM(EVP_MD_free);
+        DLLIB_SELF_DLSYM(EVP_MD_CTX_free);
     }
 
     Openssl() : DlLibBase(LIB_NAME)
