@@ -101,8 +101,8 @@ install -m 550 %{output_dir}/bin/virtrust-sh                    %{buildroot}%{_b
 install -m 550 %{output_dir}/bin/libvirtrustd                   %{buildroot}%{_bindir}
 
 # Header files
-install -m 550 %{output_dir}/include/virtrust/api/*.h           %{buildroot}%{_includedir}/virtrust/api
-install -m 550 %{output_dir}/include/virtrust/base/*.h          %{buildroot}%{_includedir}/virtrust/base
+install -m 440 %{output_dir}/include/virtrust/api/*.h           %{buildroot}%{_includedir}/virtrust/api
+install -m 440 %{output_dir}/include/virtrust/base/*.h          %{buildroot}%{_includedir}/virtrust/base
 
 # Configuration files
 install -pm 640 %{root_dir}/test/data/config.json               %{buildroot}%{_sysconfdir}/virtrust/config.json
