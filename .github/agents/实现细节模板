@@ -12,7 +12,7 @@
 >
 > 1. 复制本模板到对应特性的设计文档目录，按特性实际情况填写。
 > 2. 每个章节的"📌 填写要求"是对编写者的约束，**正式文档中删除该提示块**。
-> 3. 示例代码以项目实际技术栈（Linux 内核模块 / C 语言）给出，可直接参考修改。
+> 3. 示例均为**设计级描述**（表格、伪代码、图表），无实际源代码；编码时以本文档为蓝图。
 > 4. **严禁空泛描述**（如"调用相关接口处理异常"），必须给出字段名、错误码、具体参数。
 > 5. 接口签名、错误码、字段名须与《接口设计》章节（第 3 章）**保持完全一致**。
 
@@ -54,72 +54,40 @@
 
 **作用**：接口即合约——签名、字段、错误码三要素共同约束调用方与实现方的边界。
 
-**内容特点**：精确到参数类型、字段位宽、取值范围、NULL 指针处理、并发安全性说明。
+**内容特点**：精确到参数类型、字段位宽、取值范围、空指针处理、并发安全性说明。
 
 **编写要求**：
-- 所有接口签名须与 `include/` 下对应头文件保持一致；
+- 所有接口签名须与对应头文件/接口定义保持一致；
 - 字段定义表每行必须填写"约束"与"默认值"；
 - 请求/响应示例须包含成功和至少一种失败场景。
 
 **注意事项**：
 - 禁止用"参数见代码注释"代替字段说明；
-- ioctl 命令号须与 `command.h` 中枚举保持一致；
-- 涉及用户态/内核态边界的接口必须标注 `copy_from_user` / `copy_to_user` 使用点。
+- ioctl 命令号须与命令枚举定义保持一致；
+- 涉及用户态与实现层边界的接口必须标注安全拷贝要求。
 
 ---
 
 ### 1.1 函数/方法签名
 
-> 📌 **填写要求**：列出本特性所有对外暴露的函数，含内核导出符号（`EXPORT_SYMBOL`）及 ioctl 处理函数。每个函数须说明：并发安全性、调用上下文（中断/进程/软中断）、锁依赖。
+> 📌 **填写要求**：列出本特性所有对外暴露的接口，每个接口须说明：接口名称、用途、主要参数（名称+类型+含义）、返回值、调用上下文（是否可睡眠）、并发安全性。
 
-#### 示例：策略注册接口
+#### 示例：接口规格表
 
-```c
-/**
- * httcsec_policy_register - 向策略引擎注册一条访问控制策略
- *
- * @policy:     策略描述结构体指针，不可为 NULL，调用方持有所有权
- * @flags:      注册标志位，见 POLICY_FLAG_* 宏定义
- *
- * 返回值：
- *   0          成功
- *  -EINVAL     @policy 为 NULL 或字段校验失败
- *  -ENOMEM     内核内存不足，kzalloc 失败
- *  -EEXIST     同名策略已存在且 POLICY_FLAG_OVERWRITE 未置位
- *  -EPERM      当前调用上下文不允许（如中断上下文）
- *
- * 调用上下文：进程上下文（may sleep）
- * 并发安全性：内部使用 policy_rwlock 写锁保护，可多线程安全调用
- * 导出符号：EXPORT_SYMBOL(httcsec_policy_register)
- */
-int httcsec_policy_register(const struct httcsec_policy *policy,
-                            unsigned int flags);
-```
-
-```c
-/**
- * httcsec_io_command_register - 注册 ioctl 命令处理函数
- *
- * @cmd_nr:    命令号，取值范围 [0, MAX_COMMAND_NR)，见 command.h 枚举
- * @func:      命令处理回调，签名为 long (*)(unsigned long param)
- *
- * 返回值：
- *   0         成功
- *  -EINVAL    @cmd_nr 越界或 @func 为 NULL
- *  -EBUSY     该命令号已被注册
- */
-int httcsec_io_command_register(unsigned int cmd_nr,
-                                httcsec_io_command_func func);
-```
+| 接口名 | 用途 | 主要参数 | 返回值 | 调用上下文 | 并发安全性 |
+|---|---|---|---|---|---|
+| `policy_register` | 向策略引擎注册一条访问控制策略 | policy（策略描述，非空）；flags（注册标志位） | 0=成功；错误码=失败（见错误码规范） | 进程上下文（可睡眠） | 内部使用写锁保护，多线程安全 |
+| `policy_lookup` | 按主体路径查询策略 | subject（主体路径，非空） | 匹配的策略指针；NULL=未匹配 | 进程/中断上下文（不可睡眠） | 使用读锁，允许并发调用 |
+| `io_command_register` | 注册 ioctl 命令处理函数 | cmd_nr（命令号）；handler（处理回调） | 0=成功；错误码=失败 | 进程上下文（模块初始化阶段） | 单次调用，不可重入 |
 
 #### 接口并发安全性汇总表
 
-| 函数名 | 调用上下文 | 锁依赖 | 可重入 | 说明 |
+| 接口名 | 调用上下文 | 锁依赖 | 可重入 | 说明 |
 |---|---|---|---|---|
-| `httcsec_policy_register` | 进程上下文 | `policy_rwlock`（写） | 是 | 注册时持写锁，不可在中断中调用 |
-| `httcsec_policy_lookup` | 进程/中断上下文 | `policy_rwlock`（读） | 是 | RCU 读侧，允许并发 |
-| `httcsec_io_command_register` | 进程上下文（模块初始化） | `cmd_table_mutex` | 否 | 模块加载期单次调用 |
-| `tsb_get_trust_state` | 进程/中断上下文 | `trust_score_lock`（读） | 是 | 已导出，外部模块可调用 |
+| `policy_register` | 进程上下文 | 策略链表写锁 | 是 | 注册时持写锁，不可在中断中调用 |
+| `policy_lookup` | 进程/中断上下文 | 策略链表读锁 | 是 | 读侧允许并发 |
+| `io_command_register` | 进程上下文（模块初始化） | 命令表互斥锁 | 否 | 模块加载期单次调用 |
+| `get_trust_state` | 进程/中断上下文 | 信任分值读锁 | 是 | 已导出，外部模块可调用 |
 
 ---
 
@@ -127,137 +95,81 @@ int httcsec_io_command_register(unsigned int cmd_nr,
 
 > 📌 **填写要求**：对每个结构体参数展开字段级说明，位域须标注 bit 范围，枚举须列出所有合法值。
 
-#### 示例：`httcsec_policy` 结构体字段
+#### 示例：策略参数结构体字段
 
 | 字段名 | 类型 | 大小(字节) | 取值约束 | 默认值 | 说明 |
 |---|---|---|---|---|---|
-| `magic` | `uint32_t` | 4 | 固定值 `0x48544343`（"HTTC"） | — | 结构体合法性校验魔数 |
-| `version` | `uint16_t` | 2 | `[1, 255]` | `1` | 策略格式版本，影响反序列化逻辑 |
-| `type` | `uint8_t` | 1 | 见 `POLICY_TYPE_*` 枚举 | `POLICY_TYPE_WHITELIST` | 策略类型 |
-| `flags` | `uint8_t` | 1 | bit0=强制模式，bit1=审计模式 | `0x00` | 行为控制标志 |
-| `subject_len` | `uint16_t` | 2 | `[1, MAX_SUBJECT_LEN]`，`MAX_SUBJECT_LEN=256` | — | `subject` 数据字节长度，不含终止符 |
-| `subject` | `char[]` | 变长 | UTF-8，不可包含 `\0` | — | 策略主体（进程路径/标签） |
-| `hash` | `uint8_t[32]` | 32 | SM3 或 SHA-256 摘要 | 全零表示不校验 | 策略文件完整性摘要 |
-| `reserved` | `uint8_t[4]` | 4 | 必须为全零 | `{0}` | 保留字段，兼容性扩展用 |
+| `magic` | 无符号32位整数 | 4 | 固定值 `0x48544343`（"HTTC"） | — | 结构体合法性校验魔数 |
+| `version` | 无符号16位整数 | 2 | `[1, 255]` | `1` | 策略格式版本，影响反序列化逻辑 |
+| `type` | 无符号8位整数 | 1 | 见 `POLICY_TYPE_*` 枚举 | `POLICY_TYPE_WHITELIST` | 策略类型 |
+| `flags` | 无符号8位整数（位域） | 1 | bit0=强制模式，bit1=审计模式 | `0x00` | 行为控制标志 |
+| `subject_len` | 无符号16位整数 | 2 | `[1, MAX_SUBJECT_LEN]`，`MAX_SUBJECT_LEN=256` | — | `subject` 数据字节长度，不含终止符 |
+| `subject` | 字符数组 | 变长 | UTF-8，不可包含空字节 | — | 策略主体（进程路径/标签） |
+| `hash` | 无符号8位整数数组（32字节） | 32 | SM3 或 SHA-256 摘要 | 全零表示不校验 | 策略文件完整性摘要 |
+| `reserved` | 无符号8位整数数组（4字节） | 4 | 必须为全零 | 全零 | 保留字段，兼容性扩展用 |
 
-#### 示例：ioctl 参数结构体 `tsb_user_interface_parameter`
+#### 示例：ioctl 参数结构体 `user_interface_parameter`
 
 | 字段名 | 类型 | 约束 | 默认值 | 说明 |
 |---|---|---|---|---|
-| `type` | `int` | 见 `TYPE_WHITELIST_*` / `TYPE_DMEASURE_*` 枚举 | — | 操作子类型，决定 `data` 解析方式 |
-| `length` | `int` | `[1, 65536]`，单位：字节 | — | `data` 有效数据字节数 |
-| `data` | `const char *` | 用户态指针，非 NULL，需 `copy_from_user` 拷贝 | — | 实际策略数据 payload |
+| `type` | 有符号32位整数 | 见 `TYPE_WHITELIST_*` / `TYPE_DMEASURE_*` 枚举 | — | 操作子类型，决定 `data` 解析方式 |
+| `length` | 有符号32位整数 | `[1, 65536]`，单位：字节 | — | `data` 有效数据字节数 |
+| `data` | 用户态指针 | 非空，由实现层负责安全拷贝 | — | 实际策略数据 payload |
 
 ---
 
 ### 1.3 请求/响应示例
 
-> 📌 **填写要求**：提供完整的成功场景和至少两种典型失败场景（参数非法 + 资源不足）。内核模块使用 C 结构体初始化语法；若有用户态 JSON 协议则同步给出。
+> 📌 **填写要求**：提供成功调用和典型失败调用的**调用描述表**，描述调用方传入的参数值和接口返回的结果及含义。
 
 #### 示例：用户态通过 ioctl 注册白名单策略
 
-**成功请求（用户态 C 代码）**：
-```c
-/* 用户态发起 ioctl 调用示例 */
-struct tsb_user_interface_parameter param = {
-    .type   = TYPE_WHITELIST_MEASURE_FILE,
-    .length = strlen(file_path),
-    .data   = file_path,          /* "/usr/local/httcsec/bin/agent" */
-};
+**成功场景**：
 
-int ret = ioctl(fd, HTTCSEC_IOC_WHITELIST_ADD, &param);
-if (ret != 0) {
-    fprintf(stderr, "[ERROR] ioctl WHITELIST_ADD failed: %d (%s)\n",
-            ret, strerror(errno));
-}
-```
+| 场景 | 调用方传入参数 | 接口返回结果 | 说明 |
+|---|---|---|---|
+| 注册白名单文件策略 | type=白名单文件度量类型；length=路径字节长度；data=目标文件路径 | 返回成功 | 策略写入全局链表，立即生效 |
 
-**内核侧处理函数响应逻辑**：
-```c
-static long ioctl_add_whitelist(unsigned long param)
-{
-    struct tsb_user_interface_parameter uparam;
-    char *buf = NULL;
-    int ret = 0;
+**失败场景**：
 
-    /* Step 1: 从用户态安全拷贝参数头 */
-    if (copy_from_user(&uparam, (void __user *)param, sizeof(uparam)))
-        return -EFAULT;          /* 返回码：-EFAULT，用户态收到 errno=EFAULT */
+| 场景 | 触发条件 | 接口返回 | 调用方处理建议 |
+|---|---|---|---|
+| 参数非法 | length 超出允许范围，或 type 为未知值 | 参数非法错误 | 检查入参后再次调用 |
+| 内存不足 | 系统内核内存耗尽 | 内存不足错误 | 等待后重试，最多3次 |
+| 用户态指针非法 | data 指针无效，安全拷贝失败 | 内存访问错误 | 检查 data 指针有效性，属程序缺陷 |
+| 策略已存在 | 同名策略已注册且未设置覆盖标志 | 已存在错误 | 检查是否需要先删除旧策略 |
+| 权限不足 | 调用方不具备管理员权限 | 权限错误 | 提示以管理员身份运行 |
 
-    /* Step 2: 参数合法性校验 */
-    if (uparam.length <= 0 || uparam.length > MAX_POLICY_DATA_LEN)
-        return -EINVAL;          /* 返回码：-EINVAL */
+**返回码与可读错误码对照**：
 
-    /* Step 3: 分配内核缓冲区并拷贝 data */
-    buf = kzalloc(uparam.length + 1, GFP_KERNEL);
-    if (!buf)
-        return -ENOMEM;          /* 返回码：-ENOMEM */
-
-    if (copy_from_user(buf, (void __user *)uparam.data, uparam.length)) {
-        ret = -EFAULT;
-        goto out_free;
-    }
-
-    /* Step 4: 调用策略引擎注册 */
-    ret = whitelist_policy_add(uparam.type, buf, uparam.length);
-
-out_free:
-    kfree(buf);
-    return ret;                  /* 0 = 成功；负数 errno = 失败 */
-}
-```
-
-**返回码与用户态 errno 对照**：
-
-| 内核返回值 | 用户态 errno | 含义 | 用户态处理建议 |
+| 返回码 | 可读错误名 | 含义 | 调用方处理建议 |
 |---|---|---|---|
 | `0` | — | 成功 | 继续执行 |
-| `-EINVAL` | `EINVAL` | 参数非法（长度越界/类型未知） | 检查入参，打印字段值后重试 |
-| `-ENOMEM` | `ENOMEM` | 内核内存不足 | 告警，等待 500 ms 后最多重试 3 次 |
-| `-EFAULT` | `EFAULT` | 用户态指针非法 | 检查 `data` 指针有效性，属程序 Bug |
-| `-EEXIST` | `EEXIST` | 策略已存在 | 检查是否需要先删除旧策略 |
-| `-EPERM` | `EPERM` | 权限不足（非 root） | 提示用户以 root 运行 |
+| 参数非法错误 | `ERR_INVALID_PARAM` | 参数非法（长度越界/类型未知） | 检查入参，打印字段值后重试 |
+| 内存不足错误 | `ERR_NO_MEMORY` | 内存不足 | 告警，等待 500ms 后最多重试 3 次 |
+| 内存访问错误 | `ERR_FAULT` | 用户态指针非法 | 检查 data 指针有效性，属程序缺陷 |
+| 已存在错误 | `ERR_EXIST` | 策略已存在 | 检查是否需要先删除旧策略 |
+| 权限错误 | `ERR_PERMISSION` | 权限不足 | 提示以管理员身份运行 |
 
 ---
 
 ### 1.4 版本兼容声明
 
-> 📌 **填写要求**：说明新旧版本接口的兼容策略，包括废弃符号处理、ABI 稳定性承诺、内核版本条件编译边界。
+> 📌 **填写要求**：说明新旧版本接口的兼容策略，包括废弃符号处理、ABI 稳定性承诺、底层系统版本的差异适配策略。
 
-```c
-/* =====================================================================
- * 接口版本兼容说明
- * ---------------------------------------------------------------------
- * V1.0（初始版本）：
- *   - httcsec_policy_register() 签名：(policy, flags) 两参数版本
- *   - 支持内核版本：2.6.32 ~ 5.15
- *
- * V1.1（当前版本）：
- *   - 新增 httcsec_policy_register_v2()，增加 @priority 参数
- *   - 旧版 httcsec_policy_register() 保留，内部转发至 v2，priority=0
- *   - 废弃符号：httcsec_set_policy_raw()，将在 V2.0 移除
- *
- * 内核版本适配（条件编译边界）：
- * ===================================================================== */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 10, 0)
-    /* 5.10+ 使用 kernel_read_file 新签名（含 bool contents 参数） */
-    int (*kernel_read_file)(struct file *file,
-                            enum kernel_read_file_id id, bool contents);
-#elif LINUX_VERSION_CODE >= KERNEL_VERSION(4, 6, 0)
-    int (*kernel_read_file)(struct file *file, enum kernel_read_file_id id);
-#else
-    int (*kernel_module_from_file)(struct file *file);
-#endif
-```
+**版本兼容约定**：
+
+> - **V1.0 → V1.1**：新增 `policy_register_v2` 接口（新增优先级参数），旧版 `policy_register` 保留，实现上自动转发至 v2，优先级置0。废弃接口 `set_policy_raw` 将在 V2.0 移除，升级时须迁移至 `policy_register_v2`。
+> - 针对不同底层系统版本的差异，采用运行时能力探测而非编译期条件判断，以确保同一二进制在多版本系统上可运行。
 
 **接口兼容性矩阵**：
 
 | 接口名 | V1.0 状态 | V1.1 状态 | V2.0 规划 | ABI 稳定 | 备注 |
 |---|---|---|---|---|---|
-| `httcsec_policy_register` | 可用 | 可用（转发） | 可用 | 是 | 签名不变，内部实现变更 |
-| `httcsec_policy_register_v2` | 不存在 | 新增 | 可用 | 是 | 推荐使用 |
-| `httcsec_set_policy_raw` | 可用 | **废弃** | **移除** | 否 | 迁移至 `register_v2` |
-| `tsb_get_trust_state` | 可用 | 可用 | 可用 | 是 | EXPORT_SYMBOL，ABI 冻结 |
+| `policy_register` | 可用 | 可用（转发至 v2） | 可用 | 是 | 签名不变，内部实现变更 |
+| `policy_register_v2` | 不存在 | 新增 | 可用 | 是 | 推荐使用 |
+| `set_policy_raw` | 可用 | **废弃** | **移除** | 否 | 迁移至 `policy_register_v2` |
+| `get_trust_state` | 可用 | 可用 | 可用 | 是 | 已导出，ABI 冻结 |
 
 ---
 
@@ -265,109 +177,64 @@ out_free:
 
 **目标**：以字段级精度定义所有核心数据结构，确保编码与文档完全对齐。
 
-**作用**：结构体/表定义是内存布局、序列化格式、持久化策略的唯一权威参考。
+**作用**：数据结构定义是内存布局、序列化格式、持久化策略的唯一权威参考。
 
 **内容特点**：字段顺序即内存顺序；对齐要求、位域宽度、字节序须明确标注；数据库表须包含索引策略。
 
 **编写要求**：
-- 结构体字段排列须考虑内存对齐，避免隐式 padding 导致 ABI 不稳定；
-- 数据库表须标注主键、唯一约束、索引类型（B-Tree/Hash）；
+- 字段排列须考虑内存对齐，避免隐式填充导致 ABI 不稳定；
+- 数据库表须标注主键、唯一约束、索引类型；
 - 配置项表须给出取值范围和异常值的处理行为（截断/拒绝/使用默认值）。
 
 **注意事项**：
-- 禁止在内核路径使用变长数组（VLA），改用 `[0]` 柔性数组成员；
-- 结构体跨越用户态/内核态边界时，使用 `__packed` 或明确对齐标注；
-- 持久化结构体变更须在 2.4 节记录版本演进。
+- 持久化结构体变更须在 2.4 节记录版本演进；
+- 跨越用户态与实现层边界的结构体须明确对齐标注；
+- 可变长字段须标注最大有效长度和超出时的处理行为。
 
 ---
 
 ### 2.1 核心结构体/类定义
 
-> 📌 **填写要求**：给出完整的 C 结构体定义，每个字段附注释说明用途、约束、默认值。重要结构体须标注 `sizeof` 期望值。
+> 📌 **填写要求**：以**字段定义表**给出所有核心数据结构，精确到字段名、数据类型（与语言无关的描述）、字节大小、取值约束、默认值与用途说明。注明整体内存布局总大小及对齐要求。
 
-#### 示例：策略节点（内核内部结构）
+#### 示例：策略节点（policy_node）
 
-```c
-/**
- * struct httcsec_policy_node - 内核策略链表节点
- *
- * sizeof(struct httcsec_policy_node) == 128（x86_64，含末尾 padding）
- * 对齐要求：8 字节对齐（cache line 友好）
- * 生命周期：模块加载时由 policy_pool 分配，卸载时统一释放
- */
-struct httcsec_policy_node {
-    /* --- 链表管理（16 字节） --- */
-    struct list_head    list;           /* 挂载到全局策略链表 */
+**策略节点（policy_node）** — 总大小：128字节，8字节对齐，生命周期：随模块加减载分配/释放
 
-    /* --- 标识字段（8 字节） --- */
-    uint32_t            id;             /* 策略唯一 ID，单调递增，溢出后回绕 */
-    uint8_t             type;           /* POLICY_TYPE_*，见枚举；不可为 0 */
-    uint8_t             version;        /* 策略格式版本，当前固定为 1 */
-    uint8_t             flags;          /* bit0=强制，bit1=审计，bit2-7 保留(须为0) */
-    uint8_t             state;          /* POLICY_STATE_*，见状态机 */
+| 字段名 | 数据类型 | 大小（字节） | 取值约束 | 默认值 | 说明 |
+|---|---|---|---|---|---|
+| `list` | 双向链表节点 | 16 | — | — | 挂载到全局策略链表 |
+| `id` | 无符号32位整数 | 4 | 单调递增，溢出回绕 | 由分配器赋值 | 策略唯一标识 |
+| `type` | 无符号8位整数 | 1 | 见策略类型枚举（不可为0） | — | 策略类型 |
+| `version` | 无符号8位整数 | 1 | 当前固定为1 | 1 | 策略格式版本 |
+| `flags` | 无符号8位整数（位域） | 1 | bit0=强制模式；bit1=审计模式；bit2-7保留（须为0） | 0x00 | 行为控制标志 |
+| `state` | 无符号8位整数 | 1 | 见策略状态枚举（INACTIVE/ACTIVE/SUSPENDED/DELETED） | INACTIVE | 当前生命周期状态 |
+| `subject` | 字符数组 | 64 | UTF-8字符串，最大有效长度63字节，超出截断并告警 | — | 主体路径或标签 |
+| `hash` | 字节数组 | 32 | SM3-256摘要；全零表示不校验 | 全零 | 完整性摘要 |
+| `created_at` | 有符号64位整数 | 8 | Unix时间戳（秒） | 创建时系统时间 | 策略创建时间 |
 
-    /* --- 主体/客体（64 字节） --- */
-    char                subject[64];    /* 主体路径或标签，'\0' 结尾，UTF-8 */
-                                        /* 最大有效长度 63 字节，超出截断并告警 */
+#### 示例：日志条目（log_entry）
 
-    /* --- 完整性摘要（32 字节） --- */
-    uint8_t             hash[32];       /* SM3-256 摘要；全零表示不校验 */
+**日志条目（log_entry）** — 总大小：256字节，8字节对齐，生命周期：由日志环形缓冲区管理
 
-    /* --- 时间戳（8 字节） --- */
-    int64_t             created_at;     /* 创建时间，ktime_get_real_seconds() */
-
-    /* --- 保留（保持 128 字节对齐，0 字节 padding） --- */
-};
-
-/* 编译期大小断言，防止意外字段增删导致 ABI 破坏 */
-BUILD_BUG_ON(sizeof(struct httcsec_policy_node) != 128);
-```
-
-#### 示例：内核日志环形缓冲区
-
-```c
-/**
- * struct httcsec_log_ring - 内核内存日志环形缓冲区
- *
- * 读写并发控制：读侧持 log_spinlock，写侧同样持 log_spinlock
- * 缓冲区大小：LOG_RING_SIZE 条目（默认 1024，见 Kconfig）
- */
-struct httcsec_log_ring {
-    spinlock_t          lock;           /* 保护以下所有字段 */
-    uint32_t            head;           /* 下一个可写位置，[0, LOG_RING_SIZE) */
-    uint32_t            tail;           /* 下一个可读位置，[0, LOG_RING_SIZE) */
-    uint32_t            count;          /* 当前有效条目数 */
-    uint32_t            dropped;        /* 因缓冲区满而丢弃的条目数，累计 */
-    struct httcsec_log_entry entries[0];/* 柔性数组，实际大小在 init 时 vmalloc */
-};
-
-/**
- * struct httcsec_log_entry - 单条日志条目
- *
- * sizeof == 256（固定大小，方便 ring buffer 下标寻址）
- */
-struct httcsec_log_entry {
-    int64_t             timestamp_ns;   /* ktime_get_ns()，纳秒精度 */
-    uint8_t             level;          /* LOG_LEVEL_*：0=DEBUG,1=INFO,2=WARN,3=ERROR */
-    uint8_t             module_id;      /* 见 MODULE_ID_* 枚举 */
-    uint16_t            event_id;       /* 见 EVENT_ID_* 枚举，0=普通日志 */
-    uint32_t            pid;            /* current->pid */
-    uint32_t            tid;            /* current->tgid */
-    char                comm[16];       /* current->comm，进程名 */
-    char                func[32];       /* __func__，函数名 */
-    uint32_t            line;           /* __LINE__ */
-    char                msg[188];       /* 日志消息，'\0' 结尾，超长截断 */
-                                        /* 188 = 256 - 8 - 1 - 1 - 2 - 4 - 4 - 16 - 32 - 4 */
-};
-
-BUILD_BUG_ON(sizeof(struct httcsec_log_entry) != 256);
-```
+| 字段名 | 数据类型 | 大小（字节） | 取值约束 | 默认值 | 说明 |
+|---|---|---|---|---|---|
+| `timestamp_ns` | 有符号64位整数 | 8 | Unix时间戳（纳秒） | 写入时系统时间 | 日志记录时间，纳秒精度 |
+| `level` | 无符号8位整数 | 1 | 0=DEBUG，1=INFO，2=WARN，3=ERROR，4=FATAL | — | 日志严重级别 |
+| `module_id` | 无符号8位整数 | 1 | 见模块ID枚举 | — | 产生日志的模块标识 |
+| `event_id` | 无符号16位整数 | 2 | 0=普通日志；非零=审计事件（见事件类型枚举） | 0 | 事件类型 |
+| `pid` | 无符号32位整数 | 4 | `[1, 4194304]` | — | 触发进程PID |
+| `tid` | 无符号32位整数 | 4 | `[1, 4194304]` | — | 线程ID |
+| `comm` | 字符数组 | 16 | 最长15字节有效，空字节结尾 | — | 进程名 |
+| `func` | 字符数组 | 32 | 最长31字节有效，空字节结尾 | — | 产生日志的函数名 |
+| `line` | 无符号32位整数 | 4 | `[1, 99999]` | — | 日志所在代码行号 |
+| `msg` | 字符数组 | 188 | 最长187字节有效，超长截断，空字节结尾 | — | 日志消息正文 |
 
 ---
 
 ### 2.2 数据库/文件表结构
 
-> 📌 **填写要求**：对于使用文件持久化的场景（SQLite、自定义二进制格式），给出完整的表结构或文件布局。标注索引类型和查询性能预期。
+> 📌 **填写要求**：对于使用文件持久化的场景，给出完整的表结构或文件布局。标注索引类型和查询性能预期。
 
 #### 示例：策略持久化文件布局（二进制格式 v1）
 
@@ -388,35 +255,29 @@ BUILD_BUG_ON(sizeof(struct httcsec_log_entry) != 256);
 │  56      8     reserved（全零）                                   │
 ├──────────────────────────────────────────────────────────────────┤
 │  Entry Array（每条 128 字节，共 entry_count 条）                  │
-│  内存布局与 struct httcsec_policy_node 字段顺序一致               │
-│  （跳过 list_head，从 id 字段开始序列化）                         │
+│  内存布局与 policy_node 字段顺序一致                              │
+│  （跳过链表节点字段，从 id 字段开始序列化）                       │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
-#### 示例：SQLite 审计日志表（用户态守护进程）
+#### 示例：审计日志表（用户态守护进程持久化）
 
-```sql
--- 审计日志主表
-CREATE TABLE audit_events (
-    id          INTEGER PRIMARY KEY AUTOINCREMENT,  -- 自增主键
-    event_id    INTEGER NOT NULL,                   -- 事件类型，见 EVENT_ID_* 枚举
-    level       INTEGER NOT NULL DEFAULT 1,         -- 0=DEBUG,1=INFO,2=WARN,3=ERROR
-    pid         INTEGER NOT NULL,                   -- 触发进程 PID
-    comm        TEXT    NOT NULL,                   -- 进程名，最长 16 字符
-    subject     TEXT,                               -- 主体路径（可为 NULL）
-    object      TEXT,                               -- 客体路径（可为 NULL）
-    result      INTEGER NOT NULL DEFAULT 0,         -- 0=允许，1=拒绝，2=审计
-    detail      TEXT,                               -- JSON 格式附加详情
-    created_at  INTEGER NOT NULL                    -- Unix 时间戳（秒）
-);
+**审计日志表（audit_events）**：
 
--- 查询索引（按时间范围查询审计事件，预期 O(log n)）
-CREATE INDEX idx_audit_created_at   ON audit_events(created_at DESC);
--- 按事件类型筛选（预期 O(log n)）
-CREATE INDEX idx_audit_event_id     ON audit_events(event_id, created_at DESC);
--- 按进程查询（调查溯源场景）
-CREATE INDEX idx_audit_pid_comm     ON audit_events(pid, comm);
-```
+| 列名 | 数据类型 | 约束 | 默认值 | 说明 |
+|---|---|---|---|---|
+| `id` | 整数 | 主键，自增 | — | 记录唯一标识 |
+| `event_id` | 整数 | 非空 | — | 事件类型，见事件类型枚举 |
+| `level` | 整数 | 非空 | 1（INFO） | 日志级别：0=DEBUG，1=INFO，2=WARN，3=ERROR |
+| `pid` | 整数 | 非空 | — | 触发进程PID |
+| `comm` | 文本 | 非空，最长16字符 | — | 进程名 |
+| `subject` | 文本 | 可为空 | NULL | 主体路径 |
+| `object` | 文本 | 可为空 | NULL | 客体路径 |
+| `result` | 整数 | 非空 | 0（允许） | 0=允许；1=拒绝；2=审计 |
+| `detail` | 文本 | 可为空 | NULL | JSON格式附加详情 |
+| `created_at` | 整数 | 非空 | — | Unix时间戳（秒） |
+
+索引策略：按 `created_at` 降序（时间范围查询，预期 O(log n)）；按 `(event_id, created_at)` 复合索引（事件类型过滤，预期 O(log n)）；按 `(pid, comm)` 索引（溯源查询）。
 
 **数据保留策略**：
 - 默认保留最近 **30 天**（可通过配置项 `log.retention_days` 调整）；
@@ -433,37 +294,37 @@ CREATE INDEX idx_audit_pid_comm     ON audit_events(pid, comm);
 
 | 配置项 Key | 类型 | 取值范围 | 默认值 | 热加载 | 异常值处理 | 说明 |
 |---|---|---|---|---|---|---|
-| `policy.mode` | string | `enforce` / `audit` / `disabled` | `audit` | 是 | 非法值使用 `audit`，WARN 日志 | 策略执行模式 |
-| `policy.max_count` | int | `[1, 65536]` | `4096` | 否（重启生效） | 越界截断至边界值，ERROR 日志 | 最大策略条目数 |
-| `policy.db_path` | string | 合法绝对路径，≤256 字符 | `/usr/local/httcsec/policy/` | 否 | 路径非法则拒绝启动 | 策略数据库目录 |
-| `log.level` | string | `debug` / `info` / `warn` / `error` | `info` | 是 | 非法值使用 `info` | 内核日志过滤级别 |
-| `log.ring_size` | int | `[64, 65536]` | `1024` | 否 | 越界截断，WARN 日志 | 内核环形缓冲区大小 |
-| `log.retention_days` | int | `[1, 365]` | `30` | 是 | 越界截断至边界值 | 审计日志保留天数 |
-| `feature.whitelist_enable` | bool | `true` / `false` | `true` | 是 | 非法值使用 `true` | 白名单特性开关 |
-| `feature.dmeasure_enable` | bool | `true` / `false` | `false` | 是 | 非法值使用 `false` | 动态度量特性开关 |
+| `policy.mode` | 字符串 | `enforce` / `audit` / `disabled` | `audit` | 是 | 非法值使用 `audit`，记录WARN日志 | 策略执行模式 |
+| `policy.max_count` | 整数 | `[1, 65536]` | `4096` | 否（重启生效） | 越界截断至边界值，记录ERROR日志 | 最大策略条目数 |
+| `policy.db_path` | 字符串 | 合法绝对路径，不超过256字符 | `/usr/local/httcsec/policy/` | 否 | 路径非法则拒绝启动 | 策略数据库目录 |
+| `log.level` | 字符串 | `debug` / `info` / `warn` / `error` | `info` | 是 | 非法值使用 `info` | 日志过滤级别 |
+| `log.ring_size` | 整数 | `[64, 65536]` | `1024` | 否 | 越界截断，记录WARN日志 | 内核环形缓冲区大小（条目数） |
+| `log.retention_days` | 整数 | `[1, 365]` | `30` | 是 | 越界截断至边界值 | 审计日志保留天数 |
+| `feature.whitelist_enable` | 布尔值 | `true` / `false` | `true` | 是 | 非法值使用 `true` | 白名单特性开关 |
+| `feature.dmeasure_enable` | 布尔值 | `true` / `false` | `false` | 是 | 非法值使用 `false` | 动态度量特性开关 |
 
 ---
 
 ### 2.4 字段版本演进说明
 
-> 📌 **填写要求**：记录结构体字段的新增、废弃、变更历史，确保跨版本数据读写兼容。
+> 📌 **填写要求**：记录数据结构字段的新增、废弃、变更历史，确保跨版本数据读写兼容。
 
-| 版本 | 变更类型 | 结构体 | 字段 | 变更描述 | 兼容处理 |
+| 版本 | 变更类型 | 数据结构 | 字段 | 变更描述 | 兼容处理 |
 |---|---|---|---|---|---|
-| V1.0 | 新增 | `httcsec_policy_node` | 所有字段 | 初始版本 | — |
-| V1.1 | 新增 | `httcsec_policy_node` | `created_at` | 增加创建时间戳字段 | 旧数据读取时 `created_at=0`，表示"未知时间" |
-| V1.1 | 废弃 | `httcsec_policy_node` | `reserved[0]` | 原 reserved[0] 复用为 `state` 字段 | 旧版写入 0，新版读取 0 解释为 `POLICY_STATE_ACTIVE` |
-| V1.2 | 变更 | `httcsec_log_entry` | `msg` | 长度从 128 扩展至 188 字节 | 文件格式版本号同步升级，旧文件以 V1.1 格式解析 |
+| V1.0 | 新增 | `policy_node` | 所有字段 | 初始版本 | — |
+| V1.1 | 新增 | `policy_node` | `created_at` | 增加创建时间戳字段 | 旧数据读取时 `created_at=0`，表示"未知时间" |
+| V1.1 | 废弃 | `policy_node` | `reserved[0]` | 原保留字节复用为 `state` 字段 | 旧版写入0，新版读取0解释为 `POLICY_STATE_ACTIVE` |
+| V1.2 | 变更 | `log_entry` | `msg` | 长度从128字节扩展至188字节 | 文件格式版本号同步升级，旧文件以 V1.1 格式解析 |
 
 ---
 
 ## 3 流程实现细节
 
-**目标**：以时序图、伪代码、状态表三种互补视图，完整描述运行时的控制流与数据流。
+**目标**：以时序图、步骤描述、状态表三种互补视图，完整描述运行时的控制流与数据流。
 
 **作用**：消除对"调用顺序"和"超时边界"的歧义，使测试用例与实现代码有共同的参考基线。
 
-**内容特点**：时序图含具体超时值（毫秒级）；伪代码给出真实函数名；状态表列出所有禁止迁移。
+**内容特点**：时序图含具体超时值（毫秒级）；步骤描述给出真实接口名；状态表列出所有禁止迁移。
 
 **编写要求**：
 - 时序图须标注所有超时、重试、异步回调节点；
@@ -471,7 +332,7 @@ CREATE INDEX idx_audit_pid_comm     ON audit_events(pid, comm);
 - 状态迁移表须包含"禁止迁移"行，防止设计遗漏。
 
 **注意事项**：
-- 禁止用"处理完后通知"等模糊描述，须给出具体的同步原语（spinlock/mutex/completion/workqueue）；
+- 禁止用"处理完后通知"等模糊描述，须给出具体的同步原语（读写锁/互斥锁/完成量/工作队列）；
 - 时序图中的"内核模块"与"用户守护进程"须明确标为两个独立 lifeline。
 
 ---
@@ -491,22 +352,22 @@ sequenceDiagram
     participant FS as 文件系统<br/>(/usr/local/httcsec/)
 
     UA->>FS: open("/usr/local/httcsec/policy/whitelist.db")
-    FS-->>UA: fd（超时 2s，失败返回 ENOENT）
+    FS-->>UA: fd（超时 2s，失败返回文件不存在错误）
 
-    UA->>UA: 校验文件 magic & SM3 摘要（< 50ms）
+    UA->>UA: 校验文件 magic 及 SM3 摘要（< 50ms）
     UA->>KM: ioctl(COMMAND_RELOAD_WHITELIST_POLICY, &param)<br/>（超时 5s，阻塞等待）
 
-    KM->>KM: copy_from_user(&param) — 内核侧参数拷贝
-    KM->>PE: whitelist_policy_reload(buf, len)
+    KM->>KM: 参数安全拷贝（用户态→内核态）
+    KM->>PE: policy_reload(buf, len)
 
     loop 逐条解析（最多 4096 条，每条 < 1ms）
-        PE->>PE: whitelist_policy_add(type, subject, hash)
-        PE->>PE: write_lock(policy_rwlock)
-        PE->>PE: list_add_tail(&node->list, &policy_list)
-        PE->>PE: write_unlock(policy_rwlock)
+        PE->>PE: policy_add(type, subject, hash)
+        PE->>PE: 获取策略链表写锁
+        PE->>PE: 添加至策略链表尾部
+        PE->>PE: 释放策略链表写锁
     end
 
-    PE-->>KM: 0（成功）/负数 errno（失败）
+    PE-->>KM: 0（成功）/错误码（失败）
     KM-->>UA: ioctl 返回 0 或错误码
 
     UA->>UA: 记录审计日志（event=POLICY_RELOAD，result=成功）
@@ -518,29 +379,29 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     participant PR as 目标进程<br/>(execve 调用方)
-    participant KH as LSM Hook<br/>(bprm_check_security)
+    participant KH as 安全钩子<br/>(bprm_check_security)
     participant WL as 白名单引擎
     participant LG as 日志模块
 
     PR->>KH: execve("/usr/bin/malware")
-    KH->>WL: whitelist_check(path, hash)<br/>（需在 < 1ms 内返回，避免影响系统性能）
+    KH->>WL: whitelist_check(path, hash)<br/>（须在 < 1ms 内返回，避免影响系统性能）
 
-    WL->>WL: read_lock(policy_rwlock)
-    WL->>WL: list_for_each_entry(node, &policy_list, list)<br/>— 最坏 O(N)，N ≤ 4096，约 0.4ms
+    WL->>WL: 获取策略链表读锁
+    WL->>WL: 遍历策略链表匹配主体与摘要<br/>— 最坏 O(N)，N ≤ 4096，约 0.4ms
 
     alt 路径+摘要命中白名单
         WL-->>KH: 0（放行）
-        WL->>WL: read_unlock(policy_rwlock)
+        WL->>WL: 释放策略链表读锁
         KH-->>PR: 继续执行
     else 未命中，策略模式=enforce
-        WL-->>KH: -EACCES（拒绝）
-        WL->>WL: read_unlock(policy_rwlock)
-        KH->>LG: httcsec_log(WARN, "execve blocked", path, hash)
-        LG->>LG: spin_lock(log_ring.lock)<br/>ring_buffer_write(&log_ring, &entry)<br/>spin_unlock(log_ring.lock)
-        KH-->>PR: -EACCES（execve 失败）
+        WL-->>KH: 访问拒绝错误
+        WL->>WL: 释放策略链表读锁
+        KH->>LG: 记录警告日志（"execve blocked", path, hash）
+        LG->>LG: 获取日志环形缓冲区锁<br/>写入日志条目<br/>释放日志环形缓冲区锁
+        KH-->>PR: 访问拒绝错误（execve 失败）
     else 未命中，策略模式=audit
         WL-->>KH: 0（放行但记录）
-        KH->>LG: httcsec_log(WARN, "execve audited", path, hash)
+        KH->>LG: 记录警告日志（"execve audited", path, hash）
         KH-->>PR: 继续执行
     end
 ```
@@ -549,68 +410,43 @@ sequenceDiagram
 
 ### 3.2 关键处理流程伪代码
 
-> 📌 **填写要求**：伪代码须使用项目中真实的函数名和数据结构名，可以是 C 代码框架（含注释），编译后应能通过语法检查。
+> 📌 **填写要求**：以编号步骤描述关键处理流程，不使用任何编程语言语法。须标注每阶段的约束（最大数量、超时、并发控制要求）。
 
-#### 示例：策略热加载流程
+#### 示例：策略热加载流程（policy_reload）
 
-```c
-/**
- * whitelist_policy_reload - 原子性热加载白名单策略
- *
- * 设计约束：
- *   - 加载期间不阻塞正在进行的策略查询（读写锁分离）
- *   - 失败时回滚至原有策略（swap + rollback 模式）
- *   - 最大加载时间：5000ms（超时由用户态 ioctl 超时控制）
- */
-int whitelist_policy_reload(const char *data, int len)
-{
-    LIST_HEAD(new_list);             /* 新策略临时链表 */
-    LIST_HEAD(old_list);             /* 旧策略暂存链表 */
-    int ret = 0;
-    int count = 0;
+**设计约束**：
+- 加载期间不阻塞正在进行的策略查询（通过读写分离实现）
+- 失败时回滚至原有策略（"先构建新链表，再原子替换"模式）
+- 最大加载时间：5000ms（由调用方超时控制）
 
-    /* Phase 1: 解析并构建新策略链表（不持锁，可并发查询旧策略） */
-    ret = whitelist_parse_policies(data, len, &new_list, &count);
-    if (ret) {
-        DEBUG_MSG(HTTC_TSB_INFO,
-                  "[%s] parse failed: %d, count=%d\n", __func__, ret, count);
-        whitelist_free_list(&new_list);   /* 释放已分配节点 */
-        return ret;
-    }
+**处理步骤**：
 
-    if (count > MAX_POLICY_ENTRIES) {    /* MAX_POLICY_ENTRIES = 4096 */
-        whitelist_free_list(&new_list);
-        return -E2BIG;
-    }
-
-    /* Phase 2: 原子性替换（持写锁期间最短，仅做链表头交换） */
-    write_lock(&policy_rwlock);
-    list_splice_init(&policy_list, &old_list);  /* 旧策略移出 */
-    list_splice(&new_list, &policy_list);        /* 新策略移入 */
-    policy_count = count;
-    write_unlock(&policy_rwlock);
-
-    /* Phase 3: 释放旧策略（锁外执行，无竞争） */
-    whitelist_free_list(&old_list);
-
-    DEBUG_MSG(HTTC_TSB_INFO,
-              "[%s] reload success, count=%d\n", __func__, count);
-    return 0;
-}
-```
+1. **解析阶段**（不持锁，可与策略查询并发执行）
+   1. 将输入数据逐条解析为策略对象，累计解析计数
+   2. 若解析失败，释放已分配的所有中间对象，返回解析错误码
+   3. 若策略总数超过最大策略条目上限（MAX_POLICY_ENTRIES，默认4096），释放中间对象，返回"数量超限"错误码
+2. **原子替换阶段**（持写锁，锁持有时间极短，仅做链表头交换）
+   1. 获取策略链表写锁
+   2. 将旧策略链表头移出，存入临时链表
+   3. 将新策略链表接入全局策略链表头
+   4. 更新全局策略计数
+   5. 释放策略链表写锁
+3. **清理阶段**（锁外执行，无竞争）
+   1. 遍历临时链表中的旧策略，逐条释放内存
+4. 记录成功日志（策略数量、耗时），返回成功
 
 ---
 
 ### 3.3 并发/多线程模型
 
-> 📌 **填写要求**：画出所有并发执行体（内核线程/workqueue/tasklet/中断）及其共享数据和同步点。
+> 📌 **填写要求**：画出所有并发执行体及其共享数据和同步点。
 
 ```mermaid
 flowchart TD
     subgraph 内核上下文
-        LSM["LSM Hook 线程\n（execve/open/mmap）\n并发，进程上下文"]
+        LSM["安全钩子线程\n（execve/open/mmap）\n并发，进程上下文"]
         ioctl_th["ioctl 处理线程\n（用户态系统调用）\n进程上下文，可睡眠"]
-        kthread["日志刷写 kthread\n（httcsec_log_flush）\n定时 1s，进程上下文"]
+        kthread["日志刷写线程\n（log_flush）\n定时 1s，进程上下文"]
     end
 
     subgraph 共享数据
@@ -620,21 +456,21 @@ flowchart TD
     end
 
     subgraph 同步原语
-        rwlock["policy_rwlock\n（rwlock_t）\n读：LSM Hook\n写：ioctl 热加载"]
-        spinlock["log_ring.lock\n（spinlock_t）\n读：kthread\n写：所有日志调用方"]
-        rwlock2["trust_score_lock\n（rwlock_t）\n读：tsb_get_trust_state\n写：ioctl_set_trust_score"]
+        rwlock["策略链表读写锁\n（读写锁）\n读：安全钩子线程\n写：ioctl 热加载"]
+        spinlock["日志缓冲区锁\n（自旋锁）\n读：刷写线程\n写：所有日志调用方"]
+        rwlock2["信任分值读写锁\n（读写锁）\n读：get_trust_state\n写：ioctl_set_trust_score"]
     end
 
-    LSM -- "read_lock / read_unlock" --> rwlock
-    ioctl_th -- "write_lock / write_unlock" --> rwlock
+    LSM -- "获取读锁 / 释放读锁" --> rwlock
+    ioctl_th -- "获取写锁 / 释放写锁" --> rwlock
     rwlock --> policy_list
 
-    LSM -- "spin_lock / spin_unlock" --> spinlock
-    ioctl_th -- "spin_lock / spin_unlock" --> spinlock
-    kthread -- "spin_lock / spin_unlock" --> spinlock
+    LSM -- "获取自旋锁 / 释放自旋锁" --> spinlock
+    ioctl_th -- "获取自旋锁 / 释放自旋锁" --> spinlock
+    kthread -- "获取自旋锁 / 释放自旋锁" --> spinlock
     spinlock --> log_ring
 
-    ioctl_th -- "read_lock / read_unlock" --> rwlock2
+    ioctl_th -- "获取读锁 / 释放读锁" --> rwlock2
     rwlock2 --> trust_score
 ```
 
@@ -642,9 +478,9 @@ flowchart TD
 
 | 共享数据 | 同步原语 | 选型理由 |
 |---|---|---|
-| `policy_list` | `rwlock_t` | 读多写少（LSM Hook 高频读，ioctl 低频写）；rwlock 允许并发读 |
-| `log_ring` | `spinlock_t` | 写入路径可能在中断上下文（tasklet），不可使用 mutex |
-| `t_score` | `rwlock_t` | 同 policy_list，读多写少；trust score 查询高频 |
+| 策略链表 | 读写锁 | 读多写少（安全钩子高频读，ioctl 低频写）；读写锁允许并发读 |
+| 日志环形缓冲区 | 自旋锁 | 写入路径可能在中断上下文，不可使用可睡眠互斥锁 |
+| 信任分值 | 读写锁 | 同策略链表，读多写少；信任状态查询高频 |
 
 ---
 
@@ -656,13 +492,13 @@ flowchart TD
 
 | 当前状态 | 触发事件 | 目标状态 | 触发条件 | 超时处理 | 备注 |
 |---|---|---|---|---|---|
-| `INACTIVE`(0) | `policy_add` | `ACTIVE`(1) | 字段校验通过 | — | 初始加载成功 |
-| `ACTIVE`(1) | `policy_delete` | `DELETED`(3) | 管理员命令 | — | 标记删除，延迟释放 |
-| `ACTIVE`(1) | `policy_reload` | `ACTIVE`(1) | 策略内容更新 | 5s 超时回滚 | 内容变更不改变状态 |
-| `ACTIVE`(1) | `hash_mismatch` | `SUSPENDED`(2) | 运行时完整性校验失败 | — | 触发 WARN 审计日志 |
-| `SUSPENDED`(2) | `policy_verify_ok` | `ACTIVE`(1) | 管理员手动恢复 | — | — |
-| `SUSPENDED`(2) | `policy_delete` | `DELETED`(3) | 管理员命令 | — | — |
-| `DELETED`(3) | — | — | — | — | 终止状态，下次 GC 时释放内存 |
+| `INACTIVE` | `policy_add` | `ACTIVE` | 字段校验通过 | — | 初始加载成功 |
+| `ACTIVE` | `policy_delete` | `DELETED` | 管理员命令 | — | 标记删除，延迟释放 |
+| `ACTIVE` | `policy_reload` | `ACTIVE` | 策略内容更新 | 5s 超时回滚 | 内容变更不改变状态 |
+| `ACTIVE` | `hash_mismatch` | `SUSPENDED` | 运行时完整性校验失败 | — | 触发 WARN 审计日志 |
+| `SUSPENDED` | `policy_verify_ok` | `ACTIVE` | 管理员手动恢复 | — | — |
+| `SUSPENDED` | `policy_delete` | `DELETED` | 管理员命令 | — | — |
+| `DELETED` | — | — | — | — | 终止状态，下次垃圾回收时释放内存 |
 | ~~`DELETED`→`ACTIVE`~~ | ~~任意~~ | ~~禁止~~ | — | — | **禁止**：已删除策略不可复活，须重新注册 |
 | ~~`INACTIVE`→`SUSPENDED`~~ | ~~任意~~ | ~~禁止~~ | — | — | **禁止**：未激活策略不可直接挂起 |
 
@@ -674,17 +510,17 @@ flowchart TD
 
 **作用**：统一错误码、重试策略、降级行为，防止异常在模块边界被吞掉或重复处理。
 
-**内容特点**：错误码具体到负数 errno；重试参数精确到毫秒；降级配置给出具体阈值。
+**内容特点**：错误码具体到可读名称；重试参数精确到毫秒；降级配置给出具体阈值。
 
 **编写要求**：
 - 每个异常必须分类为"可恢复"或"不可恢复"；
 - 重试必须有退避算法和最大次数上限；
-- 内核路径的异常处理禁止使用 `printk` 同步打印热路径（改用异步日志环形缓冲区）。
+- 内核路径的异常处理禁止在热路径中同步打印日志，改用异步日志环形缓冲区。
 
 **注意事项**：
-- 内核模块不可 panic（除非内存损坏等不可恢复场景），须通过返回负数 errno 向上层传递；
-- 用户态守护进程的异常须通过 syslog/审计日志上报；
-- 避免在持锁期间执行可能阻塞的操作（如 `copy_from_user`、文件 I/O）。
+- 内核模块不可触发系统崩溃（除非内存损坏等不可恢复场景），须通过返回错误码向上层传递；
+- 用户态守护进程的异常须通过系统日志/审计日志上报；
+- 避免在持锁期间执行可能阻塞的操作（如安全内存拷贝、文件 I/O）。
 
 ---
 
@@ -694,82 +530,45 @@ flowchart TD
 
 | 错误码 | 异常类型 | 可恢复性 | 触发场景 | 重试策略 | 用户/管理员提示 |
 |---|---|---|---|---|---|
-| `-EINVAL` | 参数校验失败 | 可恢复（需修正参数） | 字段越界/类型非法/magic 错误 | 不重试，返回错误 | "策略参数非法，请检查 type/length 字段" |
-| `-ENOMEM` | 内核内存不足 | 可恢复（等待内存释放） | `kzalloc` / `vmalloc` 失败 | 指数退避，最多 3 次，间隔 100/200/400ms | "内核内存不足，请检查系统内存使用率" |
-| `-EFAULT` | 用户态指针非法 | 不可恢复（程序 Bug） | `copy_from_user` 失败 | 不重试，终止操作 | "非法内存访问，请检查调用程序版本" |
-| `-ENOENT` | 策略文件不存在 | 可恢复（补充文件后重试） | 热加载时文件被删除 | 重试 1 次（1s 后），失败则保留旧策略 | "策略文件不存在，使用上次成功加载的策略" |
-| `-EACCES` | 策略拒绝访问 | 不适用（正常拦截行为） | LSM Hook 命中拒绝策略 | 不重试 | 无（静默拦截，仅记录审计日志） |
-| `-EBUSY` | 命令号冲突 | 不可恢复（模块冲突） | 模块加载顺序错误 | 不重试，模块加载失败 | "命令号冲突，请检查已加载的内核模块" |
-| `-E2BIG` | 策略数量超限 | 可恢复（精简策略后重试） | 策略条目超过 `max_count` | 不重试，返回错误 | "策略条目超过上限（4096），请精简策略" |
-| `-ETIMEDOUT` | 操作超时 | 可恢复（重试） | kthread 等待超时（`wait_event_timeout` 返回 0） | 指数退避，最多 3 次 | "操作超时，请检查内核模块运行状态" |
+| 参数非法错误 | 参数校验失败 | 可恢复（需修正参数） | 字段越界/类型非法/魔数错误 | 不重试，返回错误 | "策略参数非法，请检查 type/length 字段" |
+| 内存不足错误 | 内存不足 | 可恢复（等待内存释放） | 内核内存分配失败 | 指数退避，最多3次，间隔100/200/400ms | "内核内存不足，请检查系统内存使用率" |
+| 内存访问错误 | 用户态指针非法 | 不可恢复（程序缺陷） | 安全内存拷贝失败 | 不重试，终止操作 | "非法内存访问，请检查调用程序版本" |
+| 文件不存在错误 | 策略文件不存在 | 可恢复（补充文件后重试） | 热加载时文件被删除 | 重试1次（1s后），失败则保留旧策略 | "策略文件不存在，使用上次成功加载的策略" |
+| 访问拒绝错误 | 策略拒绝访问 | 不适用（正常拦截行为） | 安全钩子命中拒绝策略 | 不重试 | 无（静默拦截，仅记录审计日志） |
+| 资源忙错误 | 命令号冲突 | 不可恢复（模块冲突） | 模块加载顺序错误 | 不重试，模块加载失败 | "命令号冲突，请检查已加载的内核模块" |
+| 数量超限错误 | 策略数量超限 | 可恢复（精简策略后重试） | 策略条目超过 `max_count` | 不重试，返回错误 | "策略条目超过上限（4096），请精简策略" |
+| 超时错误 | 操作超时 | 可恢复（重试） | 超时等待返回超时 | 指数退避，最多3次 | "操作超时，请检查内核模块运行状态" |
 
 ---
 
 ### 4.2 重试退避算法
 
-> 📌 **填写要求**：给出具体的退避算法实现，参数须为确定的数值（非"可配置"的模糊表述）。
+> 📌 **填写要求**：以参数表和步骤描述定义退避算法，不使用编程语言语法。
 
 #### 示例：用户态守护进程 ioctl 重试逻辑
 
-```c
-/**
- * httcsec_ioctl_with_retry - 带指数退避重试的 ioctl 调用
- *
- * 退避参数：
- *   initial_interval_ms = 100    初始等待间隔 100ms
- *   backoff_multiplier  = 2      每次翻倍
- *   max_retries         = 3      最多重试 3 次（总共最多尝试 4 次）
- *   max_interval_ms     = 1000   单次最大等待不超过 1000ms
- *   jitter_range_ms     = 20     加入 [0, 20ms] 随机抖动，避免雷同重试
- *
- * 适用场景：-ENOMEM、-ETIMEDOUT（瞬时资源不足）
- * 不适用场景：-EINVAL、-EFAULT、-EACCES（逻辑错误，重试无意义）
- */
-static int httcsec_ioctl_with_retry(int fd, unsigned long cmd, void *arg)
-{
-    const int initial_interval_ms = 100;
-    const int backoff_multiplier  = 2;
-    const int max_retries         = 3;
-    const int max_interval_ms     = 1000;
-    const int jitter_range_ms     = 20;
+**指数退避重试算法参数定义**：
 
-    int interval_ms = initial_interval_ms;
-    int ret;
+| 参数名 | 值 | 说明 |
+|---|---|---|
+| 初始等待间隔 | 100ms | 第1次重试前等待时间 |
+| 退避倍数 | 2 | 每次重试后等待时间翻倍 |
+| 最大重试次数 | 3 | 超过后放弃重试 |
+| 单次最大等待上限 | 1000ms | 防止等待时间过长 |
+| 随机抖动范围 | [0, 20ms] | 避免多调用方同时重试 |
 
-    for (int attempt = 0; attempt <= max_retries; attempt++) {
-        ret = ioctl(fd, cmd, arg);
-        if (ret == 0)
-            return 0;   /* 成功，立即返回 */
+**适用场景**：内存不足、操作超时等瞬时资源不足类错误
 
-        /* 不可重试的错误码，直接返回 */
-        if (errno == EINVAL || errno == EFAULT ||
-            errno == EBUSY  || errno == EACCES)
-            return ret;
+**不适用场景**：参数非法、权限不足等逻辑错误（重试无意义）
 
-        if (attempt == max_retries) {
-            /* 最后一次失败，记录 ERROR 日志 */
-            syslog(LOG_ERR,
-                   "ioctl cmd=0x%lx failed after %d retries, errno=%d (%s)",
-                   cmd, max_retries, errno, strerror(errno));
-            return ret;
-        }
+**处理步骤**：
 
-        /* 计算下次等待时间：指数退避 + 随机抖动 */
-        int jitter    = rand() % (jitter_range_ms + 1);
-        int sleep_ms  = MIN(interval_ms + jitter, max_interval_ms);
-
-        syslog(LOG_WARNING,
-               "ioctl cmd=0x%lx attempt %d failed (errno=%d), "
-               "retry after %dms",
-               cmd, attempt + 1, errno, sleep_ms);
-
-        usleep(sleep_ms * 1000);
-        interval_ms = MIN(interval_ms * backoff_multiplier, max_interval_ms);
-    }
-
-    return ret;
-}
-```
+1. 首次调用，若成功则直接返回成功
+2. 若失败且错误类型属"不可重试"（参数非法/权限不足/指针非法/命令冲突），直接返回错误，不重试
+3. 若已达最大重试次数，记录错误日志，返回最后一次错误码
+4. 计算下次等待时间：取"当前间隔 + 随机抖动"与"单次最大等待上限"的较小值
+5. 记录告警日志（当前重试次序、等待时间、错误码）
+6. 等待计算所得时间后，跳转步骤1重试；当前间隔乘以退避倍数（不超过单次最大等待上限）
 
 **退避时间序列（无抖动时）**：
 
@@ -789,16 +588,16 @@ static int httcsec_ioctl_with_retry(int fd, unsigned long cmd, void *arg)
 
 ```mermaid
 flowchart TD
-    A["底层：kzalloc() 返回 NULL\n内核内存分配失败"]
-    B["whitelist_policy_add()\n返回 -ENOMEM\n（透传，不做转换）"]
-    C["whitelist_policy_reload()\n返回 -ENOMEM\n+ 调用 whitelist_free_list() 回滚\n+ DEBUG_MSG 记录函数名/行号"]
-    D["ioctl_reload_whitelist()\n返回 -ENOMEM\n（透传至内核 ioctl 框架）"]
-    E["内核 ioctl 框架\n将 -ENOMEM 转换为 errno=ENOMEM\n返回给用户态 -1"]
-    F["用户态守护进程\nioctl() 返回 -1，errno=ENOMEM\n触发重试逻辑（最多 3 次）"]
-    G["重试 3 次均失败\nsyslog(LOG_ERR, '策略加载失败')\n保留上次成功的策略（降级运行）\n发送告警事件至管理平台"]
+    A["底层：内核内存分配返回空\n内存分配失败"]
+    B["policy_add()\n返回内存不足错误\n（透传，不做转换）"]
+    C["policy_reload()\n返回内存不足错误\n+ 回滚策略链表\n+ 记录调试日志（函数名/行号）"]
+    D["ioctl_reload_policy()\n返回内存不足错误\n（透传至 ioctl 框架）"]
+    E["ioctl 框架\n将内存不足错误转换为用户态标准错误码\n返回给用户态"]
+    F["用户态守护进程\nioctl 调用失败，收到内存不足错误码\n触发重试逻辑（最多 3 次）"]
+    G["重试 3 次均失败\n记录错误日志（'策略加载失败'）\n保留上次成功的策略（降级运行）\n发送告警事件至管理平台"]
 
     A --> B --> C --> D --> E --> F
-    F -->|"重试成功"| H["syslog(LOG_WARNING, '重试成功')\n继续正常运行"]
+    F -->|"重试成功"| H["记录警告日志（'重试成功'）\n继续正常运行"]
     F -->|"重试失败"| G
 ```
 
@@ -806,56 +605,23 @@ flowchart TD
 
 ### 4.4 降级/熔断配置
 
-> 📌 **填写要求**：描述特性在异常持续发生时的降级行为，给出熔断阈值和恢复条件。
+> 📌 **填写要求**：以参数表和降级规则描述熔断策略，不使用编程语言语法。
 
-#### 内核模块降级策略
+#### 熔断器参数定义
 
-```c
-/*
- * 策略引擎降级行为定义
- *
- * 触发条件：策略加载失败（-ENOMEM 或 -ENOENT）且重试耗尽
- * 降级行为：
- *   enforce 模式 → 切换至 audit 模式（放行所有操作，记录审计日志）
- *   audit 模式   → 维持 audit 模式（不降级）
- *   disabled 模式 → 维持 disabled 模式
- *
- * 熔断参数（内核模块全局变量，可通过 sysfs 查看）：
- */
-#define POLICY_CIRCUIT_THRESHOLD    5     /* 连续失败 5 次触发熔断 */
-#define POLICY_CIRCUIT_HALF_OPEN_S  30    /* 熔断 30s 后进入半开状态，允许一次探测 */
+| 参数名 | 默认值 | 说明 |
+|---|---|---|
+| 连续失败触发阈值 | 5次 | 连续失败达到此次数时触发熔断（闭合→断开） |
+| 半开等待时间 | 30秒 | 熔断后等待此时间进入半开状态，允许一次探测请求 |
+| 探测成功恢复条件 | 1次成功 | 半开状态探测成功后恢复熔断器至闭合状态 |
 
-static atomic_t policy_fail_count   = ATOMIC_INIT(0);
-static atomic_t policy_circuit_open = ATOMIC_INIT(0); /* 1=熔断中 */
+#### 降级行为规则
 
-static int policy_load_with_circuit(const char *data, int len)
-{
-    /* 熔断检查 */
-    if (atomic_read(&policy_circuit_open)) {
-        DEBUG_MSG(HTTC_TSB_INFO,
-                  "[%s] circuit open, skip reload, fallback to audit\n",
-                  __func__);
-        return -ECONNREFUSED;  /* 熔断中，拒绝请求 */
-    }
-
-    int ret = whitelist_policy_reload(data, len);
-
-    if (ret == 0) {
-        atomic_set(&policy_fail_count, 0);   /* 成功，重置计数 */
-    } else {
-        if (atomic_inc_return(&policy_fail_count) >= POLICY_CIRCUIT_THRESHOLD) {
-            atomic_set(&policy_circuit_open, 1);  /* 触发熔断 */
-            DEBUG_MSG(HTTC_TSB_INFO,
-                      "[%s] circuit breaker OPEN after %d failures\n",
-                      __func__, POLICY_CIRCUIT_THRESHOLD);
-            /* 启动定时器，30s 后尝试半开恢复 */
-            mod_timer(&circuit_recover_timer,
-                      jiffies + POLICY_CIRCUIT_HALF_OPEN_S * HZ);
-        }
-    }
-    return ret;
-}
-```
+| 原运行模式 | 触发降级的条件 | 降级后行为 | 恢复条件 |
+|---|---|---|---|
+| 强制（enforce）模式 | 策略加载失败且重试耗尽 | 切换至审计（audit）模式，放行所有操作并记录日志 | 策略加载成功后人工切回 |
+| 审计（audit）模式 | 策略加载失败 | 维持审计模式（不进一步降级） | — |
+| 已禁用（disabled）模式 | 任意 | 维持禁用（不降级） | — |
 
 ---
 
@@ -868,46 +634,44 @@ static int policy_load_with_circuit(const char *data, int len)
 **内容特点**：JSON 格式规范精确到每个字段；审计事件包含完整的主客体和操作结果；字段表标注必填项。
 
 **编写要求**：
-- 内核侧日志通过环形缓冲区异步上报，避免在热路径中同步 `printk`；
-- 用户态守护进程统一使用 JSON 格式输出至 syslog；
+- 内核侧日志通过环形缓冲区异步上报，避免在热路径中同步写日志；
+- 用户态守护进程统一使用 JSON 格式输出至系统日志；
 - 每条日志必须包含 `traceId`（跨用户态/内核态追踪同一请求）。
 
 **注意事项**：
 - 禁止在日志中记录密码、密钥、完整哈希值等敏感信息；
-- `DEBUG` 级别日志仅在开发构建（`#ifdef DEBUG`）或运行时动态开启时输出；
+- `DEBUG` 级别日志仅在开发构建或运行时动态开启时输出；
 - 日志消息须为英文或固定中文短语（避免动态中文格式化字符串）。
 
 ---
 
 ### 5.1 日志格式规范
 
-> 📌 **填写要求**：给出精确的 JSON Schema 或字段定义，区分内核侧（ring buffer 结构体）和用户态（JSON syslog）两种格式。
+> 📌 **填写要求**：给出精确的 JSON Schema 或字段定义，区分内核侧（环形缓冲区结构体）和用户态（JSON 系统日志）两种格式。
 
 #### 用户态 JSON 日志格式
 
 ```json
 {
-  "timestamp":  "2025-01-15T10:23:45.123456789Z",
-  "level":      "WARN",
-  "module":     "whitelist",
-  "traceId":    "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
-  "pid":        12345,
-  "comm":       "httcsec-agent",
-  "func":       "whitelist_policy_reload",
-  "line":       187,
-  "event_id":   2001,
-  "msg":        "policy reload failed, keeping previous policy",
+  "timestamp":  "<ISO8601时间戳，UTC，纳秒精度>",
+  "level":      "<日志级别：DEBUG|INFO|WARN|ERROR|FATAL>",
+  "module":     "<模块名，小写英文>",
+  "traceId":    "<UUID v4>",
+  "pid":        "<进程PID，整数>",
+  "comm":       "<进程名，最长16字符>",
+  "func":       "<函数名，最长64字符>",
+  "line":       "<代码行号，整数>",
+  "event_id":   "<事件类型ID，整数，0=普通日志>",
+  "msg":        "<日志消息正文，英文，最长256字符>",
   "extra": {
-    "errno":    12,
-    "attempt":  3,
-    "path":     "/usr/local/httcsec/policy/whitelist.db"
+    "<扩展键>": "<扩展值，自由键值对，用于附加上下文>"
   }
 }
 ```
 
-#### 内核侧日志上报格式（ring buffer → 用户态读取后转 JSON）
+#### 内核侧日志上报格式（环形缓冲区 → 用户态读取后转 JSON）
 
-内核侧使用 `struct httcsec_log_entry`（见第 2.1 节）写入环形缓冲区，
+内核侧使用 `log_entry` 结构（见第 2.1 节）写入环形缓冲区，
 用户态守护进程通过 `ioctl(COMMAND_READ_MEM_LOG)` 批量读取后转换为上述 JSON 格式。
 
 **字段映射关系**：
@@ -916,7 +680,7 @@ static int policy_load_with_circuit(const char *data, int len)
 |---|---|---|
 | `timestamp_ns` | `timestamp` | 纳秒时间戳 → ISO 8601 UTC 字符串 |
 | `level` | `level` | `0→"DEBUG"`, `1→"INFO"`, `2→"WARN"`, `3→"ERROR"`, `4→"FATAL"` |
-| `module_id` | `module` | 枚举 → 模块名字符串（见 MODULE_ID_* 映射表） |
+| `module_id` | `module` | 枚举 → 模块名字符串（见模块ID映射表） |
 | `event_id` | `event_id` | 透传（0=普通日志，非零=审计事件） |
 | `pid` + `tid` | `pid` + `tid` | 透传 |
 | `comm` | `comm` | 透传 |
@@ -928,88 +692,53 @@ static int policy_load_with_circuit(const char *data, int len)
 
 ### 5.2 各级别使用场景与示例
 
-> 📌 **填写要求**：每个级别给出 2~3 个具体场景和对应的代码调用示例。
+> 📌 **填写要求**：每个级别给出2~3个具体**触发场景**和对应的**日志内容示例**（以日志字段描述，非代码调用）。
 
-#### DEBUG（调试级，仅开发构建输出）
+#### DEBUG（调试级，仅开发构建或运行时动态开启时输出）
 
-**场景**：函数进入/退出追踪、中间变量值、锁获取/释放。
+**场景**：函数入口/退出追踪、中间变量值、锁获取/释放。
 
-```c
-/* 适用场景：函数入口，记录关键入参 */
-DEBUG_MSG(HTTC_TSB_DEBUG,
-          "[%s] enter, type=%d, len=%d\n",
-          __func__, uparam.type, uparam.length);
-
-/* 适用场景：循环中的中间状态（注意热路径中慎用） */
-DEBUG_MSG(HTTC_TSB_DEBUG,
-          "[%s] policy_node id=%u, subject=%s matched\n",
-          __func__, node->id, node->subject);
-```
+| 触发场景 | 典型日志 msg 内容示例 |
+|---|---|
+| 函数入口追踪，记录关键入参 | `"enter: type=<值>, length=<值>"` |
+| 策略遍历时命中特定节点 | `"policy match: id=<id>, subject=<路径>"` |
 
 #### INFO（信息级，重要生命周期事件）
 
 **场景**：模块加载/卸载、策略成功加载、服务正常启停。
 
-```c
-/* 适用场景：模块初始化成功 */
-DEBUG_MSG(HTTC_TSB_INFO,
-          "[%s] httcsec module loaded, version=%s, policy_count=%d\n",
-          __func__, HTTCSEC_VERSION, policy_count);
-
-/* 适用场景：策略热加载成功 */
-DEBUG_MSG(HTTC_TSB_INFO,
-          "[%s] whitelist policy reloaded, count=%d, elapsed_us=%lld\n",
-          __func__, count, elapsed_us);
-```
+| 触发场景 | 典型日志 msg 内容示例 |
+|---|---|
+| 模块初始化成功 | `"module loaded: version=<版本>, policy_count=<数量>"` |
+| 策略热加载成功 | `"policy reloaded: count=<数量>, elapsed=<耗时>ms"` |
+| 模块卸载 | `"module unloading: releasing <数量> policy entries"` |
 
 #### WARN（警告级，可继续运行但需关注）
 
 **场景**：策略文件校验失败（使用旧策略继续）、重试成功、降级运行。
 
-```c
-/* 适用场景：文件摘要校验失败，降级使用旧策略 */
-DEBUG_MSG(HTTC_TSB_INFO,  /* 当前项目统一用 HTTC_TSB_INFO 前缀，级别由 level 字段区分 */
-          "WARN [%s] policy file hash mismatch, fallback to cached policy\n",
-          __func__);
+| 触发场景 | 典型日志 msg 内容示例 |
+|---|---|
+| 策略文件摘要校验失败，降级使用旧策略 | `"policy hash mismatch, fallback to cached policy"` |
+| audit 模式下拦截事件（放行但记录） | `"execve audited: comm=<进程名>, path=<路径>"` |
+| 重试成功（之前有失败尝试） | `"retry succeeded on attempt <次序>"` |
 
-/* 适用场景：audit 模式下拦截事件（放行但记录） */
-DEBUG_MSG(HTTC_TSB_INFO,
-          "WARN [%s] execve audited: comm=%s path=%s\n",
-          __func__, current->comm, path);
-```
-
-#### ERROR（错误级，操作失败，需干预）
+#### ERROR（错误级，操作失败，需人工干预）
 
 **场景**：ioctl 重试耗尽、内存分配失败（非瞬时）、命令注册冲突。
 
-```c
-/* 适用场景：重试耗尽，策略加载彻底失败 */
-DEBUG_MSG(HTTC_TSB_INFO,
-          "ERROR [%s] policy reload failed after 3 retries, ret=%d\n",
-          __func__, ret);
+| 触发场景 | 典型日志 msg 内容示例 |
+|---|---|
+| 重试耗尽，策略加载彻底失败 | `"policy reload failed after <次数> retries: <错误码>"` |
+| 命令号注册冲突，模块加载失败 | `"command <命令号> already registered, load aborted"` |
 
-/* 适用场景：命令号注册冲突（模块加载失败） */
-DEBUG_MSG(HTTC_TSB_INFO,
-          "ERROR [%s] command NR=%d already registered, module load aborted\n",
-          __func__, cmd_nr);
-```
+#### FATAL（致命级，模块须安全退出）
 
-#### FATAL（致命级，模块须立即卸载）
+**场景**：核心数据结构被破坏（魔数校验失败）、不可恢复的内存错误。
 
-**场景**：核心数据结构被破坏（magic 校验失败）、不可恢复的内存错误。
-
-```c
-/* 适用场景：内核数据结构 magic 值被破坏（潜在内存越界攻击） */
-if (node->magic != HTTCSEC_NODE_MAGIC) {
-    DEBUG_MSG(HTTC_TSB_INFO,
-              "FATAL [%s] policy node magic corrupted: expected=0x%x, got=0x%x\n"
-              "        possible memory corruption, triggering module unload\n",
-              __func__, HTTCSEC_NODE_MAGIC, node->magic);
-    /* 不调用 panic，通过标志位触发安全卸载流程 */
-    atomic_set(&fatal_error_flag, 1);
-    schedule_work(&module_unload_work);
-}
-```
+| 触发场景 | 典型日志 msg 内容示例 |
+|---|---|
+| 核心数据结构魔数校验失败，疑似内存损坏 | `"policy node magic corrupted: expected=<期望值>, actual=<实际值>, triggering unload"` |
 
 ---
 
@@ -1033,27 +762,27 @@ if (node->magic != HTTCSEC_NODE_MAGIC) {
 
 ```json
 {
-  "timestamp":   "2025-01-15T10:23:45.123456789Z",
+  "timestamp":   "<ISO8601时间戳，UTC，纳秒精度>",
   "level":       "WARN",
-  "module":      "whitelist",
-  "traceId":     "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "module":      "<模块名>",
+  "traceId":     "<UUID v4>",
   "event_id":    2002,
   "event_name":  "EXEC_BLOCKED",
   "subject": {
-    "pid":       9876,
-    "ppid":      1234,
-    "comm":      "malware",
-    "uid":       1000,
-    "path":      "/tmp/malware"
+    "pid":       "<触发进程PID>",
+    "ppid":      "<父进程PID>",
+    "comm":      "<进程名>",
+    "uid":       "<用户ID>",
+    "path":      "<进程可执行文件路径>"
   },
   "object": {
-    "path":      "/tmp/malware",
-    "hash":      "a3f1...（SM3 摘要前 16 字节，完整值不记录）",
-    "size":      102400
+    "path":      "<被访问文件路径>",
+    "hash":      "<SM3 摘要前16字节十六进制，完整值不记录>",
+    "size":      "<文件大小，字节>"
   },
   "action":      "execve",
   "result":      "blocked",
-  "policy_id":   0,
+  "policy_id":   "<匹配到的策略ID，0表示未匹配>",
   "msg":         "execve blocked by enforce policy: path not in whitelist"
 }
 ```
@@ -1066,26 +795,26 @@ if (node->magic != HTTCSEC_NODE_MAGIC) {
 
 | 字段名 | JSON 类型 | 是否必填 | 格式/约束 | 示例值 | 说明 |
 |---|---|---|---|---|---|
-| `timestamp` | string | **必填** | ISO 8601 UTC，纳秒精度 | `"2025-01-15T10:23:45.123456789Z"` | 事件发生时间 |
-| `level` | string | **必填** | `DEBUG`/`INFO`/`WARN`/`ERROR`/`FATAL` | `"WARN"` | 日志严重级别 |
-| `module` | string | **必填** | 小写英文，见 MODULE_ID 映射表 | `"whitelist"` | 产生日志的模块 |
-| `traceId` | string | **必填** | UUID v4 格式 | `"a1b2c3d4-..."` | 请求追踪 ID，跨内核/用户态关联 |
-| `pid` | integer | **必填** | `[1, 4194304]` | `12345` | 进程 PID |
-| `comm` | string | **必填** | 最长 16 字符 | `"httcsec-agent"` | 进程名 |
-| `func` | string | **必填** | C 函数名，最长 64 字符 | `"whitelist_policy_reload"` | 日志所在函数 |
-| `line` | integer | **必填** | `[1, 99999]` | `187` | 日志所在行号 |
-| `msg` | string | **必填** | 英文，最长 256 字符，不含换行 | `"policy reload failed"` | 日志消息正文 |
-| `event_id` | integer | 可选 | `0`=普通日志，`>0`=审计事件 | `2002` | 审计事件类型 ID |
-| `event_name` | string | 可选（event_id>0 时必填） | 见事件类型表 | `"EXEC_BLOCKED"` | 审计事件名称 |
-| `tid` | integer | 可选 | 线程 ID | `12346` | 线程 PID（`tgid`） |
-| `subject` | object | 可选（审计事件必填） | 含 pid/comm/uid/path 子字段 | 见 5.3 节示例 | 操作主体信息 |
-| `object` | object | 可选（审计事件必填） | 含 path/hash/size 子字段 | 见 5.3 节示例 | 操作客体信息 |
-| `action` | string | 可选（审计事件必填） | `execve`/`open`/`mmap`/`ioctl` 等 | `"execve"` | 执行的操作类型 |
-| `result` | string | 可选（审计事件必填） | `allowed`/`blocked`/`audited` | `"blocked"` | 操作结果 |
-| `extra` | object | 可选 | 自由键值对，用于附加上下文 | `{"errno": 12, "attempt": 3}` | 额外诊断信息 |
+| `timestamp` | 字符串 | **必填** | ISO 8601 UTC，纳秒精度 | `"<ISO8601时间戳>"` | 事件发生时间 |
+| `level` | 字符串 | **必填** | `DEBUG`/`INFO`/`WARN`/`ERROR`/`FATAL` | `"WARN"` | 日志严重级别 |
+| `module` | 字符串 | **必填** | 小写英文，见模块ID映射表 | `"whitelist"` | 产生日志的模块 |
+| `traceId` | 字符串 | **必填** | UUID v4 格式 | `"<UUID v4>"` | 请求追踪 ID，跨内核/用户态关联 |
+| `pid` | 整数 | **必填** | `[1, 4194304]` | `<进程PID>` | 进程 PID |
+| `comm` | 字符串 | **必填** | 最长 16 字符 | `"<进程名>"` | 进程名 |
+| `func` | 字符串 | **必填** | 函数名，最长 64 字符 | `"<函数名>"` | 日志所在函数 |
+| `line` | 整数 | **必填** | `[1, 99999]` | `<行号>` | 日志所在行号 |
+| `msg` | 字符串 | **必填** | 英文，最长 256 字符，不含换行 | `"policy reload failed"` | 日志消息正文 |
+| `event_id` | 整数 | 可选 | `0`=普通日志，`>0`=审计事件 | `2002` | 审计事件类型 ID |
+| `event_name` | 字符串 | 可选（event_id>0 时必填） | 见事件类型表 | `"EXEC_BLOCKED"` | 审计事件名称 |
+| `tid` | 整数 | 可选 | 线程 ID | `<线程ID>` | 线程 PID |
+| `subject` | 对象 | 可选（审计事件必填） | 含 pid/comm/uid/path 子字段 | 见 5.3 节示例 | 操作主体信息 |
+| `object` | 对象 | 可选（审计事件必填） | 含 path/hash/size 子字段 | 见 5.3 节示例 | 操作客体信息 |
+| `action` | 字符串 | 可选（审计事件必填） | `execve`/`open`/`mmap`/`ioctl` 等 | `"execve"` | 执行的操作类型 |
+| `result` | 字符串 | 可选（审计事件必填） | `allowed`/`blocked`/`audited` | `"blocked"` | 操作结果 |
+| `extra` | 对象 | 可选 | 自由键值对，用于附加上下文 | `{"errno": 12, "attempt": 3}` | 额外诊断信息 |
 
 ---
 
-*本模板版本：V1.0*
+*本模板版本：V1.1*
 *适用特性说明书版本：V1.0 及以上*
-*最后更新：2025-01-15*
+*最后更新：2025-07-14*
