@@ -1,0 +1,420 @@
+# Virtrust Daemon (virtrustd) 管理手册
+
+## 概述
+
+Virtrust Daemon (virtrustd) 是 virtrust 项目的守护进程服务，提供基于 gRPC 的远程 API 服务。它作为后端服务运行，接受来自客户端的虚拟机管理请求，并通过 virtrust API 库执行相应的操作。
+
+- **默认服务器地址**：127.0.0.1
+- **默认服务器端口**：5031
+- **默认 Unix Socket**：/tmp/grpc.sock
+- **默认日志文件**：/var/log/virtrustd.log
+
+## 系统架构
+
+### 服务组件
+
+```
+virtrustd 守护进程
+├── gRPC Server          # gRPC 服务器
+├── LinkConfig          # 链接配置管理
+├── 信号处理器          # SIGINT, SIGTERM, SIGPIPE 处理
+├── 日志系统            # 服务日志记录
+└── virtrust API        # 虚拟机管理 API 调用
+```
+
+### 通信流程
+
+```
+客户端应用
+    ↓ (gRPC/TLS)
+virtrustd 守护进程
+    ↓ (virtrust API)
+libvirt 虚拟化层
+```
+
+## 安装和部署
+
+### 系统要求
+
+- **操作系统**：openEuler 24.03 LTS SP2
+- **权限**：需要足够的权限来管理虚拟机
+- **依赖**：libvirt、gRPC 相关库
+
+
+### 源码安装步骤
+
+1. **编译安装**：
+```bash
+# 在 virtrust 项目目录下
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
+
+# 安装服务
+sudo cmake --install build
+```
+
+2. **创建配置文件**：
+```bash
+sudo mkdir -p /etc/virtrust
+sudo cp test/data/config.json /etc/virtrust/config.json
+```
+
+3. **创建日志目录**：
+```bash
+sudo mkdir -p /var/log
+sudo touch /var/log/virtrustd.log
+sudo chmod 640 /var/log/virtrustd.log
+```
+
+### RPM 部署
+1. **构建 RPM 包**
+```shell
+sh rpm/build_rpm.sh
+```
+2. **安装**
+```shell
+sudo rpm -ivh ~/rpmbuild/RPMS/aarch64/TSB-agent-1.0.0-1.aarch64.rpm
+```
+安装完成后，可在以下位置找到可执行文件、头文件、库文件和配置文件：
+```shell
+# 可执行文件
+/usr/bin/libvirtrustd
+/usr/bin/virtrust-sh
+
+# 头文件目录
+/usr/include/virtrust/
+
+# 库文件
+/usr/lib64/libvirtrust-shared.so
+
+# 示例配置文件
+/etc/virtrust/config.json
+```
+3. **卸载**
+```shell
+rpm -e TSB-agent
+```
+## 配置管理
+
+### 配置文件格式
+
+配置文件使用 JSON 格式，包含以下字段：
+
+```json
+{
+    "caPath": "ca-cert.pem",
+    "certPath": "server-cert.pem",
+    "skPath": "server-sk.pem",
+    "ip": "127.0.0.1"
+}
+```
+
+#### 配置字段说明
+
+- `ca_path`：CA 证书文件路径
+- `cert_path`：服务器证书文件路径
+- `sk_path`：服务器私钥文件路径，默认为 "server-sk.pem"
+- `ip`：服务器监听地址，默认为 "127.0.0.1"
+
+## 运行和管理
+
+### 启动服务
+
+```bash
+# 基础启动
+sudo libvirtrustd --config /etc/virtrust/config.json
+
+# 调试模式启动
+sudo libvirtrustd -d --config /etc/virtrust/config.json
+```
+
+### 命令行选项
+
+| 选项 | 长选项 | 参数 | 描述 |
+|------|--------|------|------|
+| 无 | `--config` | 文件路径 | 配置文件路径（必需） |
+| `-d` | `--debug` | 无 | 启用调试模式 |
+| 无 | `--help` | 无 | 显示帮助信息 |
+| 无 | `--version` | 无 | 显示版本信息 |
+
+### 系统服务配置
+
+创建 systemd 服务文件 `/etc/systemd/system/virtrustd.service`：
+
+```ini
+[Unit]
+Description=Virtrust Daemon
+After=network.target libvirtd.service
+Wants=libvirtd.service
+
+[Service]
+Type=simple
+User=root
+Group=root
+ExecStart=/usr/local/bin/virtrustd --config /etc/virtrust/virtrustd.json
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+```
+
+**服务管理命令**：
+```bash
+# 重新加载 systemd 配置
+sudo systemctl daemon-reload
+
+# 启动服务
+sudo systemctl start virtrustd
+
+# 停止服务
+sudo systemctl stop virtrustd
+
+# 重启服务
+sudo systemctl restart virtrustd
+
+# 查看服务状态
+sudo systemctl status virtrustd
+
+# 开机自启
+sudo systemctl enable virtrustd
+
+# 禁用开机自启
+sudo systemctl disable virtrustd
+```
+
+### 服务状态监控
+
+```bash
+# 检查服务是否运行
+sudo systemctl is-active virtrustd
+
+# 查看服务日志
+sudo journalctl -u virtrustd -f
+
+# 查看最近的错误日志
+sudo journalctl -u virtrustd --since "1 hour ago" -p err
+```
+
+## 日志管理
+
+### 日志文件位置
+
+- **日志文件**：`/var/log/virtrustd.log`
+- **系统日志**：通过 systemd journal 记录
+
+### 日志级别
+
+- **默认级别**：INFO
+- **调试模式**：DEBUG（使用 `--debug` 选项启用）
+
+### 日志轮转配置
+
+创建 logrotate 配置文件 `/etc/logrotate.d/virtrustd`：
+
+```
+/var/log/virtrustd.log {
+    daily
+    missingok
+    rotate 30
+    compress
+    delaycompress
+    notifempty
+    create 644 root root
+    postrotate
+        systemctl reload virtrustd
+    endscript
+}
+```
+
+## 安全配置
+
+### TLS 证书管理
+以下是生成grpc服务证书的示例， 开源规范允许私钥可以使用明文存储，因此生成的私钥文件暂时未使用口令保护，有其他需要可以以该脚本作为基础进行修改
+```bash
+#!/bin/bash
+openssl genrsa -out ca-key.pem 2048
+
+# 创建 CA 证书
+openssl req -new -x509 -days 365 -key ca-key.pem -out ca-cert.pem \
+  -subj "/C=CN/ST=State/L=City/O=Organization/CN=Virtrust-CA"
+
+# 生成服务器私钥
+openssl genrsa -out server-key.pem 2048
+
+# 生成证书签名请求
+openssl req -new -key server-key.pem -out server-req.pem \
+  -subj "/C=CN/ST=State/L=City/O=Organization/CN=virtrustd-server"
+
+# 签发服务器证书: 以下的ip1,ip2需要替换为服务器的ip列表
+openssl x509 -req -days 365 -in server-req.pem -CA ca-cert.pem \
+  -CAkey ca-key.pem -CAcreateserial -out server-cert.pem -extfile <(printf "subjectAltName=IP:ip1,IP:ip2,DNS:localhost")
+
+# 移动到安全位置
+mkdir -p  /etc/virtrust/certs/
+sudo mv ca-cert.pem server-cert.pem server-key.pem /etc/virtrust/certs/
+```
+```
+ 注意： 生成证书之后，再拷贝到其他服务器节点
+```
+
+4. **libvirt证书**：
+```bash
+# 该脚本仅提供证书及私钥生成的示例，不对安全性负责。
+# 以下方式生成的私钥文件未使用口令保护，有安全性问题，若需要口令保护请修改脚本。
+#!/bin/bash
+
+# 证书生成工具脚本（基于GnuTLS certtool）
+# 功能：创建CA、服务器和客户端证书
+
+set -e  # 遇到错误立即退出
+set -u  # 使用未定义变量时报错
+
+# 全局配置
+CA_ORG="HW"
+SERVER_HOST="compute1.libvirt.org"
+SERVER_DNS=("compute1" "compute1.libvirt.org")
+if [ $# -eq 0 ]; then
+    read -p "请输入服务器 IP: " SERVER_IP
+    SERVER_IPS=("$SERVER_IP")
+else
+    SERVER_IPS=("$@")  # 使用所有传入的参数作为 IP 列表
+fi
+CLIENT_CN="client1"
+CLIENT_COUNTRY="CN"
+CLIENT_STATE="XIAN"
+CLIENT_LOCALITY="XIAN"
+
+# 安装目录（根据需要修改）
+CA_CERT_PATH="/etc/pki/CA/cacert.pem"
+SERVER_KEY_PATH="/etc/pki/libvirt/private/serverkey.pem"
+SERVER_CERT_PATH="/etc/pki/libvirt/servercert.pem"
+CLIENT_KEY_PATH="/etc/pki/libvirt/private/clientkey.pem"
+CLIENT_CERT_PATH="/etc/pki/libvirt/clientcert.pem"
+
+# 检查certtool是否安装
+if ! command -v certtool &> /dev/null; then
+    echo "错误：certtool未安装。请安装gnutls-utils包："
+    echo "  Fedora/RHEL: sudo dnf install gnutls-utils"
+    echo "  Debian/Ubuntu: sudo apt-get install gnutls-bin"
+    exit 1
+fi
+
+# 创建临时目录
+TMP_DIR=./libvirt_tlscerts
+mkdir -p "$TMP_DIR"
+
+# 1. 创建CA证书
+echo "===== 创建CA证书 ====="
+cat > "$TMP_DIR/ca.info" <<EOF
+cn = $CA_ORG
+ca
+cert_signing_key
+EOF
+
+certtool --generate-privkey > "$TMP_DIR/cakey.pem"
+certtool --generate-self-signed \
+    --load-privkey "$TMP_DIR/cakey.pem" \
+    --template "$TMP_DIR/ca.info" \
+    --outfile "$TMP_DIR/cacert.pem"
+
+echo "CA证书已生成："
+certtool -i --infile "$TMP_DIR/cacert.pem" | grep -E "Subject:|Validity:"
+
+# 2. 创建服务器证书
+echo -e "\n===== 创建服务器证书 ====="
+cat > "$TMP_DIR/server.info" <<EOF
+organization = $CA_ORG
+cn = $SERVER_HOST
+EOF
+
+# 添加DNS名称
+for dns in "${SERVER_DNS[@]}"; do
+    echo "dns_name = $dns" >> "$TMP_DIR/server.info"
+done
+
+# 添加IP地址
+for ip in "${SERVER_IPS[@]}"; do
+    echo "ip_address = $ip" >> "$TMP_DIR/server.info"
+done
+
+# 添加扩展字段
+cat >> "$TMP_DIR/server.info" <<EOF
+tls_www_server
+signing_key
+encryption_key
+EOF
+
+certtool --generate-privkey > "$TMP_DIR/serverkey.pem"
+certtool --generate-certificate \
+    --load-privkey "$TMP_DIR/serverkey.pem" \
+    --load-ca-certificate "$TMP_DIR/cacert.pem" \
+    --load-ca-privkey "$TMP_DIR/cakey.pem" \
+    --template "$TMP_DIR/server.info" \
+    --outfile "$TMP_DIR/servercert.pem"
+
+echo "服务器证书已生成："
+certtool -i --infile "$TMP_DIR/servercert.pem" | grep -E "Subject:|Subject Alternative Name"
+
+# 3. 创建客户端证书
+echo -e "\n===== 创建客户端证书 ====="
+cat > "$TMP_DIR/client.info" <<EOF
+country = $CLIENT_COUNTRY
+state = $CLIENT_STATE
+locality = $CLIENT_LOCALITY
+organization = $CA_ORG
+cn = $CLIENT_CN
+tls_www_client
+signing_key
+encryption_key
+EOF
+
+certtool --generate-privkey > "$TMP_DIR/clientkey.pem"
+certtool --generate-certificate \
+    --load-privkey "$TMP_DIR/clientkey.pem" \
+    --load-ca-certificate "$TMP_DIR/cacert.pem" \
+    --load-ca-privkey "$TMP_DIR/cakey.pem" \
+    --template "$TMP_DIR/client.info" \
+    --outfile "$TMP_DIR/clientcert.pem"
+
+echo "客户端证书已生成："
+certtool -i --infile "$TMP_DIR/clientcert.pem" | grep -E "Subject:"
+
+# 5. 验证证书链（可选）
+echo -e "\n验证证书链..."
+certtool --verify --infile "$TMP_DIR/servercert.pem" \
+    --load-ca-certificate "$TMP_DIR/cacert.pem"
+
+echo -e "\n生成证书完成，位置： $TMP_DIR，需手动将证书复制到客户端和服务端如下位置："
+echo "服务端和客户端：CA证书 -> $CA_CERT_PATH"
+echo "服务端：服务器私钥 -> $SERVER_KEY_PATH"
+echo "服务端：服务器证书 -> $SERVER_CERT_PATH"
+echo "客户端：客户端私钥 -> $CLIENT_KEY_PATH"
+echo "客户端：客户端证书 -> $CLIENT_CERT_PATH"
+```
+
+```
+  生成的证书之后，证书应放置的路径如下
+服务端和客户端：CA证书 -> /etc/pki/CA/cacert.pem
+服务端：服务器私钥 -> /etc/pki/libvirt/private/serverkey.pem
+服务端：服务器证书 -> /etc/pki/libvirt/servercert.pem
+客户端：客户端私钥 -> /etc/pki/libvirt/private/clientkey.pem
+客户端：客户端证书 -> /etc/pki/libvirt/clientcert.pem
+```
+
+### 防火墙配置
+
+```bash
+# 开放 gRPC 服务端口
+sudo firewall-cmd --permanent --add-port=5031/tcp
+# 开放 libvirt tls方式端口
+sudo firewall-cmd --permanent --add-port=16514/tcp
+sudo firewall-cmd --reload
+```
+
+### 通信矩阵
+| Source Device | Source IP      | Source Port | Destination Device | Destination IP      | Destination Port | Protocol | Is Listening Port Configurable | Authentication | Encryption  |
+| ------------- | -------------- |-------------| ------------------ | ------------------- | ---------------- | -------- | ------------------------------ | -------------- | ----------- |
+| Source Node   | Source host IP | Random port allocated by the system     | Destination Node   | Destination host IP | 5031             | TCP      | No                             | Certificate    | TLS 1.2/1.3 |
+| Source Node   | Source host IP | Random port allocated by the system     | Destination Node   | Destination host IP | 16514            | TCP      | Yes                            | Certificate    | TLS 1.2/1.3 |
